@@ -1,0 +1,6 @@
+build/
+tools/elf2rel
+tools/elf2dol
+.ninja_log
+build.ninja
+main.dol
