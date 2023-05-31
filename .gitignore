@@ -1,6 +1,7 @@
 build/
 tools/elf2rel
 tools/elf2dol
+tools/mwcc_compiler/
 .ninja_log
 build.ninja
 main.dol
