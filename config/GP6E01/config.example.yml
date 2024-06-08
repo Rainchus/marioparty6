@@ -1,5 +1,5 @@
 # Path to the main.dol file.
-object: orig/GAMEID/sys/main.dol
+object: orig/GP6E01/sys/main.dol
 # (optional) SHA-1 hash of the main.dol file for verification.
 hash: 0123456789abcdef0123456789abcdef01234567
 # (optional) Name override. Defaults to "main".
@@ -8,16 +8,16 @@ name: main
 # (optional) Path to the symbols.txt file.
 # This file will be created if it does not exist.
 # See docs/symbols.md for more information.
-symbols: config/GAMEID/symbols.txt
+symbols: config/GP6E01/symbols.txt
 # (optional) Path to the splits.txt file.
 # This file will be created if it does not exist.
 # See docs/splits.md for more information.
-splits: config/GAMEID/splits.txt
+splits: config/GP6E01/splits.txt
 
 # (optional) Path to the DOL's .map file.
 # This should only used for initial analysis, and generating the symbols and splits files.
 # Once those files are generated, remove this to avoid conflicts.
-map: orig/GAMEID/files/main.MAP
+map: orig/GP6E01/files/main.MAP
 # (optional) Start address of common BSS symbols, if any.
 # Useful along with `map`, but not required otherwise, since common BSS
 # is marked in the splits file.
@@ -34,7 +34,7 @@ common_start: 0x80001234
 mw_comment_version: 8
 
 # (optional) Path to `selfile.sel` for Wii games with RSO files.
-selfile: orig/GAMEID/files/selfile.sel
+selfile: orig/GP6E01/files/selfile.sel
 # (optional) SHA-1 hash of the `selfile.sel` file for verification.
 selfile_hash: 0123456789abcdef0123456789abcdef01234567
 
@@ -75,13 +75,13 @@ export_all: true
 
 # (optional) Custom template for `ldscript.lcf`. Avoid unless necessary.
 # See https://github.com/encounter/decomp-toolkit/blob/main/assets/ldscript.lcf
-ldscript_template: config/GAMEID/module/ldscript.tpl
+ldscript_template: config/GP6E01/module/ldscript.tpl
 
 # (optional) Configuration for modules.
 modules:
 
 - # Path to the module.
-  object: orig/GAMEID/files/module.rel
+  object: orig/GP6E01/files/module.rel
 
   # (optional) SHA-1 hash of the module for verification.
   hash: 0123456789abcdef0123456789abcdef01234567
@@ -92,22 +92,22 @@ modules:
   # (optional) Path to the module's symbols.txt file.
   # This file will be created if it does not exist.
   # See docs/symbols.md for more information.
-  symbols: config/GAMEID/module/symbols.txt
+  symbols: config/GP6E01/module/symbols.txt
   # (optional) Path to the module's splits.txt file.
   # This file will be created if it does not exist.
   # See docs/splits.md for more information.
-  splits: config/GAMEID/module/splits.txt
+  splits: config/GP6E01/module/splits.txt
 
   # (optional) Path to the module's .map file.
   # See `map` above for more information.
-  map: orig/GAMEID/files/module.MAP
+  map: orig/GP6E01/files/module.MAP
 
   # (optional) Mark symbols as "force active" / "exported".
   force_active: []
 
   # (optional) Custom template for `ldscript.lcf`, if needed.
   # See https://github.com/encounter/decomp-toolkit/blob/main/assets/ldscript_partial.lcf
-  ldscript_template: config/GAMEID/module/ldscript.tpl
+  ldscript_template: config/GP6E01/module/ldscript.tpl
 
   # (optional) By default, every REL is linked with every other REL.
   # Some games link RELs individually, so the module IDs are not unique.
@@ -123,10 +123,10 @@ extract:
   symbol: SomeSymbol
 
   # (optional) The path to extract raw binary data to.
-  # Path is relative to `build/GAMEID/bin`.
+  # Path is relative to `build/GP6E01/bin`.
   binary: Lib/SomeSymbol.bin
 
   # (optional) The path to extract a C array representation to.
   # In a C/C++ file, the symbol can be included with `#include "Lib/SomeSymbol.inc"`.
-  # Path is relative to `build/GAMEID/include`.
+  # Path is relative to `build/GP6E01/include`.
   header: Lib/SomeSymbol.inc
