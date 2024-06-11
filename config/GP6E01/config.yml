@@ -56,11 +56,11 @@ modules:
   splits: config/dll/rels/m666dll/splits.txt
   links: []
 
-- object: orig/GP6E01/files/dll/m580Dll.rel
-  hash: acffec5b3084b0487d4bad22e15e797c7c8d7434
-  symbols: config/dll/rels/m580Dll/symbols.txt
-  splits: config/dll/rels/m580Dll/splits.txt
-  links: []
+# - object: orig/GP6E01/files/dll/m580Dll.rel
+#   hash: acffec5b3084b0487d4bad22e15e797c7c8d7434
+#   symbols: config/dll/rels/m580Dll/symbols.txt
+#   splits: config/dll/rels/m580Dll/splits.txt
+#   links: []
 
 - object: orig/GP6E01/files/dll/m535Dll.rel
   hash: 5a69f0a8ec04a5badf89f9d02e03f66a2e0eaff5
@@ -224,11 +224,11 @@ modules:
   splits: config/dll/rels/mdseldll/splits.txt
   links: []
 
-- object: orig/GP6E01/files/dll/m433Dll.rel
-  hash: 6b417d96fd14d3b22bbc42601078ff38c995123f
-  symbols: config/dll/rels/m433Dll/symbols.txt
-  splits: config/dll/rels/m433Dll/splits.txt
-  links: []
+# - object: orig/GP6E01/files/dll/m433Dll.rel
+#   hash: 6b417d96fd14d3b22bbc42601078ff38c995123f
+#   symbols: config/dll/rels/m433Dll/symbols.txt
+#   splits: config/dll/rels/m433Dll/splits.txt
+#   links: []
 
 - object: orig/GP6E01/files/dll/fileseldll.rel
   hash: 98ffdca10a6b0f9d5e5fcd526b65816306ea808e
