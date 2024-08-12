@@ -204,6 +204,14 @@ cflags_rel = [
     "-sdata2 0",
 ]
 
+# Game flags
+cflags_game = [
+    *cflags_base,
+    "-O0,p",
+    "-char unsigned",
+    "-fp_contract off",
+]
+
 config.linker_version = "GC/2.6"
 config.rel_strip_partial = False
 config.rel_empty_file = "REL/empty.c"
@@ -245,6 +253,15 @@ config.libs = [
         "objects": [
             Object(NonMatching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
             Object(NonMatching, "Runtime.PPCEABI.H/__init_cpp_exceptions.cpp"),
+        ],
+    },
+    {
+        "lib": "Game",
+        "mw_version": config.linker_version,
+        "cflags": cflags_game,
+        "host": False,
+        "objects": [
+            Object(NonMatching, "game/kerent.c"),
         ],
     },
     {

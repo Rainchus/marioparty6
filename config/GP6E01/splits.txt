@@ -12,3 +12,6 @@ Sections:
 	.sbss       type:bss align:32
 	.sdata2     type:rodata align:32
 	.sbss2      type:bss align:4
+
+game/kerent.c:
+	.text       start:0x80213974 end:0x80216014
