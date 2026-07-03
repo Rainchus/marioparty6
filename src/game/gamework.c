@@ -1,5 +1,4 @@
 #include "game/gamework.h"
-#include "game/object.h"
 #include "game/pad.h"
 #include "game/flag.h"
 
@@ -35,7 +34,7 @@ void GWInit(void)
         conf->padNo = i;
         conf->comDif = GW_PLAYER_COM_DIF_EASY;
         conf->grpNo = i;
-        if(!omPadDisableChk(i) || SIProbe(i) == 0x00040000) {
+        if(omPadErrChk(i) == PAD_ERR_NONE || SIProbe(i) == 0x00040000) {
             conf->type = GW_PLAYER_TYPE_MAN;
         } else {
             conf->type = GW_PLAYER_TYPE_COM;

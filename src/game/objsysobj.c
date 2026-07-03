@@ -3,16 +3,10 @@
 #include "game/hu3d.h"
 #include "game/sprite.h"
 #include "game/process.h"
+#include "game/audio.h"
 
 //TODO: Replace when mgdata.h is implemented
 extern s32 MgNoGet(s16 ovlNo);
-//TODO: Replace when wipe.h is implemented
-extern BOOL WipeCheckEnd(void);
-extern BOOL WipeStatGet(void);
-//TODO: Replace when audio.h is implemented
-extern void HuAudFXPauseAll(BOOL pause);
-extern void HuAudSeqPauseAll(BOOL pause);
-extern void HuAudSStreamPauseAll(BOOL pause);
 //TODO: Replace when gamemes.h is implemented
 extern void GameMesPauseCreate(void);
 
@@ -131,7 +125,7 @@ void omSystemKeyCheck(OMOBJ *obj)
     if(obj->work[0] & SYSKEY_ATTR_PAUSEON) {
         u32 padNo = obj->work[1];
         if(padNo != SYSKEY_PAD_NONE) {
-            if(!omPadDisableChk(padNo) && (HuPadBtnDown[padNo] & PAD_BUTTON_START)) {
+            if(omPadErrChk(padNo) == PAD_ERR_NONE && (HuPadBtnDown[padNo] & PAD_BUTTON_START)) {
                 obj->work[0] |= SYSKEY_ATTR_PAUSEKEY;
             }
         }
@@ -155,12 +149,12 @@ void omSystemKeyCheck(OMOBJ *obj)
     } else {
         s16 pauseF = FALSE;
         s32 padNo;
-        if(WipeCheckEnd() || omCurrentOvlGet() == DLL_NONE || omSysExitReq) {
+        if(WipeCheck() || omCurrentOvlGet() == DLL_NONE || omSysExitReq) {
             return;
         }
-        if(!WipeStatGet()) {
+        if(!WipeCheckIn()) {
             for(padNo=0; padNo<4; padNo++) {
-                if(!omPadDisableChk(padNo) && (HuPadBtnDown[padNo] & PAD_BUTTON_START)) {
+                if(!omPadErrChk(padNo) && (HuPadBtnDown[padNo] & PAD_BUTTON_START)) {
                     pauseF = TRUE;
                     break;
                 }

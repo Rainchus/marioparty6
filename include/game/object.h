@@ -20,6 +20,8 @@ typedef enum omOvl_e {
 #define OM_STAT_ACTIVE (1 << 2)
 #define OM_STAT_PAUSED (1 << 4)
 #define OM_STAT_NOPAUSE (1 << 5)
+#define OM_STAT_40 (1 << 6)
+
 #define OM_STAT_SPRPAUSE (1 << 7)
 #define OM_STAT_MODELPAUSE (1 << 8)
 
@@ -38,7 +40,7 @@ typedef struct omObjGrp_s {
     u16 objNum;
     u16 *memberNext;
     OMOBJ **memberList;
-} OMOBJ_GRP;
+} OMOBJGRP;
 
 typedef struct omObjWork_s {
     s16 objMax;
@@ -47,8 +49,8 @@ typedef struct omObjWork_s {
     s16 objLast;
     s16 objFirst;
     OMOBJ *objData;
-    OMOBJ_GRP *grpData;
-} OMOBJ_WORK;
+    OMOBJGRP *grpData;
+} OMOBJWORK;
 
 struct omObj_s {
     u16 stat;
@@ -76,7 +78,7 @@ typedef struct omOvlHis_s {
     OMOVL ovl;
     s32 evtno;
     s32 stat;
-} OMOVL_HIS;
+} OMOVLHIS;
 
 typedef struct ovlTbl_s {
     char *name;
@@ -112,7 +114,7 @@ void omOvlGotoEx(OMOVL ovl, s16 unlinkF, s32 evtno, s32 stat);
 void omOvlReturnEx(s16 hisOfs, s16 unlinkF);
 void omOvlKill(s16 unlinkF);
 void omOvlHisChg(s32 hisOfs, OMOVL ovl, s32 evtno, s32 stat);
-OMOVL_HIS *omOvlHisGet(s32 hisOfs);
+OMOVLHIS *omOvlHisGet(s32 hisOfs);
 OMOBJMAN *omInitObjMan(s16 objMax, s32 objManPrio);
 OMOBJ *omAddObjEx(OMOBJMAN *objMan, s16 prio, u16 mdlcnt, u16 mtncnt, s16 grpNo, OMOBJ_FUNC objFunc);
 void omAddMember(OMOBJMAN *objMan, u16 grpNo, OMOBJ *obj);
@@ -147,9 +149,10 @@ s16 omCameraViewMoveSimpleMulti(u32 camera, OM_CAMERA_VIEW *cameraView, s32 time
 s16 omCameraViewMoveSimple(OM_CAMERA_VIEW *cameraView, s32 time);
 BOOL omCameraViewCheck(u32 cameraBit);
 
+void omObjManPause(BOOL pauseF);
+
 void omGameSysInit(OMOBJMAN *objman);
 void omVibrate(s16 playerNo, s16 duration, s16 off, s16 on);
-BOOL omPadDisableChk(u32 playerNo);
 
 extern s16 omSysExitReq;
 extern OMOBJ *omDBGSysKeyObj;

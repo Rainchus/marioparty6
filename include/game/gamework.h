@@ -298,6 +298,24 @@ static inline void GWSingleMgWinInc(GW_PLAYER_COM_DIF comDif)
     }
 }
 
+static inline void GWMgCoinBonusSet(s32 playerNo, s16 mgCoin)
+{
+    if(_CheckFlag(FLAG_MG_PRACTICE)) {
+        return;
+    }
+    GwPlayer[playerNo].mgCoinBonus = mgCoin;
+}
+
+static inline void GWMgCoinSet(s32 playerNo, s16 mgCoin)
+{
+    GwPlayer[playerNo].mgCoin = mgCoin;
+}
+
+static inline void GWMgScoreSet(s32 playerNo, u32 mgScore)
+{
+    GwPlayer[playerNo].mgScore = mgScore;
+}
+
 void GWInit(void);
 void GWCommonInit(void);
 int GWComKeyDelayGet(void);

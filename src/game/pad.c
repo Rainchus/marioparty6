@@ -68,13 +68,13 @@ extern int HuDvdErrWait;
 void HuPadInit(void)
 {
     int i;
-    BOOL int_level;
+    BOOL old;
     PADSetSpec(PAD_SPEC_5);
     PADInit();
     SISetSamplingRate(0);
-    int_level = OSDisableInterrupts();
+    old = OSDisableInterrupts();
     VISetPostRetraceCallback(PadReadVSync);
-    OSRestoreInterrupts(int_level);
+    OSRestoreInterrupts(old);
     for(i=0; i<4; i++) {
         padStatErrOld[i] = PAD_ERR_NOT_READY;
     }
@@ -128,34 +128,34 @@ static void PadReadVSync(u32 retraceCount)
             GlobalCounterOld = GlobalCounter;
         }
         for(i=0; i<4; i++) {
-            PADStatus *curr_status = &status[i];
+            PADStatus *statusP = &status[i];
             RUMBLEDATA *rumble = &rumbleData[i];
-            if(padStatErrOld[i] && curr_status->err == PAD_ERR_NONE) {
+            if(padStatErrOld[i] && statusP->err == PAD_ERR_NONE) {
                 PADControlMotor(i, PAD_MOTOR_STOP_HARD);
                 rumble->maxTime = 0;
             }
-            padStatErrOld[i] = curr_status->err;
-            if(curr_status->err != PAD_ERR_NONE) {
-                _PadErr[i] = curr_status->err;
-                if(curr_status->err != PAD_ERR_TRANSFER && curr_status->err != PAD_ERR_NOT_READY) {
+            padStatErrOld[i] = statusP->err;
+            if(statusP->err != PAD_ERR_NONE) {
+                _PadErr[i] = statusP->err;
+                if(statusP->err != PAD_ERR_TRANSFER && statusP->err != PAD_ERR_NOT_READY) {
                     chan |= chanTbl[i];
                 }
-                if(curr_status->err == PAD_ERR_TRANSFER) {
+                if(statusP->err == PAD_ERR_TRANSFER) {
                     _PadErr[i] = 0;
                     _PadBtnDown[i] = _PadDStkDown[i] = 0;
                     continue;
                 }
-                if(curr_status->err == PAD_ERR_NO_CONTROLLER && SIProbe(i) == 0x88000000) {
+                if(statusP->err == PAD_ERR_NO_CONTROLLER && SIProbe(i) == 0x88000000) {
                     _PadErr[i] = 0;
                     chan |= chanTbl[i];
                 }
                 _PadBtnDown[i] = _PadBtn[i] = _PadStkX[i] = _PadStkY[i] = _PadSubStkX[i] = _PadSubStkY[i] = _PadTrigL[i] = _PadTrigR[i] =  _PadDStkRep[i] = _PadDStk[i] = _PadDStkDown[i] =  HuPadBtnRep[i] = 0;
             } else {
-                u16 button = curr_status->button & ~HuPadBtnMask;
-                if(curr_status->triggerL > 105.0) {
+                u16 button = statusP->button & ~HuPadBtnMask;
+                if(statusP->triggerL > 105.0) {
                     button |= PAD_BUTTON_TRIGGER_L;
                 }
-                if(curr_status->triggerR > 105.0) {
+                if(statusP->triggerR > 105.0) {
                     button |= PAD_BUTTON_TRIGGER_R;
                 }
                 if(button && _PadBtn[i] == button) {
@@ -171,26 +171,26 @@ static void PadReadVSync(u32 retraceCount)
                     _PadRepCnt[i] = 0;
                     HuPadBtnRep[i] = button;
                 }
-                PadADConv(i, curr_status);
+                PadADConv(i, statusP);
                 _PadBtnDown[i] |= PADButtonDown(_PadBtn[i], button);
                 
                 if(RumbleCounter == 0 || RumbleCounter > 3) {
                     _PadBtn[i] = button;
-                    _PadStkX[i] = curr_status->stickX;
-                    _PadStkY[i] = curr_status->stickY;
-                    _PadSubStkX[i] = curr_status->substickX;
-                    _PadSubStkY[i] = curr_status->substickY;
-                    _PadTrigL[i] = curr_status->triggerL;
-                    _PadTrigR[i] = curr_status->triggerR;
+                    _PadStkX[i] = statusP->stickX;
+                    _PadStkY[i] = statusP->stickY;
+                    _PadSubStkX[i] = statusP->substickX;
+                    _PadSubStkY[i] = statusP->substickY;
+                    _PadTrigL[i] = statusP->triggerL;
+                    _PadTrigR[i] = statusP->triggerR;
                     RumbleCounter = 0;
                 } else {
                     _PadBtn[i] |= button;
-                    _PadStkX[i] |= curr_status->stickX;
-                    _PadStkY[i] |= curr_status->stickY;
-                    _PadSubStkX[i] |= curr_status->substickX;
-                    _PadSubStkY[i] |= curr_status->substickY;
-                    _PadTrigL[i] |= curr_status->triggerL;
-                    _PadTrigR[i] |= curr_status->triggerR;
+                    _PadStkX[i] |= statusP->stickX;
+                    _PadStkY[i] |= statusP->stickY;
+                    _PadSubStkX[i] |= statusP->substickX;
+                    _PadSubStkY[i] |= statusP->substickY;
+                    _PadTrigL[i] |= statusP->triggerL;
+                    _PadTrigR[i] |= statusP->triggerR;
                 }
                 HuPadStkXf[i] = (float)_PadStkX[i]*(1.0/56.0);
                 HuPadStkYf[i] = (float)_PadStkY[i]*(1.0/56.0);
@@ -199,7 +199,7 @@ static void PadReadVSync(u32 retraceCount)
                 HuPadSubStkXf[i] = (float)_PadSubStkX[i]*(1.0/44.0);
                 HuPadTrigLf[i] = (float)_PadTrigL[i]*(1.0/150.0);
                 HuPadTrigRf[i] = (float)_PadTrigR[i]*(1.0/150.0);
-                _PadErr[i] = curr_status->err;
+                _PadErr[i] = statusP->err;
                 if(rumble->maxTime) {
                     if(rumble->numRumble) {
                         if(rumble->time == 0) {
