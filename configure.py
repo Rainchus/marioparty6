@@ -730,7 +730,7 @@ config.libs = [
     Rel(
         "bootDll",
         objects={
-            Object(NonMatching, "REL/bootDll/boot.c"),
+            Object(Matching, "REL/bootDll/boot.c", mw_version=config.linker_version),
             Object(NonMatching, "REL/bootDll/data.c"),
             Object(NonMatching, "REL/bootDll/opening.c"),
         },
