@@ -1,0 +1,15 @@
+/* Generated clean-C SDA accessor probe. */
+typedef unsigned char u8;
+typedef signed char s8;
+typedef unsigned short u16;
+typedef signed short s16;
+typedef unsigned int u32;
+typedef int s32;
+
+extern volatile u32 csap__0x8015ed50_data;
+
+__attribute__((section(".text.csap__0x8015ed50"), used, noinline))
+void csap__0x8015ed50(u32 value)
+{
+    csap__0x8015ed50_data = value;
+}

@@ -1,0 +1,483 @@
+{
+  "copied_files": [
+    "src/recovered/mp6_exact/source/auto_leaf_pattern_recovery/source/auto_leaf_pattern_recovered.c",
+    "src/recovered/mp6_exact/source/auto_leaf_pattern_recovery/source/auto_leaf_pattern_recovered.h",
+    "src/recovered/mp6_exact/source/auto_leaf_pattern_recovery/source/auto_leaf_pattern_recovered_dynamic_bit_clear.c",
+    "src/recovered/mp6_exact/source/auto_leaf_pattern_recovery/source/auto_leaf_pattern_recovered_low_register_r4.c",
+    "src/recovered/mp6_exact/source/auto_leaf_pattern_recovery/source/auto_leaf_pattern_recovered_r0_literal_store.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x80003140.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8000314c.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x80006fc8.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8000dd9c.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8000f09c.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x80017b28.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800460ac.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x80055fb4.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x80068db8.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8006a998.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8007d52c.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x80099408.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x80099410.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x80099418.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x80099420.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8009ad80.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800a8730.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800a8c30.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800ac708.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800ac7e0.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800b0a8c.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800b0a94.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800b98bc.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800e6868.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800e9450.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800e9458.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800e9480.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800ea238.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x800ea244.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8014aafc.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8014ab08.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x80153da8.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8015bb60.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8015ed50.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8015ed58.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x80170978.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8017f1d4.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8017fac0.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8017fed8.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8017fee4.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8018b984.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x801914dc.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x801914e8.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x80193cec.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8019a380.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8019b09c.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x801c45e8.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x801e9858.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x801e9d1c.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x801ef890.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x801ef898.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x802004b8.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x8021362c.c",
+    "src/recovered/mp6_exact/source/clean_sda_accessor_probe_engine/source/csap__0x80213634.c",
+    "src/recovered/mp6_exact/source/clean_sda_sequence_probe_engine/source/cssp_main_dol_18_0x80005b54.c",
+    "src/recovered/mp6_exact/source/clean_sda_sequence_probe_engine/source/cssp_main_dol_2052_0x800b81f8.c",
+    "src/recovered/mp6_exact/source/clean_sda_sequence_probe_engine/source/cssp_main_dol_23_0x80005c8c.c",
+    "src/recovered/mp6_exact/source/clean_sda_sequence_probe_engine/source/cssp_main_dol_2571_0x800eb020.c",
+    "src/recovered/mp6_exact/source/clean_sda_sequence_probe_engine/source/cssp_main_dol_4236_0x8016cafc.c",
+    "src/recovered/mp6_exact/source/clean_sda_sequence_probe_engine/source/cssp_main_dol_4888_0x801b4364.c",
+    "src/recovered/mp6_exact/source/clean_sda_sequence_probe_engine/source/cssp_main_dol_5603_0x80213620.c",
+    "src/recovered/mp6_exact/source/clean_sda_sequence_probe_engine/source/cssp_main_dol_793_0x80047508.c",
+    "src/recovered/mp6_exact/source/promotion_engine/seed_expansion_fixed_reg_probe_preflight/source/seed_expansion_targets.c",
+    "src/recovered/mp6_exact/source/promotion_engine/seed_expansion_recovery_engine_agent2_proof_scratch/source/seed_expansion_targets.c",
+    "src/recovered/mp6_exact/source/seed_expansion_recovery_engine/retained_artifacts/m602dll_rel/0x8000185c/ret_95cef8e6de008690/seed_expansion_targets.c",
+    "src/recovered/mp6_exact/source/seed_expansion_recovery_engine/retained_artifacts/m610dll_rel/0x8001c3e4/ret_9b2a48acc15bd30d/seed_expansion_targets.c",
+    "src/recovered/mp6_exact/source/seed_expansion_recovery_engine/retained_artifacts/m623dll_rel/0x8001726c/ret_616db6fcf2addb8d/seed_expansion_targets.c",
+    "src/recovered/mp6_exact/source/seed_expansion_recovery_engine/retained_artifacts/m624dll_rel/0x800048d8/ret_955e7e186214a1ec/seed_expansion_targets.c",
+    "src/recovered/mp6_exact/source/seed_expansion_recovery_engine/retained_artifacts/m626dll_rel/0x80000908/ret_d9f4921be407895e/seed_expansion_targets.c",
+    "src/recovered/mp6_exact/source/seed_expansion_recovery_engine/retained_artifacts/m639dll_rel/0x80003948/ret_64c983ec15b4c127/seed_expansion_targets.c",
+    "src/recovered/mp6_exact/source/seed_expansion_recovery_engine/retained_artifacts/m655dll_rel/0x800074e8/ret_e57233d795aac6c7/seed_expansion_targets.c",
+    "src/recovered/mp6_exact/source/seed_expansion_recovery_engine/retained_artifacts/m681dll_rel/0x80007cfc/ret_8c7fead0d6e274a6/seed_expansion_targets.c",
+    "src/recovered/mp6_exact/source/seed_expansion_recovery_engine/retained_artifacts/main_dol/0x8019a620/ret_27ffb215c93d8dbe/seed_expansion_targets.c",
+    "src/recovered/mp6_exact/source/source_manifest_adapter_engine/reports/waves/wave20_huthp_total_frame_get_linked_proof/source/wave20_huthp_total_frame_get_linked_proof.c"
+  ],
+  "copied_unique_files": 79,
+  "generated_at_utc": "2026-07-08T14:25:05.084978+00:00",
+  "granularity_counts": {
+    "function": 2312,
+    "range": 387
+  },
+  "missing_source_examples": [
+    {
+      "entry_address": "0x800A6110",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01971",
+      "module": "main.dol",
+      "source_path": "_mp6_rebuild/exact_c_recovery/source/exact_literal_return_recovered.c"
+    },
+    {
+      "entry_address": "0x8009A010",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01972",
+      "module": "main.dol",
+      "source_path": "_mp6_rebuild/exact_getter_c_recovery/source/exact_getter_recovered.c"
+    },
+    {
+      "entry_address": "0x8009CC20",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01973",
+      "module": "main.dol",
+      "source_path": "_mp6_rebuild/exact_getter_c_recovery/source/exact_getter_recovered.c"
+    },
+    {
+      "entry_address": "0x8009CC2C",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01974",
+      "module": "main.dol",
+      "source_path": "_mp6_rebuild/exact_getter_c_recovery/source/exact_getter_recovered.c"
+    },
+    {
+      "entry_address": "0x80000BA0",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01975",
+      "module": "m603DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x80000BA8",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01976",
+      "module": "m603DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x80007890",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01977",
+      "module": "m604DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x80007898",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01978",
+      "module": "m604DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x80001074",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01979",
+      "module": "m605DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x800020E0",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01980",
+      "module": "m605DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x800020E8",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01981",
+      "module": "m605DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x80003098",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01982",
+      "module": "m605DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x800030A0",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01983",
+      "module": "m605DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x8000162C",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01984",
+      "module": "m610DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x80010F90",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01985",
+      "module": "m610DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x80010F98",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01986",
+      "module": "m610DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x80001DA4",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01987",
+      "module": "m611DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x80001DAC",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01988",
+      "module": "m611DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x800005DC",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01989",
+      "module": "m622DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x800005E4",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01990",
+      "module": "m622DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x80002074",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01991",
+      "module": "m623DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x80003C44",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01992",
+      "module": "m624DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x80003C4C",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01993",
+      "module": "m624DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x8001208C",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01994",
+      "module": "m628DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    },
+    {
+      "entry_address": "0x80012094",
+      "input_manifest": "source_manifest_adapter_engine/recovered_functions.csv",
+      "lane": "source_manifest_adapter_engine",
+      "ledger_id": "ECPR01995",
+      "module": "m628DLL.rel",
+      "source_path": "_mp6_rebuild/exact_wrapper_tail_adjust_c_recovery/source/exact_wrapper_tail_adjust_recovered.c"
+    }
+  ],
+  "notes": [
+    "Rows marked already_in_repo are DTK/MWCC-proven source already present in this marioparty6 tree.",
+    "Rows marked copied_source import generated clean-C proof sources from _mp6_rebuild lane artifacts.",
+    "Rows marked missing_source are preserved in the manifest, but their historical generated source files were not present locally at export time.",
+    "Generated GCC proof sources are not wired into configure.py because this repository builds active source with MWCC."
+  ],
+  "rows": 2699,
+  "source": "D:/Games/Emulation/GameCube-Wii/_mp6_rebuild/reports/generated/exact_c_progress_ledger/exact_c_progress_ledger.csv",
+  "source_summary": {
+    "ledger_rows": 5619,
+    "proof_only_rows": 2920,
+    "source_level_exact_c_functions": 2312,
+    "source_level_exact_c_functions_ranges": 2699,
+    "source_level_exact_c_ranges": 387
+  },
+  "status_counts": {
+    "already_in_repo": 769,
+    "copied_source": 1217,
+    "missing_source": 713
+  },
+  "top_lanes": [
+    [
+      "auto_leaf_pattern_recovery",
+      1130
+    ],
+    [
+      "dtk_repo_build_proof_importer",
+      769
+    ],
+    [
+      "source_manifest_adapter_engine",
+      456
+    ],
+    [
+      "exact_dataref_r31_parent_range_c_recovery",
+      158
+    ],
+    [
+      "clean_sda_accessor_probe_engine",
+      54
+    ],
+    [
+      "promotion_engine",
+      44
+    ],
+    [
+      "wave13_p1_accessor_group_strict_probe",
+      30
+    ],
+    [
+      "wave14_p1_accessor_group_strict_probe",
+      17
+    ],
+    [
+      "seed_expansion_recovery_engine",
+      9
+    ],
+    [
+      "clean_sda_sequence_probe_engine",
+      8
+    ],
+    [
+      "wave16_p1_cdfr02475_accessor_strict_probe",
+      5
+    ],
+    [
+      "wave16_p1_cdfr02522_accessor_strict_probe",
+      5
+    ],
+    [
+      "exact_dat_addr_parent_range_c_recovery",
+      4
+    ],
+    [
+      "wave16_p1_cdfr02583_accessor_strict_probe",
+      4
+    ],
+    [
+      "wave15_p1_accessor_group_strict_probe",
+      3
+    ],
+    [
+      "bootdll_charfocus_inline_asm_c_recovery",
+      2
+    ],
+    [
+      "wave67_halfword_accessor_auto_recovery",
+      1
+    ]
+  ],
+  "top_modules": [
+    [
+      "main.dol",
+      1033
+    ],
+    [
+      "m628DLL.rel",
+      77
+    ],
+    [
+      "m677DLL.rel",
+      75
+    ],
+    [
+      "m653DLL.rel",
+      72
+    ],
+    [
+      "m681DLL.rel",
+      68
+    ],
+    [
+      "m655DLL.rel",
+      65
+    ],
+    [
+      "m673DLL.rel",
+      65
+    ],
+    [
+      "m652DLL.rel",
+      60
+    ],
+    [
+      "m654DLL.rel",
+      60
+    ],
+    [
+      "m671DLL.rel",
+      60
+    ],
+    [
+      "m672DLL.rel",
+      60
+    ],
+    [
+      "m624DLL.rel",
+      58
+    ],
+    [
+      "m603DLL.rel",
+      55
+    ],
+    [
+      "m639DLL.rel",
+      55
+    ],
+    [
+      "m634DLL.rel",
+      54
+    ],
+    [
+      "m611DLL.rel",
+      52
+    ],
+    [
+      "m648DLL.rel",
+      47
+    ],
+    [
+      "m604DLL.rel",
+      36
+    ],
+    [
+      "m605DLL.rel",
+      30
+    ],
+    [
+      "m610DLL.rel",
+      29
+    ],
+    [
+      "m623DLL.rel",
+      27
+    ],
+    [
+      "m622DLL.rel",
+      26
+    ],
+    [
+      "mdpresultdll.rel",
+      18
+    ],
+    [
+      "endingdll.rel",
+      14
+    ],
+    [
+      "m620Dll.rel",
+      13
+    ]
+  ]
+}
