@@ -370,7 +370,7 @@ config.libs = [
     DolphinLib(
         "base",
         [
-            Object(NonMatching, "dolphin/base/PPCArch.c"),
+            Object(Matching, "dolphin/base/PPCArch.c"),
         ],
     ),
     DolphinLib(
