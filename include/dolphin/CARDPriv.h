@@ -103,7 +103,7 @@ typedef struct CARDID {
 } CARDID;
 
 void __CARDDefaultApiCallback(s32 chan, s32 result);
-BOOL __CARDIsWritable(CARDDir* ent);
+s32 __CARDIsWritable(CARDControl* card, CARDDir* ent);
 
 s32 __CARDEraseSector(s32 chan, u32 addr, CARDCallback callback);
 s32 __CARDPutControlBlock(struct CARDControl* card, s32 result);
