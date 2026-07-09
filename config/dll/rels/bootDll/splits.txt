@@ -23,4 +23,3 @@ REL/bootDll/opening.c:
 
 REL/runtime.c:
 	.text       start:0x000080BC end:0x00008B00
-	.rodata     start:0x00000290 end:0x000002A8

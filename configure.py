@@ -721,18 +721,19 @@ config.libs = [
         "objects": [
             Object(Matching, "REL/empty.c"),  # Must be marked as matching
             Object(
-                NonMatching,
+                Matching,
                 "REL/runtime.c",
                 source="Runtime.PPCEABI.H/runtime.c",
+                extra_cflags=["-DMP6_REL_RUNTIME=1", "-proc 7400"],
             ),
         ],
     },
     Rel(
         "bootDll",
         objects={
-            Object(NonMatching, "REL/bootDll/boot.c"),
-            Object(NonMatching, "REL/bootDll/data.c"),
-            Object(NonMatching, "REL/bootDll/opening.c"),
+            Object(Matching, "REL/bootDll/boot.c", mw_version=config.linker_version),
+            Object(Matching, "REL/bootDll/data.c"),
+            Object(Matching, "REL/bootDll/opening.c", mw_version=config.linker_version),
         },
     ),
 
