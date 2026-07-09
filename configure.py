@@ -736,6 +736,19 @@ config.libs = [
             Object(Matching, "REL/bootDll/opening.c", mw_version=config.linker_version),
         },
     ),
+    Rel(
+        "fileseldll",
+        objects={
+            Object(NonMatching, "REL/fileseldll/filesel.c", mw_version=config.linker_version),
+            Object(
+                Matching,
+                "REL/fileseldll/runtime.c",
+                source="Runtime.PPCEABI.H/runtime.c",
+                mw_version=config.linker_version,
+                extra_cflags=["-DMP6_REL_RUNTIME=1", "-DMP6_FILESEL_RUNTIME=1", "-proc 7400"],
+            ),
+        },
+    ),
 
 ]
 
