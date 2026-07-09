@@ -645,7 +645,7 @@ config.libs = [
             Object(Matching, "msm/msmmem.c"),
             Object(Matching, "msm/msmfio.c"),
             Object(Matching, "msm/msmmus.c"),
-            Object(NonMatching, "msm/msmse.c"),
+            Object(Matching, "msm/msmse.c"),
             Object(NonMatching, "msm/msmstream.c"),
         ],
     },
