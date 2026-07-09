@@ -100,31 +100,7 @@ extern s16 lbl_1_bss_224;
 extern s16 OpeningMdlId[8];
 extern s16 WinFrameTypeTbl[4];
 extern u32 OpeningCharFileTbl[80];
-extern char lbl_1_data_8798[0xC];
-extern char lbl_1_data_87A4[0xC];
-extern char lbl_1_data_87B0[0xC];
-extern char lbl_1_data_87BC[0xC];
-extern char lbl_1_data_87C8[0xC];
-extern char lbl_1_data_87D4[0xC];
-extern char lbl_1_data_87E0[0xE];
-extern char lbl_1_data_87EE[0xE];
-extern char lbl_1_data_87FC[0xD];
-extern char lbl_1_data_8809[0x10];
-extern char lbl_1_data_8819[0x9];
-extern char lbl_1_data_8822[0x9];
 extern char *OpeningCharTexNameTbl[12];
-extern char lbl_1_data_885C[0x12];
-extern char lbl_1_data_886E[0x12];
-extern char lbl_1_data_8880[0x12];
-extern char lbl_1_data_8892[0x12];
-extern char lbl_1_data_88A4[0x12];
-extern char lbl_1_data_88B6[0x12];
-extern char lbl_1_data_88C8[0x14];
-extern char lbl_1_data_88DC[0x14];
-extern char lbl_1_data_88F0[0x13];
-extern char lbl_1_data_8903[0x16];
-extern char lbl_1_data_8919[0x13];
-extern char lbl_1_data_892C[0x14];
 extern char *OpeningCharObjNameTbl[12];
 extern HuVecF BookDefPos;
 extern HuVecF BookDefRot;
@@ -1533,60 +1509,34 @@ u32 OpeningCharFileTbl[80] = {
     0x00D50067, 0x00D50068, 0x00D50025, 0xFFFFFFFF,
 };
 
-char lbl_1_data_8798[0xC] = "Dummy_mario";
-char lbl_1_data_87A4[0xC] = "Dummy_Luigi";
-char lbl_1_data_87B0[0xC] = "Dummy_peach";
-char lbl_1_data_87BC[0xC] = "Dummy_yoshi";
-char lbl_1_data_87C8[0xC] = "Dummy_wario";
-char lbl_1_data_87D4[0xC] = "Dummy_daisy";
-char lbl_1_data_87E0[0xE] = "Dummy_waluigi";
-char lbl_1_data_87EE[0xE] = "Dummy_kinopio";
-char lbl_1_data_87FC[0xD] = "Dummy_teresa";
-char lbl_1_data_8809[0x10] = "Dummy_minikoopa";
-char lbl_1_data_8819[0x9] = "guide001";
-char lbl_1_data_8822[0x9] = "guide002";
-
 char *OpeningCharTexNameTbl[12] = {
-    lbl_1_data_8798,
-    lbl_1_data_87A4,
-    lbl_1_data_87B0,
-    lbl_1_data_87BC,
-    lbl_1_data_87C8,
-    lbl_1_data_87D4,
-    lbl_1_data_87E0,
-    lbl_1_data_87EE,
-    lbl_1_data_87FC,
-    lbl_1_data_8809,
-    lbl_1_data_8819,
-    lbl_1_data_8822,
+    "Dummy_mario",
+    "Dummy_Luigi",
+    "Dummy_peach",
+    "Dummy_yoshi",
+    "Dummy_wario",
+    "Dummy_daisy",
+    "Dummy_waluigi",
+    "Dummy_kinopio",
+    "Dummy_teresa",
+    "Dummy_minikoopa",
+    "guide001",
+    "guide002",
 };
 
-char lbl_1_data_885C[0x12] = "op_stage011-mario";
-char lbl_1_data_886E[0x12] = "op_stage011-luigi";
-char lbl_1_data_8880[0x12] = "op_stage011-peach";
-char lbl_1_data_8892[0x12] = "op_stage011-yoshi";
-char lbl_1_data_88A4[0x12] = "op_stage011-wario";
-char lbl_1_data_88B6[0x12] = "op_stage011-daisy";
-char lbl_1_data_88C8[0x14] = "op_stage011-waluigi";
-char lbl_1_data_88DC[0x14] = "op_stage011-kinopio";
-char lbl_1_data_88F0[0x13] = "op_stage011-teresa";
-char lbl_1_data_8903[0x16] = "op_stage011-minikoopa";
-char lbl_1_data_8919[0x13] = "op_stage011-soruru";
-char lbl_1_data_892C[0x14] = "op_stage011-luluna";
-
 char *OpeningCharObjNameTbl[12] = {
-    lbl_1_data_885C,
-    lbl_1_data_886E,
-    lbl_1_data_8880,
-    lbl_1_data_8892,
-    lbl_1_data_88A4,
-    lbl_1_data_88B6,
-    lbl_1_data_88C8,
-    lbl_1_data_88DC,
-    lbl_1_data_88F0,
-    lbl_1_data_8903,
-    lbl_1_data_8919,
-    lbl_1_data_892C,
+    "op_stage011-mario",
+    "op_stage011-luigi",
+    "op_stage011-peach",
+    "op_stage011-yoshi",
+    "op_stage011-wario",
+    "op_stage011-daisy",
+    "op_stage011-waluigi",
+    "op_stage011-kinopio",
+    "op_stage011-teresa",
+    "op_stage011-minikoopa",
+    "op_stage011-soruru",
+    "op_stage011-luluna",
 };
 
 HuVecF BookDefPos = { 0.0f, 0.0f, -2000.0f };
@@ -1595,3 +1545,4 @@ HuVecF BookDefRot = { -20.0f, -30.0f, 30.0f };
 char lbl_1_data_8988[0xE] = "op_book_dummy";
 char lbl_1_data_8996[0xF] = "op_book_dummy2";
 char lbl_1_data_89A5[0x14] = "op_stage004-bg_root";
+
