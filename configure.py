@@ -502,7 +502,7 @@ config.libs = [
         "card",
         [
             Object(NonMatching, "dolphin/card/CARDBios.c"),
-            Object(NonMatching, "dolphin/card/CARDUnlock.c"),
+            Object(Matching, "dolphin/card/CARDUnlock.c"),
             Object(NonMatching, "dolphin/card/CARDRdwr.c"),
             Object(Matching, "dolphin/card/CARDBlock.c"),
             Object(Matching, "dolphin/card/CARDDir.c"),
@@ -513,9 +513,9 @@ config.libs = [
             Object(NonMatching, "dolphin/card/CARDCreate.c"),
             Object(NonMatching, "dolphin/card/CARDRead.c"),
             Object(NonMatching, "dolphin/card/CARDWrite.c"),
-            Object(NonMatching, "dolphin/card/CARDDelete.c"),
+            Object(Matching, "dolphin/card/CARDDelete.c"),
             Object(NonMatching, "dolphin/card/CARDStat.c"),
-            Object(NonMatching, "dolphin/card/CARDNet.c"),
+            Object(Matching, "dolphin/card/CARDNet.c"),
         ],
     ),
     DolphinLib(
