@@ -419,7 +419,7 @@ config.libs = [
             Object(NonMatching, "dolphin/mtx/mtx44vec.c"),
             Object(NonMatching, "dolphin/mtx/vec.c"),
             Object(NonMatching, "dolphin/mtx/quat.c"),
-            Object(NonMatching, "dolphin/mtx/psmtx.c"),
+            Object(Matching, "dolphin/mtx/psmtx.c"),
         ],
     ),
     DolphinLib(
