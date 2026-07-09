@@ -539,7 +539,7 @@ config.libs = [
         "host": False,
         "objects": [
             Object(NonMatching, "dolphin/thp/THPDec.c"),
-            Object(NonMatching, "dolphin/thp/THPAudio.c"),
+            Object(Matching, "dolphin/thp/THPAudio.c"),
         ],
     },
     {
