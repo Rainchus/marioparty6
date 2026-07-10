@@ -17,6 +17,14 @@
  *   DB5C FileStatusMesClose  DBA0 FileCardMesOpen  DD24 FileCardMesClose
  *   DD84 FileMessOut      E210 FileCardChoice
  */
+/* Block math.h (pulled in transitively): its "extern inline" sqrtf emits weak
+ * _half/_three local-static pool data into this TU's .rodata. The original saveload
+ * object's copy was discarded at link (deduped against filesel.c's earlier copy), so
+ * the split target saveload object has none. This TU uses no math.h functions.
+ * #pragma pool_data off keeps per-symbol @ha/@l addressing (no rodata.0 base pooling). */
+#define _MATH_H
+#pragma pool_data off
+
 #include "dolphin.h"
 #include "game/card.h"
 #include "game/process.h"
@@ -62,14 +70,8 @@ extern FILESEL_WORK lbl_1_bss_D8[];    /* filesel.c: save-box display state     
 extern s16 lbl_1_bss_3AC[];            /* filesel.c: window ids                          */
 extern s16 lbl_1_bss_42E;              /* filesel.c: sprite group id                     */
 
-extern u32 lbl_1_data_568;             /* this TU: save-mes id static (init -1; dtk-owned until data pass) */
-extern char lbl_1_data_56C[];          /* this TU: "ERASE" (B63C string pool)            */
-extern char lbl_1_data_58B[];          /* this TU: "SAVE"                                */
-extern char lbl_1_data_59F[];          /* this TU: "EMPT"                                */
-extern char lbl_1_data_5A4[];          /* this TU: "%d"                                  */
+u32 lbl_1_data_568 = 0xFFFFFFFF;       /* this TU: save-mes id (fileMesId), init -1 */
 
-extern const f32 lbl_1_rodata_2C0, lbl_1_rodata_2C4;  /* -10000.0f / 160.0f pool         */
-extern const f32 lbl_1_rodata_2D0, lbl_1_rodata_2D4;  /* 478.0f / 94.0f pool (FileMessOut) */
 
 /* ==================== main-DOL globals (no header) ==================== */
 extern s16 curSlotNo;
@@ -220,7 +222,7 @@ s32 fn_1_B63C(s16 arg)
                 result = -2;
             }
             goto cleanup;
-        } else if (strncmp((char *)saveBuf[curSlotNo], lbl_1_data_56C, 5) == 0) {
+        } else if (strncmp((char *)saveBuf[curSlotNo], "ERASE", 5) == 0) {
             time = OSGetTime();
             SLSaveDataMake(1, &time);
             for (i = 0; i < 3; i++) {
@@ -242,8 +244,8 @@ s32 fn_1_B63C(s16 arg)
             }
             for (i = 0; i < 3; i++) {
                 SLCurBoxNoSet(i);
-                if (strncmp((char *)(saveBuf[curSlotNo] + SLBoxDataOffsetGet(i)), lbl_1_data_58B, 4) == 0 ||
-                    strncmp((char *)(saveBuf[curSlotNo] + SLBoxDataOffsetGet(i + 3)), lbl_1_data_58B, 4) == 0) {
+                if (strncmp((char *)(saveBuf[curSlotNo] + SLBoxDataOffsetGet(i)), "SAVE", 4) == 0 ||
+                    strncmp((char *)(saveBuf[curSlotNo] + SLBoxDataOffsetGet(i + 3)), "SAVE", 4) == 0) {
                     if (SLCheckSumCheck() == 0) {
                         OSReport("Box%d Broken!\n", i);
                         SLBoxBackupLoad(i);
@@ -254,16 +256,16 @@ s32 fn_1_B63C(s16 arg)
                             boxStatus[i] = 1;
                         }
                     }
-                } else if (strncmp((char *)(saveBuf[curSlotNo] + SLBoxDataOffsetGet(i)), lbl_1_data_59F, 4) != 0 &&
-                           strncmp((char *)(saveBuf[curSlotNo] + SLBoxDataOffsetGet(i + 3)), lbl_1_data_59F, 4) != 0) {
+                } else if (strncmp((char *)(saveBuf[curSlotNo] + SLBoxDataOffsetGet(i)), "EMPT", 4) != 0 &&
+                           strncmp((char *)(saveBuf[curSlotNo] + SLBoxDataOffsetGet(i + 3)), "EMPT", 4) != 0) {
                     boxStatus[i] = 3;
                     SLSaveEmptySet(curSlotNo, i);
-                } else if (strncmp((char *)(saveBuf[curSlotNo] + SLBoxDataOffsetGet(i)), lbl_1_data_59F, 4) == 0 ||
-                           strncmp((char *)(saveBuf[curSlotNo] + SLBoxDataOffsetGet(i + 3)), lbl_1_data_59F, 4) == 0) {
+                } else if (strncmp((char *)(saveBuf[curSlotNo] + SLBoxDataOffsetGet(i)), "EMPT", 4) == 0 ||
+                           strncmp((char *)(saveBuf[curSlotNo] + SLBoxDataOffsetGet(i + 3)), "EMPT", 4) == 0) {
                     SLSaveEmptySet(curSlotNo, i);
                 }
                 SLCommonLoad();
-                if (strncmp((char *)&GwCommon, lbl_1_data_58B, 4) == 0) {
+                if (strncmp((char *)&GwCommon, "SAVE", 4) == 0) {
                     lbl_1_bss_D8[i].unk_0 = 1;
                     OSTicksToCalendarTime(GwCommon.time, &lbl_1_bss_D8[i].unk_1C);
                     memcpy(lbl_1_bss_D8[i].unk_44, GwCommon.name, 0x11);
@@ -286,7 +288,7 @@ s32 fn_1_B63C(s16 arg)
             } else {
                 for (i = 0; i < 3; i++) {
                     char buf[8];
-                    sprintf(buf, (char *)(result = (s32)lbl_1_data_5A4), i + 1);
+                    sprintf(buf, (char *)(result = (s32)"%d"), i + 1);
                     if (boxStatus[i] == 1) {
                         HuWinInsertMesSet(winId, (u32)buf, 0);
                         HuWinMesSet(winId, 0x90024);
@@ -391,7 +393,7 @@ s32 fn_1_C098(s16 winId)
     u32 byteNotUsed;
 
     if (winId == -1) {
-        warnId = HuWinWarningCreate(lbl_1_rodata_2C0, lbl_1_rodata_2C4, 478, 94);
+        warnId = HuWinWarningCreate(-10000.0f, 160.0f, 478, 94);
     } else {
         warnId = winId;
     }
@@ -1091,7 +1093,7 @@ s32 fn_1_D90C(s16 winId_in, s32 arg1)
     s32 ret;
 
     if (winId_in == -1) {
-        winId = HuWinWarningCreate(lbl_1_rodata_2C0, lbl_1_rodata_2C4, 0x1de, 0x5e);
+        winId = HuWinWarningCreate(-10000.0f, 160.0f, 0x1de, 0x5e);
     } else {
         winId = winId_in;
     }
@@ -1172,7 +1174,7 @@ HUWINID fn_1_DBA0(u32 messNum, u32 insMesNum1, u32 insMesNum2, s16 posY)
     }
     HuWinMesMaxSizeGet(1, &maxSize, messNum);
     if (SLWinId == -1) {
-        winId = ((HUWINID (*)(f32, f32, int, int))HuWinWarningCreate)(lbl_1_rodata_2C0, posY, (int)maxSize.x, (int)maxSize.y);
+        winId = ((HUWINID (*)(f32, f32, int, int))HuWinWarningCreate)(-10000.0f, posY, (int)maxSize.x, (int)maxSize.y);
     } else {
         winId = SLWinId;
     }
@@ -1276,9 +1278,9 @@ s16 fn_1_DD84(s16 mode)
         break;
     }
     if (SLWinId == -1) {
-        pos[0] = lbl_1_rodata_2D0;
-        pos[1] = lbl_1_rodata_2D4;
-        warnId = HuWinWarningCreate(lbl_1_rodata_2C0, lbl_1_rodata_2C4, pos[0], pos[1]);
+        pos[0] = 478.0f;
+        pos[1] = 94.0f;
+        warnId = HuWinWarningCreate(-10000.0f, 160.0f, pos[0], pos[1]);
     } else {
         warnId = SLWinId;
     }
@@ -1344,7 +1346,7 @@ s32 fn_1_E210(s16 arg0, s16 arg1)
     w = &winData[arg1];
     if ((f32)w->winH < maxSize.y) {
         HuWinWarningClose(arg1);
-        winId = HuWinWarningCreate(lbl_1_rodata_2C0, lbl_1_rodata_2C4, (s16)maxSize.x, (s16)maxSize.y);
+        winId = HuWinWarningCreate(-10000.0f, 160.0f, (s16)maxSize.x, (s16)maxSize.y);
     } else {
         winId = arg1;
     }
