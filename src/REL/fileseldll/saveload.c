@@ -89,10 +89,10 @@ void SLSerialNoGet(void);
 s32 SLStatSet(s32 stat);
 void SLCheckSumBoxAllSet(void);
 void SLSaveBackup(void);
-void SLCurBoxNoSet(s32 boxNo);       /* void HERE (target B63C: no discarded-result ghost);
-                                        filesel.c declares it s32 for fn_1_17CC's use     */
-s32 SLSaveDataMake(s32 arg, OSTime *time);  /* s32 HERE (target B63C: discarded-result
-                                        ghost vregs); filesel.c declares it void          */
+s32 SLCurBoxNoSet(s32 boxNo);        /* s32: same shape filesel.c declares (fn_1_17CC uses
+                                        the result); the discarded-result ghost at B63C's
+                                        box-loop call is required for its regalloc        */
+void SLSaveDataMake(s32 arg, OSTime *time); /* void, as in MP5 saveload.h and filesel.c   */
 u16 SLCheckSumGet(s32 start, s32 len);
 void SLCurSlotNoSet(s32 slotNo);
 void SLSaveEmptySet(s16 slot, s16 idx);
@@ -101,13 +101,13 @@ s32 SLCheckSumCheck(void);
 void SLBoxBackupLoad(s16 boxNo);
 void SLCommonLoad(void);
 
-/* NOTE: no stdio.h/string.h — strncmp/memcpy/memset are implicit (original TU).
- * sprintf: local non-prototype VOID declaration — no crclr (not varargs here) and no
- * discarded-result ghost, matching the target's B63C call shape. */
-void sprintf();
+/* NOTE: no stdio.h/string.h — strncmp/memcpy/memset AND sprintf are all implicit
+ * declarations (original TU).  Implicit sprintf: int-returning non-prototype — no
+ * crclr (not varargs), and its discarded int result is a ghost vreg at the call,
+ * which B63C's scratch-register allocation requires (see fn comment). */
 
-/* ==================== cross-TU callee (filesel.c; original saveload.c saw an s32 decl) ==================== */
-s32 fn_1_36C4(s16 a, s16 b);
+/* ==================== cross-TU callee (filesel.c defines it void) ==================== */
+void fn_1_36C4(s16 a, s16 b);
 
 /* ==================== forward decls: functions defined in this TU ==================== */
 void fn_1_B5B4(void);
@@ -154,25 +154,23 @@ void fn_1_B5B4(void)
 /* 0xB63C  FileBoxInit — MP5-saveload.c-shaped reconstruction (while(1) retry loop,
  * else-if chain with cardError: label, block-scoped char buf[8] in the repair-window
  * loop, MP5 declaration order: brokenFlag=0 first, aggregates boxStatus/time at top,
- * buf innermost).  No cast workarounds: this TU's decls carry the shapes (void
- * sprintf/SLCurBoxNoSet, s32 SLSaveDataMake/fn_1_36C4).
+ * buf innermost).  100% — full-module objdiff match.
  *
- * 99.80 — the only sub-100 fn in the module.  Residual = 23 instruction rows, ALL pure
- * volatile-scratch allocator ties (identical opcodes/relocs/frame/branches; only
- * r0/r3/r4/r5 vs r29 picks differ) in 6 clusters:
- *   +0x38   entry -10000.0f addr:   T addi r4,r3,@l    B addi r3,r3,@l
- *   +0x94   -4 box-zero loop:       T zero=r5 idx=r3   B zero=r29 idx=r5
- *   +0x1D4  ERASE box-zero loop:    T zero=r5 idx=r0   B zero=r0  idx=r3
- *   +0x69C  boxStatus !=2/!=3 win:  T lwz r0,r0,r3,r3,r0,r3  B r0,r3,r3,r0,r3,r3
- *   +0x720  sprintf fmt addr:       T lis r4/addi r29,r4     B lis r29/addi r29,r29
- *   +0x864  tail UnMountCnt:        T lbz r5 + addi r3,r4    B lbz r3 + addi r4,r3
- * Exhausted knobs (all reproduce EXACTLY these 23 or regress): goto vs while(1) CFG
- * (bit-identical), decl order/scoping, every SL*-callee return-shape flip, extern vs
- * literal floats/strings, result=0 init, TU position of B5B4, file-wide dont_inline,
- * fmt-routing variable identity.  The stream is right; one unknown original-source
- * vreg-graph delta still shifts MWCC's scratch tie-breaks.  NOTE: multi-use string
- * literals ("SAVE"/"EMPT") must stay extern lbl_1_data_* — inlining them makes MWCC
- * CSE/hoist the pool address into a callee-saved reg (result shifts r29->r28, 95%). */
+ * ★ Regalloc key (the last 0.2% was 23 volatile-scratch rows in 6 clusters): MWCC
+ * -O0 scratch picks depend on the WHOLE function's discarded-result ghost-vreg set,
+ * not just local code.  The exact decl combo that lands every tie (found by a full
+ * 2^9 sweep of the free return-type knobs; only 3/512 combos give 0 diff rows, all
+ * object-identical):
+ *   - implicit int sprintf (no decl — no stdio.h) -> ghost at the repair-loop call;
+ *   - s32 SLCurBoxNoSet (same as filesel.c)       -> ghost at the box-loop call;
+ *   - void SLSaveDataMake / void fn_1_36C4 (their real shapes) -> NO ghosts;
+ *   - every other SL* callee void (MP5 saveload.h shapes)      -> NO ghosts.
+ * Alternate identical combos: {s32 SLBoxBackupLoad + s32 SLCommonLoad + void sprintf}
+ * and {s32 SLBoxBackupLoad + implicit sprintf}; this one is chosen because it agrees
+ * with filesel.c's decls and fn_1_36C4's actual void definition.
+ * NOTE: multi-use string literals ("SAVE"/"EMPT") must stay extern lbl_1_data_* —
+ * inlining them makes MWCC CSE/hoist the pool address into a callee-saved reg
+ * (result shifts r29->r28, 95%). */
 s32 fn_1_B63C(s16 arg)
 {
     s32 brokenFlag = 0;
@@ -931,7 +929,7 @@ s32 fn_1_D348(s16 arg)
     s32 ret;
 
     if (arg == -1) {
-        winId = HuWinWarningCreate(lbl_1_rodata_2C0, lbl_1_rodata_2C4, 478, 94);
+        winId = HuWinWarningCreate(-10000.0f, 160.0f, 478, 94);
     } else {
         winId = arg;
     }
