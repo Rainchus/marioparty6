@@ -284,6 +284,7 @@ static void GateBattanMoveStart(GATEBATTAN_WORK *work, int playerNo)
     HuVecF dir;
     HuVecF startPos;
     HuVecF endPos;
+    s16 masuId;
 
     work->doneF = FALSE;
     work->mode = 1;
@@ -293,7 +294,8 @@ static void GateBattanMoveStart(GATEBATTAN_WORK *work, int playerNo)
     mbObjMotionShiftSet(work->modelId, 2, 0, 5, HU3D_MOTATTR_LOOP);
     mbObjPosGet(work->modelId, &work->obj->rot);
     mbMasuPosGet(work->masuId, &masuPos);
-    mbMasuLinkTblGet(work->masuId, path);
+    masuId = work->masuId;
+    mbMasuLinkTblGet(masuId, path);
     mbMasuPosGet(path[0], &startPos);
     mbMasuPosGet(path[1], &endPos);
     VECSubtract(&startPos, &masuPos, &startPos);
