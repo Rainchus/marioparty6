@@ -34,6 +34,7 @@ typedef struct GateBattanWork_s {
 
 static GATEBATTAN_WORK *gateBattanDataP[GATE_MAX];
 
+static int gateBattanSE;
 static int gateBattanNum;
 
 void mbGateInit(void)
