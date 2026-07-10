@@ -719,8 +719,162 @@ static void fn_1_43A4(OMOBJ *obj)
     obj->objFunc = fn_1_4408;
 }
 
-static void fn_1_4408(OMOBJ *obj) {}
+static void fn_1_4408(OMOBJ *obj)
+{
+    float speed;
+    MSMSE *se;
 
-static void fn_1_4C5C(void) {}
+    fn_1_5C8();
+    if (smPadDStkDown & SM_KEY_UP) {
+        smSound3DNo--;
+        if (smSound3DNo < 0) {
+            smSound3DNo = 7;
+        }
+    }
+    if (smPadDStkDown & SM_KEY_DOWN) {
+        smSound3DNo++;
+        if (smSound3DNo >= 8) {
+            smSound3DNo = 0;
+        }
+    }
+    if (smPadDStkDown & (SM_KEY_LEFT | SM_KEY_RIGHT)) {
+        if (smPadDStkDown & SM_KEY_RIGHT) {
+            speed = 10;
+        }
+        else {
+            speed = -10;
+        }
+        if (HuPadBtn[0] & PAD_TRIGGER_Z) {
+            speed *= 10.0f;
+        }
+        switch (smSound3DNo) {
+            case 0:
+                Snd3DDistOffset += speed;
+                break;
+
+            case 1:
+                Snd3DSpeedOffset += speed;
+                break;
+
+            case 2:
+                Snd3DStartDisOffset += speed;
+                break;
+
+            case 3:
+                Snd3DFrontSurDisOffset += speed;
+                break;
+
+            case 4:
+                Snd3DBackSurDisOffset += speed;
+                break;
+
+            case 5:
+                smEmiCompDataNo += speed / 10.0f;
+                if (smEmiCompDataNo < 0) {
+                    smEmiCompDataNo = 0;
+                }
+                se = msmSeGetIndexPtr(smEmiCompDataNo);
+                smEmiCompVal = se->comp;
+                break;
+
+            case 6:
+                smEmiCompVal += speed / 10.0f;
+                if (smEmiCompVal > 127) {
+                    smEmiCompVal = 127;
+                }
+                if (smEmiCompVal < -127) {
+                    smEmiCompVal = -127;
+                }
+                se = msmSeGetIndexPtr(smEmiCompDataNo);
+                se->comp = smEmiCompVal;
+                break;
+
+            case 7:
+                musicOffF = (musicOffF) ? 0 : 1;
+                if (musicOffF) {
+                    msmMusSetMasterVolume(0);
+                }
+                else {
+                    msmMusSetMasterVolume(127);
+                }
+                break;
+        }
+    }
+    if (smPadBtnDown & PAD_BUTTON_START) {
+        switch (smSound3DNo) {
+            case 0:
+                Snd3DDistOffset = 0;
+                break;
+
+            case 1:
+                Snd3DSpeedOffset = 0;
+                break;
+
+            case 2:
+                Snd3DStartDisOffset = 0;
+                break;
+
+            case 3:
+                Snd3DFrontSurDisOffset = 0;
+                break;
+
+            case 4:
+                Snd3DBackSurDisOffset = 0;
+                break;
+
+            case 5:
+                smEmiCompDataNo = 0;
+                break;
+
+            case 6:
+                smEmiCompVal = 0;
+                break;
+
+            case 7:
+                musicOffF = 0;
+                break;
+        }
+    }
+
+    if (smPadBtnDown & PAD_BUTTON_B) {
+        obj->objFunc = fn_1_10D8;
+    }
+    fn_1_4C5C();
+}
+
+#define DO_HILITE(pos)                                                                                                                                 \
+    do {                                                                                                                                               \
+        if (smSound3DNo == pos) {                                                                                                                      \
+            fontcolor = FONT_COLOR_GREEN;                                                                                                              \
+        }                                                                                                                                              \
+        else {                                                                                                                                         \
+            fontcolor = FONT_COLOR_DARK_GREEN;                                                                                                         \
+        }                                                                                                                                              \
+    } while (0)
+
+static void fn_1_4C5C(void)
+{
+    char *onOffStr[] = { " ON", "OFF" };
+    fontcolor = FONT_COLOR_YELLOW;
+    print8(200, 64, 2.0f, "3DSound Config.");
+    DO_HILITE(0);
+    print8(140, 96, 2.0f, "Max Distance   %5.1f", Snd3DDistOffset);
+    DO_HILITE(1);
+    print8(140, 112, 2.0f, "Sound Speed    %5.1f", Snd3DSpeedOffset);
+    DO_HILITE(2);
+    print8(140, 128, 2.0f, "Start Distance %5.1f", Snd3DStartDisOffset);
+    DO_HILITE(3);
+    print8(140, 144, 2.0f, "Front Distance %5.1f", Snd3DFrontSurDisOffset);
+    DO_HILITE(4);
+    print8(140, 160, 2.0f, "Back Distance  %5.1f", Snd3DBackSurDisOffset);
+    DO_HILITE(5);
+    print8(140, 176, 2.0f, "emiComp DataNo  %04d", smEmiCompDataNo);
+    DO_HILITE(6);
+    print8(140, 192, 2.0f, "emiComp VAL      %3d", smEmiCompVal);
+    DO_HILITE(7);
+    print8(140, 208, 2.0f, "Music            %s", onOffStr[(musicOffF) ? 1 : 0]);
+}
+
+#undef DO_HILITE
 
 static void fn_1_502C(void) {}
