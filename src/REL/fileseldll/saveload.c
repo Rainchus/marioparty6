@@ -91,7 +91,7 @@ void SLSerialNoGet(void);
 s32 SLStatSet(s32 stat);
 void SLCheckSumBoxAllSet(void);
 void SLSaveBackup(void);
-s32 SLCurBoxNoSet(s32 boxNo);        /* s32: same shape filesel.c declares (fn_1_17CC uses
+s32 SLCurBoxNoSet(s32 boxNo);        /* s32: same shape filesel.c declares (FileselSelect uses
                                         the result); the discarded-result ghost at B63C's
                                         box-loop call is required for its regalloc        */
 void SLSaveDataMake(s32 arg, OSTime *time); /* void, as in MP5 saveload.h and filesel.c   */
