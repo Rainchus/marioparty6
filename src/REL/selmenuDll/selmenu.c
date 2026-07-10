@@ -467,7 +467,46 @@ static void fn_1_C64(OMOBJ *obj)
     obj->objFunc = fn_1_10D8;
 }
 
-static void fn_1_10D8(OMOBJ *obj) {}
+static void fn_1_10D8(OMOBJ *obj)
+{
+    fn_1_5C8();
+    fn_1_8EC();
+    if (smPadDStkDown & SM_KEY_UP) {
+        fn_1_BDC(-1);
+        fn_1_1B50((smPage * SM_PAGE_SIZE) + smCursorNo);
+        return;
+    }
+    if (smPadDStkDown & SM_KEY_DOWN) {
+        fn_1_BDC(1);
+        fn_1_1B50((smPage * SM_PAGE_SIZE) + smCursorNo);
+        return;
+    }
+    if (smPadDStkDown & SM_KEY_LEFT) {
+        fn_1_A5C(-1);
+        fn_1_1B50((smPage * SM_PAGE_SIZE) + smCursorNo);
+        return;
+    }
+    if (smPadDStkDown & SM_KEY_RIGHT) {
+        fn_1_A5C(1);
+        fn_1_1B50((smPage * SM_PAGE_SIZE) + smCursorNo);
+        return;
+    }
+    if ((smPadBtnDown & PAD_BUTTON_A) || (smPadBtnDown & PAD_BUTTON_START)) {
+        obj->objFunc = fn_1_1FC8;
+        return;
+    }
+    if (smPadBtnDown & PAD_BUTTON_Y) {
+        obj->objFunc = fn_1_3940;
+        return;
+    }
+    if (smPadBtnDown & PAD_TRIGGER_Z) {
+        obj->objFunc = fn_1_43A4;
+        return;
+    }
+    if (smPadBtnDown & PAD_BUTTON_X) {
+        omOvlReturnEx(0, 1);
+    }
+}
 
 static void fn_1_1B50(int pos)
 {
