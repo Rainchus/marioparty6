@@ -1,6 +1,6 @@
 /* REL/fileseldll/saveload.c — memory-card save/load layer (reconstructed original TU).
  *
- * TU-split evidence: fn_1_B63C's sprintf carries NO `crclr cr1eq` while the module's
+ * TU-split evidence: FileBoxInit's sprintf carries NO `crclr cr1eq` while the module's
  * filesel.c sprintf calls (fn_1_36C4) do — this TU never saw a varargs sprintf
  * prototype, i.e. NO stdio.h here (mirrors MP5 saveload.c: fileseldll.h pad audio
  * wipe main sreset mpsystem win — no stdio.h, no string.h, no math.h).
@@ -112,36 +112,36 @@ void SLCommonLoad(void);
 void fn_1_36C4(s16 a, s16 b);
 
 /* ==================== forward decls: functions defined in this TU ==================== */
-void fn_1_B5B4(void);
-s32 fn_1_B63C(s16 arg);
-s32 fn_1_BF9C(void);
-s32 fn_1_C098(s16 winId);
-s32 fn_1_C278(void);
-s32 fn_1_C2F0(s32 err, s16 winId);
-s32 fn_1_C898(const char *fileName);
-s32 fn_1_C9D0(s32 length, void *addr);
-s32 fn_1_CA58(void);
-s32 fn_1_CAA4(s16 slot);
-s32 fn_1_CBC8(s16 arg);
-s32 fn_1_CDA8(void);
-s32 fn_1_CFF4(const char *fileName, s32 size, void *addr);
-s32 fn_1_D348(s16 arg);
-s32 fn_1_D448(s32 length, const void *addr);
-s32 fn_1_D558(void);
-s32 fn_1_D90C(s16 winId_in, s32 arg1);
-HUWINID fn_1_DA18(u32 mesId, u32 insMes0, u32 insMes1, s16 arg3);
-void fn_1_DB5C(s16 winId);
-HUWINID fn_1_DBA0(u32 messNum, u32 insMesNum1, u32 insMesNum2, s16 posY);
-void fn_1_DD24(s16 winId);
-s16 fn_1_DD84(s16 mode);
-s32 fn_1_E210(s16 mesNo, s16 winId);
+void FileCommonInit(void);
+s32 FileBoxInit(s16 arg);
+s32 FileCheckCardSpace(void);
+s32 FileCardWarning(s16 winId);
+s32 FileTestOpen(void);
+s32 FileCardErrorExec(s32 err, s16 winId);
+s32 FileCardOpen(const char *fileName);
+s32 FileCardRead(s32 length, void *addr);
+s32 FileCardClose(void);
+s32 FileCardMount(s16 slot);
+s32 FileCardFormat(s16 arg);
+s32 FileCardLoad(void);
+s32 FileCardCopy(const char *fileName, s32 size, void *addr);
+s32 FileClear(s16 arg);
+s32 FileCardWrite(s32 length, const void *addr);
+s32 FileSave(void);
+s32 FileSaveMesOpen(s16 winId_in, s32 arg1);
+HUWINID FileStatusMesOpen(u32 mesId, u32 insMes0, u32 insMes1, s16 arg3);
+void FileStatusMesClose(s16 winId);
+HUWINID FileCardMesOpen(u32 messNum, u32 insMesNum1, u32 insMesNum2, s16 posY);
+void FileCardMesClose(s16 winId);
+s16 FileMessOut(s16 mode);
+s32 FileCardChoice(s16 mesNo, s16 winId);
 
 /* ======================================================================== */
 /* functions in strict ascending target-address order */
 /* ======================================================================== */
 
 /* 0xB5B4 */
-void fn_1_B5B4(void)
+void FileCommonInit(void)
 {
     s16 i;
 
@@ -173,7 +173,7 @@ void fn_1_B5B4(void)
  * NOTE: multi-use string literals ("SAVE"/"EMPT") must stay extern lbl_1_data_* —
  * inlining them makes MWCC CSE/hoist the pool address into a callee-saved reg
  * (result shifts r29->r28, 95%). */
-s32 fn_1_B63C(s16 arg)
+s32 FileBoxInit(s16 arg)
 {
     s32 brokenFlag = 0;
     s16 i;
@@ -192,12 +192,12 @@ s32 fn_1_B63C(s16 arg)
     SLWinIdSet(winId);
     SLCurSlotNoSet(0);
     while (1) {
-        result = fn_1_CDA8();
+        result = FileCardLoad();
         if (result == -4) {
             for (i = 0; i < 3; i++) {
                 lbl_1_bss_D8[i].unk_0 = 0;
             }
-            result = fn_1_BF9C();
+            result = FileCheckCardSpace();
             if (result == 0) {
                 break;
             } else {
@@ -205,7 +205,7 @@ s32 fn_1_B63C(s16 arg)
             }
         } else if (result != 0) {
         cardError:
-            result = fn_1_C2F0(result, winId);
+            result = FileCardErrorExec(result, winId);
             if (result == -3 || result == -4 || result == -5) {
                 continue;
             }
@@ -307,7 +307,7 @@ s32 fn_1_B63C(s16 arg)
             }
             HuWinWarningClose(winId);
             UnMountCnt = 0;
-            result = fn_1_D90C(-1, 0x9002A);
+            result = FileSaveMesOpen(-1, 0x9002A);
         }
         if (UnMountCnt != 0) {
             result = -4;
@@ -351,39 +351,39 @@ cleanup:
 }
 
 /* 0xBF9C */
-s32 fn_1_BF9C(void)
+s32 FileCheckCardSpace(void)
 {
     s32 result;
     u32 byteNotUsed;
     u32 filesNotUsed;
 
-    result = fn_1_CAA4(curSlotNo);
+    result = FileCardMount(curSlotNo);
     if (result < 0) {
         return result;
     }
     result = HuCardSectorSizeGet(curSlotNo);
     if (result < 0 && result != 0x2000) {
-        fn_1_DD84(8);
+        FileMessOut(8);
         return -0x80;
     }
     result = HuCardFreeSpaceGet(curSlotNo, &byteNotUsed, &filesNotUsed);
     if (filesNotUsed == 0 && byteNotUsed < 0xa000) {
-        fn_1_DD84(4);
+        FileMessOut(4);
         return -9;
     }
     if (filesNotUsed == 0) {
-        fn_1_DD84(2);
+        FileMessOut(2);
         return -9;
     }
     if (byteNotUsed < 0xa000) {
-        fn_1_DD84(3);
+        FileMessOut(3);
         return -9;
     }
     return 0;
 }
 
 /* 0xC098 */
-s32 fn_1_C098(s16 winId)
+s32 FileCardWarning(s16 winId)
 {
     s32 warnId;
     s32 ret;
@@ -402,24 +402,24 @@ s32 fn_1_C098(s16 winId)
     if (ret == 0 && (ret = HuCardOpen(curSlotNo, SLSaveFileName, &curFileInfo)) == 0) {
         ret = 0;
     } else {
-        status = fn_1_CAA4(curSlotNo);
+        status = FileCardMount(curSlotNo);
         if (status < 0) {
             code = status;
         } else {
             status = HuCardSectorSizeGet(curSlotNo);
             if (status < 0 && status != 0x2000) {
-                fn_1_DD84(8);
+                FileMessOut(8);
                 code = -0x80;
             } else {
                 status = HuCardFreeSpaceGet(curSlotNo, &byteNotUsed, &filesNotUsed);
                 if (filesNotUsed == 0 && byteNotUsed < 0xA000) {
-                    fn_1_DD84(4);
+                    FileMessOut(4);
                     code = -9;
                 } else if (filesNotUsed == 0) {
-                    fn_1_DD84(2);
+                    FileMessOut(2);
                     code = -9;
                 } else if (byteNotUsed < 0xA000) {
-                    fn_1_DD84(3);
+                    FileMessOut(3);
                     code = -9;
                 } else {
                     code = 0;
@@ -430,7 +430,7 @@ s32 fn_1_C098(s16 winId)
         if (ret == 0) {
             ret = 0;
         } else {
-            ret = fn_1_C2F0(ret, warnId);
+            ret = FileCardErrorExec(ret, warnId);
         }
     }
     if (winId == -1) {
@@ -441,7 +441,7 @@ s32 fn_1_C098(s16 winId)
 }
 
 /* 0xC278 */
-s32 fn_1_C278(void)
+s32 FileTestOpen(void)
 {
     s32 ret;
 
@@ -453,7 +453,7 @@ s32 fn_1_C278(void)
 }
 
 /* 0xC2F0 */
-s32 fn_1_C2F0(s32 err, s16 winId)
+s32 FileCardErrorExec(s32 err, s16 winId)
 {
     s32 result;
 
@@ -469,7 +469,7 @@ s32 fn_1_C2F0(s32 err, s16 winId)
     UnMountCnt = 0;
     if (err == -6) {
         for (;;) {
-            result = fn_1_E210(0x17, winId);
+            result = FileCardChoice(0x17, winId);
             if (UnMountCnt != 0 && result == 2) {
                 HuWinWarningOpen(winId);
                 HuWinInsertMesSet(winId, curSlotNo + 0x90036, 0);
@@ -491,7 +491,7 @@ s32 fn_1_C2F0(s32 err, s16 winId)
                 HuWinMesWait(winId);
                 result = HuWinChoiceGet(winId, 1);
                 if (result == 0) {
-                    result = fn_1_CBC8(curSlotNo);
+                    result = FileCardFormat(curSlotNo);
                     HuWinWarningClose(winId);
                     return -3;
                 }
@@ -503,7 +503,7 @@ s32 fn_1_C2F0(s32 err, s16 winId)
                     UnMountCnt = 0;
                     return -4;
                 }
-                fn_1_DD84(5);
+                FileMessOut(5);
                 continue;
             }
             if (result == 1) {
@@ -526,7 +526,7 @@ s32 fn_1_C2F0(s32 err, s16 winId)
     }
     if (err == -9) {
         for (;;) {
-            result = fn_1_E210(0x1d, winId);
+            result = FileCardChoice(0x1d, winId);
             if (result == -0x4d2) {
                 HuWinWarningClose(winId);
                 UnMountCnt = 0;
@@ -570,7 +570,7 @@ s32 fn_1_C2F0(s32 err, s16 winId)
             return -5;
         }
     }
-    result = fn_1_E210(0x15, winId);
+    result = FileCardChoice(0x15, winId);
     if (result == -0x4d2) {
         HuWinWarningClose(winId);
         UnMountCnt = 0;
@@ -595,14 +595,14 @@ s32 fn_1_C2F0(s32 err, s16 winId)
 }
 
 /* 0xC898 */
-s32 fn_1_C898(const char *fileName)
+s32 FileCardOpen(const char *fileName)
 {
     s32 ret;
 
     if (SLSaveFlagGet() == 0) {
         return 0;
     }
-    ret = fn_1_CAA4(curSlotNo);
+    ret = FileCardMount(curSlotNo);
     if (ret < 0) {
         return ret;
     }
@@ -611,32 +611,32 @@ s32 fn_1_C898(const char *fileName)
         return -4;
     }
     if (ret == -2) {
-        fn_1_DD84(7);
+        FileMessOut(7);
         return -0x80;
     }
     if (ret == -0x80) {
-        fn_1_DD84(1);
+        FileMessOut(1);
         return -0x80;
     }
     if (ret == -3) {
-        fn_1_DD84(0);
+        FileMessOut(0);
         return -3;
     }
     if (ret == -6) {
         ret = HuCardSectorSizeGet(curSlotNo);
         if (ret > 0 && ret != 0x2000) {
-            fn_1_DD84(8);
+            FileMessOut(8);
             return -2;
         }
         UnMountCnt = 0;
-        fn_1_DD84(5);
+        FileMessOut(5);
         return -6;
     }
     return 0;
 }
 
 /* 0xC9D0 */
-s32 fn_1_C9D0(s32 length, void *addr)
+s32 FileCardRead(s32 length, void *addr)
 {
     s32 ret;
 
@@ -646,15 +646,15 @@ s32 fn_1_C9D0(s32 length, void *addr)
     SLSerialNoGet();
     ret = HuCardRead(&curFileInfo, addr, length, 0);
     if (ret == -3) {
-        fn_1_DD84(0);
+        FileMessOut(0);
     } else if (ret < 0) {
-        fn_1_DD84(1);
+        FileMessOut(1);
     }
     return ret;
 }
 
 /* 0xCA58 */
-s32 fn_1_CA58(void)
+s32 FileCardClose(void)
 {
     s32 ret;
 
@@ -666,43 +666,43 @@ s32 fn_1_CA58(void)
 }
 
 /* 0xCAA4 (unused s16 slot param per resolution 2; body uses global curSlotNo) */
-/* dont_inline: target keeps `bl fn_1_CAA4` in all callers (CFF4/CDA8/D558 are
+/* dont_inline: target keeps `bl FileCardMount` in all callers (CFF4/CDA8/D558 are
    defined after this point and -inline auto would otherwise inline it). */
 #pragma dont_inline on
-s32 fn_1_CAA4(s16 slot)
+s32 FileCardMount(s16 slot)
 {
     s32 ret;
 
     ret = HuCardMount(curSlotNo);
     if (ret == -2) {
-        fn_1_DD84(7);
+        FileMessOut(7);
         return ret;
     }
     if (ret == -0x80) {
-        fn_1_DD84(1);
+        FileMessOut(1);
         return -0x80;
     }
     if (ret == -3) {
-        fn_1_DD84(0);
+        FileMessOut(0);
         return -3;
     }
     if (ret == -6) {
         ret = HuCardSectorSizeGet(curSlotNo);
         if (ret > 0 && ret != 0x2000) {
-            fn_1_DD84(8);
+            FileMessOut(8);
             return -2;
         }
         UnMountCnt = 0;
-        fn_1_DD84(5);
+        FileMessOut(5);
         return -6;
     }
     ret = HuCardSectorSizeGet(curSlotNo);
     if (ret < 0) {
-        fn_1_DD84(1);
+        FileMessOut(1);
         return ret;
     }
     if (ret != 0x2000) {
-        fn_1_DD84(8);
+        FileMessOut(8);
         return -2;
     }
     return 0;
@@ -710,45 +710,45 @@ s32 fn_1_CAA4(s16 slot)
 #pragma dont_inline off
 
 /* 0xCBC8 */
-s32 fn_1_CBC8(s16 arg)
+s32 FileCardFormat(s16 arg)
 {
     s16 ret;
     s16 win;
     OSTime time;
 
     if (UnMountCnt & (1 << curSlotNo)) {
-        fn_1_DD84(0xc);
+        FileMessOut(0xc);
         UnMountCnt = 0;
         return 0;
     }
-    win = fn_1_DBA0(0x9001b, arg + 0x90036, -1, 0x46);
+    win = FileCardMesOpen(0x9001b, arg + 0x90036, -1, 0x46);
     HuPrcSleep(0x1e);
     if (UnMountCnt & (1 << curSlotNo)) {
-        fn_1_DD24(win);
-        fn_1_DD84(0xc);
+        FileCardMesClose(win);
+        FileMessOut(0xc);
         UnMountCnt = 0;
         return 0;
     }
     ret = HuCardFormat(curSlotNo);
     SLSerialNo[curSlotNo] = 0;
     if (ret < 0) {
-        fn_1_DD24(win);
+        FileCardMesClose(win);
     }
     if (ret == -128) {
-        fn_1_DD84(6);
-        fn_1_DD84(1);
+        FileMessOut(6);
+        FileMessOut(1);
         return -128;
     }
     if (ret == -3) {
-        fn_1_DD84(0);
+        FileMessOut(0);
         return -3;
     }
     if (ret == -2) {
-        fn_1_DD84(7);
+        FileMessOut(7);
         return ret;
     }
     SLSerialNoGet();
-    fn_1_DD24(win);
+    FileCardMesClose(win);
     SLCurBoxNoSet(0);
     time = OSGetTime();
     SLSaveDataMake(0, &time);
@@ -757,7 +757,7 @@ s32 fn_1_CBC8(s16 arg)
 }
 
 /* 0xCDA8 */
-s32 fn_1_CDA8(void)
+s32 FileCardLoad(void)
 {
     s32 rc;
     s32 err;
@@ -771,7 +771,7 @@ s32 fn_1_CDA8(void)
     if (SLSaveFlagGet() == 0) {
         err = 0;
     } else {
-        rc = fn_1_CAA4(curSlotNo);
+        rc = FileCardMount(curSlotNo);
         if (rc < 0) {
             err = rc;
         } else {
@@ -779,22 +779,22 @@ s32 fn_1_CDA8(void)
             if (rc == -4) {
                 err = -4;
             } else if (rc == -2) {
-                fn_1_DD84(7);
+                FileMessOut(7);
                 err = -0x80;
             } else if (rc == -0x80) {
-                fn_1_DD84(1);
+                FileMessOut(1);
                 err = -0x80;
             } else if (rc == -3) {
-                fn_1_DD84(0);
+                FileMessOut(0);
                 err = -3;
             } else if (rc == -6) {
                 rc = HuCardSectorSizeGet(curSlotNo);
                 if (rc > 0 && rc != 0x2000) {
-                    fn_1_DD84(8);
+                    FileMessOut(8);
                     err = -2;
                 } else {
                     UnMountCnt = 0;
-                    fn_1_DD84(5);
+                    FileMessOut(5);
                     err = -6;
                 }
             } else {
@@ -811,9 +811,9 @@ s32 fn_1_CDA8(void)
             SLSerialNoGet();
             rd = HuCardRead(&curFileInfo, buf, 0xa000, 0);
             if (rd == -3) {
-                fn_1_DD84(0);
+                FileMessOut(0);
             } else if (rd < 0) {
-                fn_1_DD84(1);
+                FileMessOut(1);
             }
             status = rd;
         }
@@ -831,7 +831,7 @@ s32 fn_1_CDA8(void)
 }
 
 /* 0xCFF4 */
-s32 fn_1_CFF4(const char *fileName, s32 size, void *addr)
+s32 FileCardCopy(const char *fileName, s32 size, void *addr)
 {
     s32 warnA;
     s32 warnB;
@@ -845,47 +845,47 @@ s32 fn_1_CFF4(const char *fileName, s32 size, void *addr)
     }
     SLCheckSumBoxAllSet();
     SLSaveBackup();
-    ret = fn_1_CAA4(curSlotNo);
+    ret = FileCardMount(curSlotNo);
     if (ret < 0) {
         return ret;
     }
     ret = HuCardSectorSizeGet(curSlotNo);
     if (ret < 0 && ret != 0x2000) {
-        fn_1_DD84(8);
+        FileMessOut(8);
         return -0x80;
     }
     ret = HuCardFreeSpaceGet(curSlotNo, &byteNotUsed, &filesNotUsed);
     if (filesNotUsed == 0 && size > byteNotUsed) {
-        fn_1_DD84(4);
+        FileMessOut(4);
         return -9;
     }
     if (filesNotUsed == 0) {
-        fn_1_DD84(2);
+        FileMessOut(2);
         return -9;
     }
     if (size > byteNotUsed) {
-        fn_1_DD84(3);
+        FileMessOut(3);
         return -9;
     }
-    warnA = fn_1_DBA0(0x90007, curSlotNo + 0x90036, -1, 0xa0);
-    warnB = fn_1_DA18(0x9002a, curSlotNo + 0x90036, -1, 0x46);
+    warnA = FileCardMesOpen(0x90007, curSlotNo + 0x90036, -1, 0xa0);
+    warnB = FileStatusMesOpen(0x9002a, curSlotNo + 0x90036, -1, 0x46);
     HuSRDisableF = 1;
     ret = HuCardCreate(curSlotNo, fileName, size, &curFileInfo);
     if (ret < 0) {
-        fn_1_DD24(warnA);
-        fn_1_DD24(warnB);
+        FileCardMesClose(warnA);
+        FileCardMesClose(warnB);
         HuSRDisableF = 0;
     }
     if (ret == -3) {
-        fn_1_DD84(0);
+        FileMessOut(0);
         return ret;
     }
     if (ret == -6) {
-        fn_1_DD84(5);
+        FileMessOut(5);
         return ret;
     }
     if (ret < 0) {
-        fn_1_DD84(1);
+        FileMessOut(1);
         return ret;
     }
     SLSerialNoGet();
@@ -898,26 +898,26 @@ s32 fn_1_CFF4(const char *fileName, s32 size, void *addr)
     }
     HuMemDirectFree(buf);
     if (ret < 0) {
-        fn_1_DD24(warnA);
-        fn_1_DD24(warnB);
+        FileCardMesClose(warnA);
+        FileCardMesClose(warnB);
         HuSRDisableF = 0;
     }
     if (ret == -3) {
-        fn_1_DD84(0);
+        FileMessOut(0);
         return ret;
     }
     if (ret == -6) {
-        fn_1_DD84(5);
+        FileMessOut(5);
         return ret;
     }
     if (ret < 0) {
-        fn_1_DD84(1);
+        FileMessOut(1);
         return ret;
     }
     ret = SLStatSet(0);
     HuSRDisableF = 0;
-    fn_1_DD24(warnA);
-    fn_1_DD24(warnB);
+    FileCardMesClose(warnA);
+    FileCardMesClose(warnB);
     if (ret < 0) {
         return ret;
     }
@@ -925,7 +925,7 @@ s32 fn_1_CFF4(const char *fileName, s32 size, void *addr)
 }
 
 /* 0xD348 (saveBuf[curSlotNo] per resolution 5) */
-s32 fn_1_D348(s16 arg)
+s32 FileClear(s16 arg)
 {
     s32 winId;
     s32 ret;
@@ -937,12 +937,12 @@ s32 fn_1_D348(s16 arg)
     }
     SLWinIdSet(winId);
     do {
-        ret = fn_1_CFF4(SLSaveFileName, 0xA000, saveBuf[curSlotNo]);
+        ret = FileCardCopy(SLSaveFileName, 0xA000, saveBuf[curSlotNo]);
         if (ret == 0) {
             ret = 0;
             break;
         }
-        ret = fn_1_C2F0(ret, winId);
+        ret = FileCardErrorExec(ret, winId);
     } while (ret == -3);
     if (arg == -1) {
         SLWinIdSet(-1);
@@ -952,7 +952,7 @@ s32 fn_1_D348(s16 arg)
 }
 
 /* 0xD448 */
-s32 fn_1_D448(s32 length, const void *addr)
+s32 FileCardWrite(s32 length, const void *addr)
 {
     s32 winId;
     s32 ret;
@@ -961,14 +961,14 @@ s32 fn_1_D448(s32 length, const void *addr)
         return 0;
     }
     if (lbl_1_data_568 != -1) {
-        winId = (s16)fn_1_DA18(lbl_1_data_568, curSlotNo + 0x90036, -1, 0x46);
+        winId = (s16)FileStatusMesOpen(lbl_1_data_568, curSlotNo + 0x90036, -1, 0x46);
     }
     HuSRDisableF = 1;
     HuPrcSleep(0x3c);
     SLSerialNoGet();
     ret = HuCardWriteIdle(&curFileInfo, addr, length, 0);
     if (lbl_1_data_568 != -1) {
-        fn_1_DB5C(winId);
+        FileStatusMesClose(winId);
     }
     if (ret == 0) {
         ret = SLStatSet(0);
@@ -978,7 +978,7 @@ s32 fn_1_D448(s32 length, const void *addr)
 }
 
 /* 0xD558 (saveBuf[curSlotNo] per resolution 5) */
-s32 fn_1_D558(void)
+s32 FileSave(void)
 {
     s32 rv;
     s32 ret;
@@ -995,7 +995,7 @@ s32 fn_1_D558(void)
     if (SLSaveFlagGet() == 0) {
         stat = 0;
     } else {
-        ret = fn_1_CAA4(curSlotNo);
+        ret = FileCardMount(curSlotNo);
         if (ret < 0) {
             stat = ret;
         } else {
@@ -1003,22 +1003,22 @@ s32 fn_1_D558(void)
             if (ret == -4) {
                 stat = -4;
             } else if (ret == -2) {
-                fn_1_DD84(7);
+                FileMessOut(7);
                 stat = -0x80;
             } else if (ret == -0x80) {
-                fn_1_DD84(1);
+                FileMessOut(1);
                 stat = -0x80;
             } else if (ret == -3) {
-                fn_1_DD84(0);
+                FileMessOut(0);
                 stat = -3;
             } else if (ret == -6) {
                 ret = HuCardSectorSizeGet(curSlotNo);
                 if (ret > 0 && ret != 0x2000) {
-                    fn_1_DD84(8);
+                    FileMessOut(8);
                     stat = -2;
                 } else {
                     UnMountCnt = 0;
-                    fn_1_DD84(5);
+                    FileMessOut(5);
                     stat = -6;
                 }
             } else {
@@ -1029,31 +1029,31 @@ s32 fn_1_D558(void)
     rv = stat;
     if (rv == -4) {
         if (SLSerialNoCheck() == 0) {
-            fn_1_DD84(9);
+            FileMessOut(9);
         } else {
-            rv = fn_1_CFF4(SLSaveFileName, 0xa000, saveBuf[curSlotNo]);
+            rv = FileCardCopy(SLSaveFileName, 0xa000, saveBuf[curSlotNo]);
             if (rv >= 0) {
                 SLSerialNoGet();
             }
         }
     } else if (rv >= 0) {
         if (SLSerialNoCheck() == 0) {
-            fn_1_DD84(9);
+            FileMessOut(9);
         } else {
-            winId1 = (s16)fn_1_DBA0(0x9000b, curSlotNo + 0x90036, -1, 0x46);
+            winId1 = (s16)FileCardMesOpen(0x9000b, curSlotNo + 0x90036, -1, 0x46);
             buf = saveBuf[curSlotNo];
             if (SLSaveFlagGet() == 0) {
                 wret = 0;
             } else {
                 if ((u32)lbl_1_data_568 != 0xffffffff) {
-                    winId2 = (s16)fn_1_DA18(lbl_1_data_568, curSlotNo + 0x90036, -1, 0x46);
+                    winId2 = (s16)FileStatusMesOpen(lbl_1_data_568, curSlotNo + 0x90036, -1, 0x46);
                 }
                 HuSRDisableF = 1;
                 HuPrcSleep(0x3c);
                 SLSerialNoGet();
                 wstat = HuCardWriteIdle(&curFileInfo, buf, 0xa000, 0);
                 if ((u32)lbl_1_data_568 != 0xffffffff) {
-                    fn_1_DB5C(winId2);
+                    FileStatusMesClose(winId2);
                 }
                 if (wstat == 0) {
                     wstat = SLStatSet(0);
@@ -1062,21 +1062,21 @@ s32 fn_1_D558(void)
                 wret = wstat;
             }
             rv = wret;
-            fn_1_DD24(winId1);
+            FileCardMesClose(winId1);
             if (rv == -3) {
-                fn_1_DD84(0);
+                FileMessOut(0);
             } else if (rv == -2) {
-                fn_1_DD84(7);
+                FileMessOut(7);
             } else if (rv == -6) {
                 rv = HuCardSectorSizeGet(curSlotNo);
                 if (rv > 0 && rv != 0x2000) {
-                    fn_1_DD84(8);
+                    FileMessOut(8);
                 } else {
-                    fn_1_DD84(5);
+                    FileMessOut(5);
                     return -6;
                 }
             } else if (rv < 0) {
-                fn_1_DD84(1);
+                FileMessOut(1);
             }
         }
     }
@@ -1087,7 +1087,7 @@ s32 fn_1_D558(void)
 }
 
 /* 0xD90C */
-s32 fn_1_D90C(s16 winId_in, s32 arg1)
+s32 FileSaveMesOpen(s16 winId_in, s32 arg1)
 {
     s32 winId;
     s32 ret;
@@ -1100,7 +1100,7 @@ s32 fn_1_D90C(s16 winId_in, s32 arg1)
     SLWinIdSet(winId);
     lbl_1_data_568 = arg1;
     do {
-        ret = fn_1_D558();
+        ret = FileSave();
         if (SLSerialNoCheck() != 0) {
             if (ret == 0) {
                 ret = 0;
@@ -1112,7 +1112,7 @@ s32 fn_1_D90C(s16 winId_in, s32 arg1)
                 break;
             }
         }
-        ret = fn_1_C2F0(ret, winId);
+        ret = FileCardErrorExec(ret, winId);
     } while (ret == -3);
     if (winId_in == -1) {
         SLWinIdSet(-1);
@@ -1123,7 +1123,7 @@ s32 fn_1_D90C(s16 winId_in, s32 arg1)
 }
 
 /* 0xDA18 */
-HUWINID fn_1_DA18(u32 mesId, u32 insMes0, u32 insMes1, s16 arg3)
+HUWINID FileStatusMesOpen(u32 mesId, u32 insMes0, u32 insMes1, s16 arg3)
 {
     HuVec2f maxSize;
     HUWINID winId;
@@ -1149,7 +1149,7 @@ HUWINID fn_1_DA18(u32 mesId, u32 insMes0, u32 insMes1, s16 arg3)
 }
 
 /* 0xDB5C */
-void fn_1_DB5C(s16 winId)
+void FileStatusMesClose(s16 winId)
 {
     if (winId >= 0) {
         HuWinWarningClose(winId);
@@ -1158,7 +1158,7 @@ void fn_1_DB5C(s16 winId)
 }
 
 /* 0xDBA0 */
-HUWINID fn_1_DBA0(u32 messNum, u32 insMesNum1, u32 insMesNum2, s16 posY)
+HUWINID FileCardMesOpen(u32 messNum, u32 insMesNum1, u32 insMesNum2, s16 posY)
 {
     HUWINID winId;
     HuVec2f maxSize;
@@ -1191,7 +1191,7 @@ HUWINID fn_1_DBA0(u32 messNum, u32 insMesNum1, u32 insMesNum2, s16 posY)
 }
 
 /* 0xDD24 */
-void fn_1_DD24(s16 winId)
+void FileCardMesClose(s16 winId)
 {
     if (SLWinId != winId && winId >= 0) {
         HuWinWarningClose(winId);
@@ -1200,7 +1200,7 @@ void fn_1_DD24(s16 winId)
 }
 
 /* 0xDD84 */
-s16 fn_1_DD84(s16 mode)
+s16 FileMessOut(s16 mode)
 {
     s16 warnId;
     s16 choice;
@@ -1316,7 +1316,7 @@ s16 fn_1_DD84(s16 mode)
 }
 
 /* 0xE210 */
-s32 fn_1_E210(s16 arg0, s16 arg1)
+s32 FileCardChoice(s16 arg0, s16 arg1)
 {
     s16 choices[10];
     HuVec2f maxSize;

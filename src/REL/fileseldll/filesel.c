@@ -69,7 +69,7 @@ typedef struct bss18_entry {
 /* fn_1_7B64 rodata block */
 typedef struct vec5 { Vec v[5]; } VEC5;
 
-/* lbl_1_data_48C[] element (fn_1_8B94 sprite table), stride 0xC */
+/* lbl_1_data_48C[] element (NameEnterInit sprite table), stride 0xC */
 typedef struct data48c {
     /* 0x0 */ s32 unk_0;
     /* 0x4 */ u8  unk_4;
@@ -134,11 +134,11 @@ extern char lbl_1_data_1EB[];          /* "%04d" (giant3 fn_1_36C4) */
 extern char lbl_1_data_1F0[];          /* "%d"   (giant3 fn_1_36C4) */
 
 
-/* ===== final integration wave: fn_1_916C / fn_1_17CC / fn_1_2C6C (ref by dtk name) ===== */
-extern s16 lbl_1_bss_37E;              /* fn_1_916C: entered-char count (name length)   */
-extern u16 lbl_1_bss_380[];            /* fn_1_916C: temp buffer of entered char codes  */
-extern s16 lbl_1_bss_42C;              /* fn_1_916C: number of grid pages               */
-extern B234Point *lbl_1_data_47C[];    /* fn_1_916C: array of ptrs to grid-point tables */
+/* ===== final integration wave: NameEnterMain / fn_1_17CC / fn_1_2C6C (ref by dtk name) ===== */
+extern s16 lbl_1_bss_37E;              /* NameEnterMain: entered-char count (name length)   */
+extern u16 lbl_1_bss_380[];            /* NameEnterMain: temp buffer of entered char codes  */
+extern s16 lbl_1_bss_42C;              /* NameEnterMain: number of grid pages               */
+extern B234Point *lbl_1_data_47C[];    /* NameEnterMain: array of ptrs to grid-point tables */
 extern int lbl_1_data_98[];            /* fn_1_2C6C: 8 data-file ids (preload loop)     */
 extern char lbl_1_data_1A0[];          /* fn_1_2C6C: Hu3DAnimCreate bmpName             */
 extern char lbl_1_data_1AD[];          /* fn_1_2C6C: Hu3DAnimCreate bmpName             */
@@ -205,24 +205,24 @@ void fn_1_8F34(s32 arg0, s16 idx);
 s16 fn_1_AAEC(s16 winId);
 s16 fn_1_ABF8(s16 id, f32 refX, f32 refY, f32 dirX, f32 dirY);
 void fn_1_B234(B234Rect *r);
-void fn_1_B530(void);
+void NameEnterClose(void);
 void fn_1_3D14(void);         /* defined later; called by fn_1_2C6C (keep bl, no inline) */
 s32 fn_1_5244(s16 arg);       /* defined later; called by fn_1_17CC (keep bl, no inline) */
-s32 fn_1_916C(s16 no);        /* defined later; called by fn_1_17CC (keep bl, no inline) */
+s32 NameEnterMain(s16 no);        /* defined later; called by fn_1_17CC (keep bl, no inline) */
 
 /* ============ callees in REL/fileseldll/saveload.c (cross-TU; pair by name) ============ */
-void fn_1_B5B4(void);
-s32 fn_1_B63C(s16 arg);
-s32 fn_1_C278(void);
-s32 fn_1_D348(s16 arg);
-s32 fn_1_D90C(s16 winId_in, s32 arg1);
+void FileCommonInit(void);
+s32 FileBoxInit(s16 arg);
+s32 FileTestOpen(void);
+s32 FileClear(s16 arg);
+s32 FileSaveMesOpen(s16 winId_in, s32 arg1);
 
 /* ==================== forward decls: intra-TU (pair by name) ==================== */
 void fn_1_2C6C(void);
 void fn_1_15AC(void);
 void fn_1_36C4(s16 a, s16 b);
 void fn_1_6E54(s16 a, s32 b);
-void fn_1_8B94(void);
+void NameEnterInit(void);
 void fn_1_CB4(s32 arg);
 s32 fn_1_17CC(void);
 
@@ -305,7 +305,7 @@ void fn_1_374(void)
     while (WipeCheck()) {
         HuPrcVSleep();
     }
-    status = fn_1_B63C(-1);
+    status = FileBoxInit(-1);
     if (status == -2) {
         goto L_56C;
     }
@@ -326,7 +326,7 @@ L_454:
         goto L_56C;
     }
     if (status == -3) {
-        status = fn_1_B63C(-1);
+        status = FileBoxInit(-1);
         if (status == -2) {
             goto L_56C;
         }
@@ -451,7 +451,7 @@ void fn_1_6E8(void)
     Hu3DAnimBankSet(lbl_1_bss_A2[1], 0);
 
     HuPrcChildCreate(fn_1_15AC, 0x100, 0x1000, 0, HuPrcCurrentGet());
-    fn_1_8B94();
+    NameEnterInit();
     Hu3DCameraLayerHookSet(1, 0, (HU3D_LAYER_HOOK)fn_1_C60);
     Hu3DCameraLayerHookSet(2, 0, (HU3D_LAYER_HOOK)fn_1_C8C);
     omAddObjEx(lbl_1_bss_340, 0x1000, 0x10, 0x10, -1, fn_1_8688);
@@ -760,7 +760,7 @@ L_192C:
                 UnMountCnt = 0;
                 fn_1_69B0();
                 fn_1_2654(-1);
-                ret = fn_1_916C(sel);
+                ret = NameEnterMain(sel);
                 fn_1_2A40();
                 if (ret == -0x4d2) {
                     goto L_192C;
@@ -771,7 +771,7 @@ L_192C:
                     UnMountCnt = 0;
                     goto L_241C;
                 }
-                if (fn_1_C278() == 0) {
+                if (FileTestOpen() == 0) {
                     time = OSGetTime();
                     SLSaveDataMake(1, &time);
                     SLCommonSet();
@@ -781,7 +781,7 @@ L_192C:
                         }
                     }
                     fxId = HuAudFXPlay(0x48d);
-                    ret = fn_1_D348(-1);
+                    ret = FileClear(-1);
                     HuAudFXStop(fxId);
                     if (ret == -0x4d2) {
                         goto L_241C;
@@ -800,7 +800,7 @@ L_192C:
                     SLSaveDataMake(0, &time);
                     SLCommonSet();
                     fxId = HuAudFXPlay(0x48d);
-                    ret = fn_1_D90C(-1, 0x9002a);
+                    ret = FileSaveMesOpen(-1, 0x9002a);
                     HuAudFXStop(fxId);
                     if (ret == -0x4d2) {
                         goto L_241C;
@@ -1629,7 +1629,7 @@ s32 fn_1_5244(s16 arg)
         lbl_1_bss_D8[cur].unk_12 = 0;
         memcpy(&saveBuf[curSlotNo][SLBoxDataOffsetGet(cur)], &saveBuf[curSlotNo][SLBoxDataOffsetGet(arg)], 0xcb2);
         sndH = HuAudFXPlay(0x484);
-        ret = fn_1_D90C(-1, 0x90028);
+        ret = FileSaveMesOpen(-1, 0x90028);
         HuAudFXStop(sndH);
         HuAudFXPlay(0x485);
         if (ret == -0x4d2) {
@@ -1766,7 +1766,7 @@ s32 fn_1_642C(s16 arg0)
     if (ret == 0) {
         fxId = HuAudFXPlay(0x486);
         SLSaveEmptySet(curSlotNo, arg0);
-        ret = fn_1_D90C(-1, 0x90029);
+        ret = FileSaveMesOpen(-1, 0x90029);
         HuAudFXStop(fxId);
         fxId = HuAudFXPlay(0x487);
         if (ret == 0) {

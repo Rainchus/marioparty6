@@ -73,7 +73,7 @@ typedef struct filesel_work {
 typedef struct b234_point { s16 x; s16 y; u16 flag; } B234Point;
 /* fn_1_B234 out rect */
 typedef struct b234_rect { f32 x0; f32 y0; f32 x1; f32 y1; } B234Rect;
-/* lbl_1_data_48C[] element (fn_1_8B94 sprite table), stride 0xC */
+/* lbl_1_data_48C[] element (NameEnterInit sprite table), stride 0xC */
 typedef struct data48c {
     /* 0x0 */ s32 unk_0;
     /* 0x4 */ u8  unk_4;
@@ -103,16 +103,16 @@ extern s16 lbl_1_bss_2DE;
 extern s16 lbl_1_bss_2E0;
 
 /* ==================== forward decls ==================== */
-void fn_1_8B94(void);
+void NameEnterInit(void);
 void fn_1_8F34(s32 arg0, s16 idx);
-s32 fn_1_916C(s16 no);
+s32 NameEnterMain(s16 no);
 s16 fn_1_AAEC(s16 winId);
 s16 fn_1_ABF8(s16 id, f32 refX, f32 refY, f32 dirX, f32 dirY);
 void fn_1_B234(B234Rect *r);
-void fn_1_B530(void);
-void fn_1_B5B4(void); /* saveload.c (cross-TU; pair by name) */
+void NameEnterClose(void);
+void FileCommonInit(void); /* saveload.c (cross-TU; pair by name) */
 
-void fn_1_8B94(void)
+void NameEnterInit(void)
 {
     HUSPR_GROUPID grp;
     ANIMDATA *anim;
@@ -189,7 +189,7 @@ void fn_1_8F34(s32 arg0, s16 idx)
  * Two match-critical spellings: the L/R page scans use `(sel + 1) * 0x100` (the MUL
  * node canonicalizes to the target's cmpw operand order — NOT `(sel + 1) << 8`), and
  * the SJIS re-pack loop init `for (j = k = 0; j < count; k++, j++)` (k bumps first). */
-s32 fn_1_916C(s16 no)
+s32 NameEnterMain(s16 no)
 {
     B234Rect rect;
     s16 cur;
@@ -237,7 +237,7 @@ s32 fn_1_916C(s16 no)
     HuSprBankSet(lbl_1_bss_42E, 6, 2);
     HuSprBankSet(lbl_1_bss_42E, 7, 4);
     HuAudFXPlay(0);
-    fn_1_B530();
+    NameEnterClose();
     HuWinMesSet(lbl_1_bss_2E0, 0x90009);
     HuWinMesSet(lbl_1_bss_2DE, 0x10002);
     HuWinDispOn(lbl_1_bss_2DE);
@@ -541,7 +541,7 @@ L_AA78:
     HuWinHomeClear(lbl_1_bss_2E0);
     HuWinKill(winId);
     HuAudFXPlay(0);
-    fn_1_B5B4();
+    FileCommonInit();
     HuPrcVSleep();
     return ret;
 }
@@ -632,7 +632,7 @@ void fn_1_B234(B234Rect *r)
 }
 
 /* 0xB530 */
-void fn_1_B530(void)
+void NameEnterClose(void)
 {
     s16 i;
 
