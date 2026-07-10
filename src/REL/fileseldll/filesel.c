@@ -1520,6 +1520,23 @@ void fn_1_6A8C(void)
     GXSetColorUpdate(1);
 }
 
+/* 0x7A0C */
+void fn_1_7A0C(void)
+{
+    HU3D_CAMERA *cam = &Hu3DCamera[1];
+    f32 zoom0 = CZoomM[1];
+    s16 i;
+    f32 t;
+
+    for (i = 0; i < 100.0; i++) {
+        t = i / 100.0;
+        t = 1.0 - cos(3.14159265358979323846 * (90.0 * t) / 180.0);
+        CZoomM[1] = zoom0 + (200.0f - zoom0) * t;
+        HuPrcVSleep();
+    }
+    HuPrcEnd();
+}
+
 /* 0x7B64 */
 void fn_1_7B64(void)
 {
