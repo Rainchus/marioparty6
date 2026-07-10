@@ -674,7 +674,7 @@ config.libs = [
             Object(NonMatching, "board/exit.c"),
             Object(NonMatching, "board/board.c"),
             Object(NonMatching, "board/math.c"),
-            Object(NonMatching, "board/camera.c"),
+            Object(Matching, "board/camera.c"),
             Object(NonMatching, "board/player.c"),
             Object(NonMatching, "board/snpc.c"),
             Object(NonMatching, "board/object.c"),
