@@ -9,6 +9,7 @@
 #include "game/flag.h"
 #include "game/wipe.h"
 #include "game/printfunc.h"
+#include "game/objdll.h"
 #include "msm.h"
 
 #include "math.h"
@@ -26,6 +27,27 @@ extern s32 rand8(void);
 #define SM_KEY_RIGHT 0x0008
 #define SM_KEY_UP 0x0001
 #define SM_KEY_DOWN 0x0002
+
+#define MG_TYPE_4P 0
+#define MG_TYPE_1VS3 1
+#define MG_TYPE_2VS2 2
+#define MG_TYPE_BATTLE 3
+#define MG_TYPE_KUPA 4
+#define MG_TYPE_LAST 5
+#define MG_TYPE_KETTOU 6
+
+#define MG_FLAG_GRPORDER (1 << 5)
+
+typedef struct MgData_s {
+    /* 0x00 */ u16 ovl;
+    /* 0x02 */ u8 type;
+    /* 0x03 */ u8 unk_3;
+    /* 0x04 */ u16 flag;
+    /* 0x06 */ u8 unk_6[0x76];
+} MGDATA; /* size = 0x7C */
+
+extern MGDATA MgDataTbl[];
+extern OMOVL GameMesOvlPrev;
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -346,11 +368,100 @@ static void fn_1_BDC(s16 num)
     (void)pos;
 }
 
-static void fn_1_C64(OMOBJ *obj) {}
+static void fn_1_C64(OMOBJ *obj)
+{
+    int i, j;
+    OSReport("SMinit:%08x\n", fn_1_C64);
+    omDLLDBGOut();
+    Hu3DBGColorSet(0, 0, 0);
+    fn_1_568(smPlayerConf, GwPlayerConf);
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        for (j = i + 1; j < GW_PLAYER_MAX; j++) {
+            if (smPlayerConf[i].charNo == smPlayerConf[j].charNo) {
+                smPlayerConf[j].charNo = fn_1_1D4C(j, -1);
+            }
+        }
+    }
+    smPage = -1;
+    for (i = 0; i < SM_PAGE_MAX; i++) {
+        for (j = 0; j < SM_PAGE_SIZE; j++) {
+            if (smPageData[(i * SM_PAGE_SIZE) + j].on == 1) {
+                break;
+            }
+        }
+        if (j == SM_PAGE_SIZE) {
+            smCursorNoPrev[i] = -1;
+        }
+        else {
+            smCursorNoPrev[i] = j;
+        }
+    }
+    fn_1_A5C(1);
+    if (GameMesOvlPrev != DLL_NONE) {
+        for (i = 0; i < SM_PAGE_MAX * SM_PAGE_SIZE; i++) {
+            if (GameMesOvlPrev == smPageData[i].ovl && smPageData[i].on == 1) {
+                smPage = i / SM_PAGE_SIZE;
+                smCursorNo = i % SM_PAGE_SIZE;
+                smCursorNoPrev[smPage] = smCursorNo;
+                break;
+            }
+        }
+    }
+    obj->objFunc = fn_1_10D8;
+}
 
 static void fn_1_10D8(OMOBJ *obj) {}
 
-static void fn_1_1B50(int pos) {}
+static void fn_1_1B50(int pos)
+{
+    int i;
+    int j;
+    OMOVL ovl;
+    ovl = smPageData[pos].ovl;
+    for (i = 0;; i++) {
+        if (MgDataTbl[i].ovl == ovl) {
+            break;
+        }
+        if (MgDataTbl[i].ovl == (u16)DLL_NONE) {
+            for (i = 0; i < GW_PLAYER_MAX; i++) {
+                smPlayerConf[i].grpNo = i;
+            }
+            return;
+        }
+    }
+    switch (MgDataTbl[i].type) {
+        case MG_TYPE_4P:
+        case MG_TYPE_BATTLE:
+        case MG_TYPE_KUPA:
+        case MG_TYPE_LAST:
+        case MG_TYPE_KETTOU:
+            for (i = 0; i < GW_PLAYER_MAX; i++) {
+                smPlayerConf[i].grpNo = i;
+            }
+            break;
+
+        case MG_TYPE_1VS3:
+            smPlayerConf[0].grpNo = 0;
+            for (i = 1; i < GW_PLAYER_MAX; i++) {
+                smPlayerConf[i].grpNo = 1;
+            }
+            break;
+
+        case MG_TYPE_2VS2:
+            for (j = 0; j < GW_PLAYER_MAX / 2; j++) {
+                smPlayerConf[j].grpNo = 0;
+            }
+            for (j = GW_PLAYER_MAX / 2; j < GW_PLAYER_MAX; j++) {
+                smPlayerConf[j].grpNo = 1;
+            }
+            if (MgDataTbl[i].flag & MG_FLAG_GRPORDER) {
+                for (i = 0; i < GW_PLAYER_MAX; i++) {
+                    smPlayerConf[i].grpNo = i;
+                }
+            }
+            break;
+    }
+}
 
 /* ---------------- .bss group B ---------------- */
 static HU3D_MODELID smCharMdlId[SM_CHAR_MAX];
