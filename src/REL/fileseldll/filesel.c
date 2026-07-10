@@ -173,7 +173,7 @@ s32 HuMCMicGet(void);
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, s32 wrapS, s32 wrapT, s32 filter);
 
 /* ==================== forward decls: functions defined in this TU ==================== */
-void fn_1_A0(void);
+void ObjectSetup(void);
 void fn_1_374(void);
 void fn_1_680(void);
 void fn_1_6E8(void);
@@ -192,7 +192,7 @@ void fn_1_6314(s16 id, s32 flag);
 void fn_1_63A0(s16 id, s32 flag);
 s32 fn_1_642C(s16 arg0);
 s32 fn_1_69B0(void);
-void fn_1_6A8C(void);
+void FileselWipeDraw(void);
 void fn_1_7B64(void);
 void fn_1_7A0C(void);
 void fn_1_7DEC(void);
@@ -238,7 +238,7 @@ int _prolog(void)
         (*ctor)();
     }
 
-    fn_1_A0();
+    ObjectSetup();
     return 0;
 }
 
@@ -256,7 +256,7 @@ void _epilog(void)
 /* ======================================================================== */
 
 /* 0x00A0 */
-void fn_1_A0(void)
+void ObjectSetup(void)
 {
     HU3D_LIGHTID lightId;
     s16 lang;
@@ -472,7 +472,7 @@ void fn_1_6E8(void)
 void fn_1_C60(void)
 {
     GXSetPixelFmt(1, GX_ZC_LINEAR);
-    fn_1_6A8C();
+    FileselWipeDraw();
 }
 
 /* 0x0C8C */
@@ -1822,7 +1822,7 @@ s32 fn_1_69B0(void)
 }
 
 /* 0x6A8C */
-void fn_1_6A8C(void)
+void FileselWipeDraw(void)
 {
     HU3D_CAMERA *cam = &Hu3DCamera[Hu3DCameraNo];
     Mtx44 proj;

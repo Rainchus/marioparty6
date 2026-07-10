@@ -1,6 +1,6 @@
 _prolog = .text:0x00000000; // type:function size:0x54 scope:global
 _epilog = .text:0x00000054; // type:function size:0x4C scope:global
-fn_1_A0 = .text:0x000000A0; // type:function size:0x2D4
+ObjectSetup = .text:0x000000A0; // type:function size:0x2D4
 fn_1_374 = .text:0x00000374; // type:function size:0x30C
 fn_1_680 = .text:0x00000680; // type:function size:0x68
 fn_1_6E8 = .text:0x000006E8; // type:function size:0x578
@@ -27,7 +27,7 @@ fn_1_6314 = .text:0x00006314; // type:function size:0x8C
 fn_1_63A0 = .text:0x000063A0; // type:function size:0x8C
 fn_1_642C = .text:0x0000642C; // type:function size:0x584
 fn_1_69B0 = .text:0x000069B0; // type:function size:0xDC
-fn_1_6A8C = .text:0x00006A8C; // type:function size:0x3C8
+FileselWipeDraw = .text:0x00006A8C; // type:function size:0x3C8
 fn_1_6E54 = .text:0x00006E54; // type:function size:0xBB8
 fn_1_7A0C = .text:0x00007A0C; // type:function size:0x158
 fn_1_7B64 = .text:0x00007B64; // type:function size:0x288
