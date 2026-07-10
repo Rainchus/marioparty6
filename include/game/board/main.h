@@ -16,5 +16,6 @@ extern OMOBJMAN *mbObjMan;
 BOOL mbExitCheck(void);
 int mbBoardDataNumGet(int dataNum);
 int mbRandMod(int mod);
+BOOL mbAngleMoveTo(float *dest, float angle, float speed);
 
 #endif
