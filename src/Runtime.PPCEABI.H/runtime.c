@@ -154,6 +154,11 @@ const u32 lbl_1_rodata_2D8[] = {
     0x00000000, 0x00000000, 0x41F00000, 0x00000000, 0x41E00000, 0x00000000,
 };
 #define __constants lbl_1_rodata_2D8
+#elif defined(MP6_SELMENU_RUNTIME)
+const u32 lbl_1_rodata_88[] = {
+    0x00000000, 0x00000000, 0x41F00000, 0x00000000, 0x41E00000, 0x00000000,
+};
+#define __constants lbl_1_rodata_88
 #else
 extern const u32 __constants_1_rodata_290[];
 #define __constants __constants_1_rodata_290
