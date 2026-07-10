@@ -1,3 +1,8 @@
+#define _MATH_H
+#define M_PI 3.141592653589793
+double sin(double);
+double cos(double);
+
 #include "game/board/guide.h"
 #include "game/board/audio.h"
 
@@ -608,30 +613,31 @@ static void GuideFadeInEffectHook(HU3D_MODEL *modelP, MBPARTICLE *effP, Mtx matr
     }
     data = effP->data;
     for (i = 0; i < effP->num; i++, data++) {
-        if (spawn > 0) {
-            if (data->time == 0) {
-                type = effNo[mbRandMod(16)];
-                data->rndNo = type;
-                data->vel.x = 360.0f * frandf();
-                data->vel.y = 80.0f * (0.3f + 0.7f * frandf());
-                data->vel.z = 130.0f * (0.7f + 0.3f * frandf());
-                data->scale = effSize[type] * (35.0f * (0.5f + 0.5f * frandf()));
-                data->scaleBase = data->scale;
-                colorIdx = mbRandMod(8);
-                f = 0.3f * frandf();
-                data->color.r = f * (255.0f - effColor[colorIdx].r) + effColor[colorIdx].r;
-                data->color.g = f * (255.0f - effColor[colorIdx].g) + effColor[colorIdx].g;
-                data->color.b = f * (255.0f - effColor[colorIdx].b) + effColor[colorIdx].b;
-                data->color.a = mbRandMod(0x46) + 0x96;
-                data->alphaF = data->color.a;
-                data->color.a = 0;
-                data->weight = 0.0f;
-                if (data->rndNo < 3) {
-                    data->weight = 360.0f * frandf();
-                }
-                data->time = 30;
-                spawn--;
+        if (spawn <= 0) {
+            break;
+        }
+        if (data->time == 0) {
+            type = effNo[mbRandMod(16)];
+            data->rndNo = type;
+            data->vel.x = 360.0f * frandf();
+            data->vel.y = 80.0f * (0.3f + 0.7f * frandf());
+            data->vel.z = 130.0f * (0.7f + 0.3f * frandf());
+            data->scale = effSize[type] * (35.0f * (0.5f + 0.5f * frandf()));
+            data->scaleBase = data->scale;
+            colorIdx = mbRandMod(8);
+            f = 0.3f * frandf();
+            data->color.r = f * (255.0f - effColor[colorIdx].r) + effColor[colorIdx].r;
+            data->color.g = f * (255.0f - effColor[colorIdx].g) + effColor[colorIdx].g;
+            data->color.b = f * (255.0f - effColor[colorIdx].b) + effColor[colorIdx].b;
+            data->color.a = mbRandMod(0x46) + 0x96;
+            data->alphaF = data->color.a;
+            data->color.a = 0;
+            data->weight = 0.0f;
+            if (data->rndNo < 3) {
+                data->weight = 360.0f * frandf();
             }
+            data->time = 30;
+            spawn--;
         }
     }
     data = effP->data;
@@ -655,14 +661,15 @@ static void GuideFadeInEffectHook(HU3D_MODEL *modelP, MBPARTICLE *effP, Mtx matr
             data->time--;
             if (data->time < 10) {
                 data->scale *= 0.95f;
-                data->color.a = data->color.a * 0.7f;
+                data->color.a *= 0.7f;
                 if (data->time == 0) {
                     data->color.a = 0;
                     data->scale = 0.0f;
                 }
             } else if (effP->stopF == 0) {
                 f = data->color.a;
-                data->color.a = 1.0f + (f + 0.3f * (data->alphaF - f));
+                f = 1.0f + (f + 0.3f * (data->alphaF - f));
+                data->color.a = f;
             }
             if (data->color.r < 0xfa) {
                 data->color.r += 5;
@@ -674,7 +681,7 @@ static void GuideFadeInEffectHook(HU3D_MODEL *modelP, MBPARTICLE *effP, Mtx matr
                 data->color.b += 5;
             }
             if (effP->stopF != 0) {
-                data->color.a = data->color.a * 0.8f;
+                data->color.a *= 0.8f;
             }
         }
     }
@@ -711,42 +718,43 @@ static void GuideFadeOutEffectHook(HU3D_MODEL *modelP, MBPARTICLE *effP, Mtx mat
     }
     data = effP->data;
     for (i = 0; i < effP->num; i++, data++) {
-        if (spawn > 0) {
-            if (data->time == 0) {
-                type = effNo[mbRandMod(16)];
-                data->rndNo = type;
-                f = 360.0f * frandf();
-                mbMtxRotAxisDeg(mtx, 'Y', f);
-                vec.x = 0.0f;
-                vec.z = 0.0f;
-                vec.y = 600.0f * (0.3f + 0.7f * frandf());
-                PSMTXMultVec(mtx, &vec, &data->vel);
-                f = 360.0f * frandf();
-                g = 0.3f + 0.7f * frandf();
-                vec.x = g * mbCosDeg(f);
-                vec.z = 0.2f * g * mbSinDeg(f);
-                vec.y = -0.2f;
-                PSMTXMultVec(mtx, &vec, &data->accel);
-                PSVECScale(&data->accel, &data->accel, 0.5555556f);
-                PSVECScale(&data->vel, &data->pos, 0.0f);
-                data->pos.y += 5.0f;
-                data->scale = effSize[type] * (30.0f * (0.5f + 0.5f * frandf()));
-                data->scaleBase = data->scale;
-                colorIdx = mbRandMod(8);
-                data->no = colorIdx;
-                f = 0.8f + 0.2f * frandf();
-                data->color.r = f * (255.0f - effColor[colorIdx].r) + effColor[colorIdx].r;
-                data->color.g = f * (255.0f - effColor[colorIdx].g) + effColor[colorIdx].g;
-                data->color.b = f * (255.0f - effColor[colorIdx].b) + effColor[colorIdx].b;
-                data->alphaF = data->color.a;
-                data->color.a = 0;
-                data->weight = 0.0f;
-                if (data->rndNo < 3) {
-                    data->weight = 360.0f * frandf();
-                }
-                data->time = 20;
-                spawn--;
+        if (spawn <= 0) {
+            break;
+        }
+        if (data->time == 0) {
+            type = effNo[mbRandMod(16)];
+            data->rndNo = type;
+            f = 360.0f * frandf();
+            mbMtxRotAxisDeg(mtx, 'Y', f);
+            vec.x = vec.y = 0.0f;
+            vec.z = 0.016666668f * (600.0f * (0.7f + 0.3f * frandf()));
+            PSMTXMultVec(mtx, &vec, &data->vel);
+            f = 360.0f * frandf();
+            g = 0.7f + 0.3f * frandf();
+            vec.x = g * mbCosDeg(f);
+            vec.y = 0.2f + g * mbSinDeg(f);
+            vec.z = -0.8f;
+            PSMTXMultVec(mtx, &vec, &data->accel);
+            PSVECScale(&data->accel, &data->accel, 0.55555564f);
+            PSVECScale(&data->vel, &data->pos, 1.0f);
+            data->pos.y += 5.0f;
+            data->scale = effSize[type] * (30.0f * (0.5f + 0.5f * frandf()));
+            data->scaleBase = data->scale;
+            colorIdx = mbRandMod(8);
+            data->no = colorIdx;
+            f = 0.8f + 0.2f * frandf();
+            data->color.r = f * (255.0f - effColor[colorIdx].r) + effColor[colorIdx].r;
+            data->color.g = f * (255.0f - effColor[colorIdx].g) + effColor[colorIdx].g;
+            data->color.b = f * (255.0f - effColor[colorIdx].b) + effColor[colorIdx].b;
+            data->color.a = mbRandMod(0x46) + 0x96;
+            data->alphaF = data->color.a;
+            data->color.a = 0;
+            data->weight = 0.0f;
+            if (data->rndNo < 3) {
+                data->weight = 360.0f * frandf();
             }
+            data->time = 20;
+            spawn--;
         }
     }
     data = effP->data;
@@ -762,21 +770,22 @@ static void GuideFadeOutEffectHook(HU3D_MODEL *modelP, MBPARTICLE *effP, Mtx mat
             data->time--;
             if (data->time < 10) {
                 data->scale *= 0.95f;
-                data->color.a = data->color.a * 0.7f;
+                data->color.a *= 0.7f;
                 if (data->time == 0) {
                     data->color.a = 0;
                     data->scale = 0.0f;
                 }
             } else if (effP->stopF == 0) {
                 f = data->color.a;
-                data->color.a = 1.0f + (f + 0.3f * (data->alphaF - f));
+                f = 1.0f + (f + 0.3f * (data->alphaF - f));
+                data->color.a = f;
             }
             colorIdx = data->no;
-            data->color.r = effColor[colorIdx].r + 0.1f * ((255.0f - effColor[colorIdx].r) - data->color.r);
-            data->color.g = effColor[colorIdx].g + 0.1f * ((255.0f - effColor[colorIdx].g) - data->color.g);
-            data->color.b = effColor[colorIdx].b + 0.1f * ((255.0f - effColor[colorIdx].b) - data->color.b);
+            data->color.r = data->color.r + 0.1f * ((float)effColor[colorIdx].r - data->color.r);
+            data->color.g = data->color.g + 0.1f * ((float)effColor[colorIdx].g - data->color.g);
+            data->color.b = data->color.b + 0.1f * ((float)effColor[colorIdx].b - data->color.b);
             if (effP->stopF != 0) {
-                data->color.a = data->color.a * 0.8f;
+                data->color.a *= 0.8f;
             }
         }
     }
