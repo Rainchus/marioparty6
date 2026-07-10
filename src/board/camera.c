@@ -352,8 +352,7 @@ static void CameraMotionSet(MBCAMERA *cameraP)
     float weight;
     float t;
     HuVecF pos;
-    cameraP->time++;
-    if(cameraP->time >= cameraP->maxTime) {
+    if(++cameraP->time >= cameraP->maxTime) {
         _ClearFlag(FLAG_BOARD_CAMERAMOT);
     }
     t = (float)cameraP->time / (float)cameraP->maxTime;
@@ -629,9 +628,9 @@ void mbCameraStackIdxSet(s16 idx, s16 maxTime)
     int i;
     cameraP->dispOn = FALSE;
     if(cameraP->focusNum == 0) {
-        CameraMoveApply(&cameraP->center, &cameraP->rot, &cameraP->offset, cameraP->zoom, cameraP->fov, maxTime);
+        CameraMoveApply(&cameraP->center, &cameraP->rot, &cameraP->offset, cameraP->zoom, cameraP->fov, (s16)maxTime);
     } else {
-        CameraMoveApply(NULL, &cameraP->rot, &cameraP->offset, cameraP->zoom, cameraP->fov, maxTime);
+        CameraMoveApply(NULL, &cameraP->rot, &cameraP->offset, cameraP->zoom, cameraP->fov, (s16)maxTime);
     }
     cameraCur.focusNum = cameraP->focusNum;
     for(i = 0; i < cameraCur.focusNum; i++) {
@@ -641,13 +640,14 @@ void mbCameraStackIdxSet(s16 idx, s16 maxTime)
 
 void mbCameraStackPop(s16 maxTime)
 {
-    MBCAMERA *cameraP = &cameraStack[cameraStackLevel - 1];
+    s16 level = cameraStackLevel;
+    MBCAMERA *cameraP = &cameraStack[level - 1];
     int i;
     cameraP->dispOn = FALSE;
     if(cameraP->focusNum == 0) {
-        CameraMoveApply(&cameraP->center, &cameraP->rot, &cameraP->offset, cameraP->zoom, cameraP->fov, maxTime);
+        CameraMoveApply(&cameraP->center, &cameraP->rot, &cameraP->offset, cameraP->zoom, cameraP->fov, (s16)maxTime);
     } else {
-        CameraMoveApply(NULL, &cameraP->rot, &cameraP->offset, cameraP->zoom, cameraP->fov, maxTime);
+        CameraMoveApply(NULL, &cameraP->rot, &cameraP->offset, cameraP->zoom, cameraP->fov, (s16)maxTime);
     }
     cameraCur.focusNum = cameraP->focusNum;
     for(i = 0; i < cameraCur.focusNum; i++) {
@@ -673,13 +673,7 @@ BOOL mbCameraCullCheck(HuVecF *pos, float radius)
     boundX = 1.2f*(tanHalfFov*-viewPos.z);
     boundY = tanHalfFov*-viewPos.z;
     r = radius/HuCos(cameraP->fov*0.5f);
-    if(fabs(viewPos.x)-r >= boundX) {
-        return FALSE;
-    }
-    if(fabs(viewPos.y)-r >= boundY) {
-        return FALSE;
-    }
-    if((viewPos.z-radius) <= 0.0f) {
+    if(fabs(viewPos.x)-r < boundX && fabs(viewPos.y)-r < boundY && (viewPos.z-radius) <= 0.0f) {
         return TRUE;
     } else {
         return FALSE;
