@@ -28,6 +28,11 @@ typedef struct listenerParam_s {
 
 BOOL mbPauseEnableCheck(void);
 void mbObjPosGet(MBMODELID modelId, HuVecF *pos);
+
+static inline int BoardNoGet(void)
+{
+    return GwSystem.boardNo;
+}
 void mbMasuPosGet(s16 masuId, HuVecF *pos);
 void mbPlayerPosGet(s16 playerNo, HuVecF *pos);
 MBMODELID mbPlayerObjIDGet(int playerNo);
@@ -73,7 +78,7 @@ void mbCameraInit(void)
         { 9, 8000, 1000, 0, 4000, 4000 },
         { 10, 8000, 1000, 0, 4000, 4000 },
     };
-    const LISTENERPARAM *listenerParam;
+    const float *listenerParam;
     HU3D_CAMERA *cam;
     HuVecF pos;
     HuVecF dir;
@@ -116,28 +121,27 @@ void mbCameraInit(void)
     Hu3DCameraScissorSet(cameraP->bit, cameraP->viewportX, cameraP->viewportY, cameraP->viewportW, cameraP->viewportH);
     cameraP->center.x = cameraP->center.y = cameraP->center.z = 0;
     for(i = 0; i < MBNO_MAX; i++) {
-        if(listenerParamTbl[i].no == GwSystem.boardNo) {
+        if(listenerParamTbl[i].no == BoardNoGet()) {
             break;
         }
     }
     if(i >= MBNO_MAX) {
         i = 0;
     }
-    listenerParam = &listenerParamTbl[i];
+    listenerParam = &listenerParamTbl[i].sndDist;
     pos.x = pos.y = 0;
     pos.z = 100000;
     dir.x = 0;
     dir.y = 0;
     dir.z = -1;
     VECNormalize(&dir, &dir);
-    HuAudFXListnerSetEX(&pos, &dir, listenerParam->sndDist, listenerParam->sndSpeed, listenerParam->startDis, listenerParam->frontSurDis, listenerParam->backSurDis);
+    HuAudFXListnerSetEX(&pos, &dir, listenerParam[0], listenerParam[1], listenerParam[2], listenerParam[3], listenerParam[4]);
     cameraOMObj = omAddObjEx(mbObjMan, 32256, 0, 0, OM_GRP_NONE, CameraOMExec);
     Hu3DCameraLayerHookSet(HU3D_CAM0, 0, Camera0LayerHook);
     Hu3DCameraLayerHookSet(HU3D_CAM1, 0, Camera1LayerHook);
     Hu3DCameraLayerHookSet(HU3D_CAM2, 0, Camera2LayerHook);
     omSetStatBit(cameraOMObj, OM_STAT_NOPAUSE);
-    lightTypeBackup[1] = -1;
-    lightTypeBackup[0] = -1;
+    lightTypeBackup[0] = lightTypeBackup[1] = -1;
 }
 
 static void Camera0LayerHook(s16 layerNo)
