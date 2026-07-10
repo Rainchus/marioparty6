@@ -393,7 +393,7 @@ config.libs = [
             Object(Matching, "dolphin/os/OSMutex.c"),
             Object(NonMatching, "dolphin/os/OSReboot.c"),
             Object(NonMatching, "dolphin/os/OSReset.c"),
-            Object(NonMatching, "dolphin/os/OSResetSW.c"),
+            Object(Matching, "dolphin/os/OSResetSW.c"),
             Object(NonMatching, "dolphin/os/OSRtc.c"),
             Object(NonMatching, "dolphin/os/OSSemaphore.c"),
             Object(NonMatching, "dolphin/os/OSStopwatch.c"),
