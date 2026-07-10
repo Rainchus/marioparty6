@@ -51,6 +51,11 @@ typedef struct MgData_s {
 extern MGDATA MgDataTbl[];
 extern OMOVL GameMesOvlPrev;
 extern s32 MgNoGet(s16 ovlNo);
+extern void CharDataClose(s16 charNo);
+extern s32 CharMotionAMemPGet(s16 charNo);
+extern void CharMotionInit(s16 charNo);
+
+#define GW_TYPE_MAN 0
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -61,6 +66,23 @@ typedef struct sm_entry {
     char *name;
     OMOVL ovl;
 } SMEntry;
+
+static char *smCharNameTbl[14] = {
+    "Mario",
+    "Luigi",
+    "Peach",
+    "Yoshi",
+    "Wario",
+    "Daisy",
+    "Waluigi",
+    "Kinopio",
+    "Teresa",
+    "Minikoopa",
+    "Kinopiko",
+    "MinikoopaR",
+    "MinikoopaG",
+    "MinikoopaB",
+};
 
 static SMEntry smPageData[SM_PAGE_MAX * SM_PAGE_SIZE] = {
     { TRUE, "601:PIKATTO HIPDROP", DLL_m601dll },
@@ -239,7 +261,6 @@ static void fn_1_43A0(void);        /* SMStub */
 static void fn_1_43A4(OMOBJ *obj);  /* SMSound3DInit */
 static void fn_1_4408(OMOBJ *obj);  /* SMSound3DExec */
 static void fn_1_4C5C(void);        /* SMSound3DPrint */
-static void fn_1_502C(void);
 
 int _prolog(void)
 {
@@ -650,7 +671,123 @@ static void fn_1_1FC8(OMOBJ *obj)
     obj->objFunc = fn_1_21C0;
 }
 
-static void fn_1_21C0(OMOBJ *obj) {}
+static void fn_1_21C0(OMOBJ *obj)
+{
+    int i;
+
+    s16 port;
+    int j;
+    s16 w;
+    s16 x;
+    s16 y;
+    s16 manDoneNum;
+    s16 manNum;
+
+    for (i = 0; i < SM_CHAR_MAX; i++) {
+        Hu3DModelAttrSet(smCharMdlId[i], HU3D_ATTR_DISPOFF);
+    }
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        if (smPlayerConf[i].type == GW_TYPE_MAN) {
+            Hu3DModelAttrReset(smCharMdlId[smPlayerConf[i].charNo], HU3D_ATTR_DISPOFF);
+            Hu3DModelCameraSet(smCharMdlId[smPlayerConf[i].charNo], smCharSelCamBitTbl[i]);
+        }
+    }
+    for (i = 0, manDoneNum = 0, manNum = 0; i < GW_PLAYER_MAX; i++) {
+        if (smCharSelEndF[i] == TRUE) {
+            manDoneNum++;
+        }
+        if (smPlayerConf[i].type == GW_TYPE_MAN) {
+            manNum++;
+        }
+    }
+    if (manDoneNum == manNum) {
+        fn_1_1D4C(0, 0);
+        fn_1_1EAC();
+        smPlayerConf[0].charNo = 4;
+        smPlayerConf[1].charNo = 11;
+        smPlayerConf[2].charNo = 12;
+        smPlayerConf[3].charNo = 13;
+        fn_1_568(GwPlayerConf, smPlayerConf);
+        CharDataClose(-1);
+        OSReport("%d,%d,%d,%d\n", GwPlayerConf[0].charNo, GwPlayerConf[1].charNo, GwPlayerConf[2].charNo, GwPlayerConf[3].charNo);
+        if (!CharMotionAMemPGet(GwPlayerConf[0].charNo)) {
+            CharMotionInit(GwPlayerConf[0].charNo);
+        }
+        if (!CharMotionAMemPGet(GwPlayerConf[1].charNo)) {
+            CharMotionInit(GwPlayerConf[1].charNo);
+        }
+        if (!CharMotionAMemPGet(GwPlayerConf[2].charNo)) {
+            CharMotionInit(GwPlayerConf[2].charNo);
+        }
+        if (!CharMotionAMemPGet(GwPlayerConf[3].charNo)) {
+            CharMotionInit(GwPlayerConf[3].charNo);
+        }
+        WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_NORMAL, 20);
+        obj->objFunc = fn_1_2F80;
+    }
+    fn_1_5C8();
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        port = smPlayerConf[i].padNo;
+        if (!smCharSelEndF[i]) {
+            if (smPadDStkDownAll[port] & SM_KEY_LEFT) {
+                smPlayerConf[port].charNo = fn_1_1D4C(i, -1);
+            }
+            if (smPadDStkDownAll[port] & SM_KEY_RIGHT) {
+                smPlayerConf[port].charNo = fn_1_1D4C(i, 1);
+            }
+            if (smPadBtnDownAll[port] & PAD_BUTTON_A) {
+                smCharSelEndF[i] = TRUE;
+            }
+        }
+        if (HuPadBtnDown[port] & PAD_BUTTON_B) {
+            if (manDoneNum != 0) {
+                smCharSelEndF[i] = 0;
+            }
+            else {
+                fn_1_1E5C();
+                obj->objFunc = fn_1_10D8;
+                return;
+            }
+        }
+        if (smPadBtnDownAll[port] & PAD_BUTTON_START) {
+            for (j = 0; j < GW_PLAYER_MAX; j++) {
+                if (!smPlayerConf[j].type) {
+                    smCharSelEndF[j] = TRUE;
+                }
+            }
+            return;
+        }
+        if (!smPlayerConf[i].type) {
+            w = strlen(smCharNameTbl[smPlayerConf[i].charNo]);
+            w *= 16;
+            x = ((320 - w) / 2) + ((i % 2) * 320);
+            y = 176 + ((i / 2) * 240);
+            if (smCharSelEndF[i] == TRUE) {
+                fontcolor = FONT_COLOR_WHITE;
+                print8(x, y, 2.0f,
+                    "\xFD\x08"
+                    "%s",
+                    smCharNameTbl[smPlayerConf[i].charNo]);
+            }
+            else {
+                fontcolor = FONT_COLOR_GREEN;
+                print8(x, y, 2.0f,
+                    "\xFD\x05"
+                    "%s",
+                    smCharNameTbl[smPlayerConf[i].charNo]);
+            }
+        }
+        else {
+            w = 72;
+            x = ((320 - w) / 2) + ((i % 2) * 320);
+            y = 108 + ((i / 2) * 240);
+            fontcolor = FONT_COLOR_YELLOW;
+            print8(x, y, 3.0f,
+                "\xFD\x07"
+                "COM");
+        }
+    }
+}
 
 static void fn_1_2F80(OMOBJ *obj)
 {
@@ -1048,5 +1185,3 @@ static void fn_1_4C5C(void)
 }
 
 #undef DO_HILITE
-
-static void fn_1_502C(void) {}

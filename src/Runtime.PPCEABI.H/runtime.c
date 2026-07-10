@@ -47,6 +47,7 @@ asm void __cvt_dbl_usll(void);
 #endif
 
 #ifdef MP6_SELMENU_RUNTIME
+#define __cvt_fp2unsigned fn_1_502C
 #define __div2u fn_1_5280
 #define __div2i fn_1_536C
 #define __mod2u fn_1_54A4
@@ -185,7 +186,7 @@ static const u32 __constants[] = {
 #endif
 
 /* 803620AC-80362108 35C9EC 005C+00 0/0 42/42 89/89 .text            __cvt_fp2unsigned */
-#if !defined(MP6_FILESEL_RUNTIME) && !defined(MP6_SELMENU_RUNTIME)
+#ifndef MP6_FILESEL_RUNTIME
 asm u32 __cvt_fp2unsigned(register f64 d)
 {
 #ifdef __MWERKS__ // clang-format off
