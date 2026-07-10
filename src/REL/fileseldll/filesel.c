@@ -15,15 +15,23 @@
 #include "game/wipe.h"
 #include "math.h"
 #include "string.h"
+#include "stdio.h"
 
 typedef void (*VoidFunc)(void);
 
 typedef struct filesel_work {
-    /* 0x00 */ u8 unk_00[0x08];
+    /* 0x00 */ s32 unk_0;
+    /* 0x04 */ u8 unk_04[0x04];
     /* 0x08 */ s16 unk_8;
-    /* 0x0A */ u8 unk_0A[0x0E];
+    /* 0x0A */ u8 unk_0A[0x08];
+    /* 0x12 */ s16 unk_12;
+    /* 0x14 */ s16 unk_14;
+    /* 0x16 */ s16 unk_16;
     /* 0x18 */ s16 unk_18;
-    /* 0x1A */ u8 unk_1A[0x3E];
+    /* 0x1A */ u8 unk_1A[0x02];
+    /* 0x1C */ OSCalendarTime unk_1C;
+    /* 0x44 */ char unk_44[0x11];
+    /* 0x55 */ u8 unk_55[0x03];
     /* 0x58 */ void *unk_58;
     /* 0x5C */ void *unk_5C;
     /* 0x60 */ u8 unk_60[2];
@@ -56,6 +64,16 @@ typedef struct bss18_entry {
 /* fn_1_7B64 rodata block */
 typedef struct vec5 { Vec v[5]; } VEC5;
 
+/* lbl_1_data_48C[] element (fn_1_8B94 sprite table), stride 0xC */
+typedef struct data48c {
+    /* 0x0 */ s32 unk_0;
+    /* 0x4 */ u8  unk_4;
+    /* 0x5 */ u8  pad_5;
+    /* 0x6 */ s16 unk_6;
+    /* 0x8 */ s16 unk_8;
+    /* 0xA */ s16 unk_A;
+} DATA48C; /* size 0xC */
+
 /* ==================== module .bss/.data (no header; ref by dtk name) ==================== */
 extern const VoidFunc _ctors[];
 extern const VoidFunc _dtors[];
@@ -79,8 +97,10 @@ extern OMOBJ *lbl_1_bss_344;
 extern B234Point *lbl_1_bss_348;
 extern char lbl_1_bss_34C[];
 extern s16 lbl_1_bss_3AC[];
-extern char lbl_1_bss_3B2[];
+extern u8 lbl_1_bss_3B2[][0x11];
+extern s16 lbl_1_bss_42A;
 extern s16 lbl_1_bss_42E;
+extern Vec lbl_1_bss_68[];
 
 extern OM_CAMERA_VIEW lbl_1_data_0;
 extern OM_CAMERA_VIEW lbl_1_data_1C;
@@ -88,6 +108,13 @@ extern HU3D_PARMAN_PARAM lbl_1_data_E8;
 extern char lbl_1_data_138[];
 extern char lbl_1_data_144[];
 extern char lbl_1_data_1FD[0x17];
+extern DATA48C lbl_1_data_48C[];
+extern char lbl_1_data_56C[];
+extern char lbl_1_data_572[];
+extern char lbl_1_data_58B[];
+extern char lbl_1_data_590[];
+extern char lbl_1_data_59F[];
+extern char lbl_1_data_5A4[];
 extern char lbl_1_data_B8[];
 extern char lbl_1_data_E2[];
 extern u32 lbl_1_data_568;
@@ -100,6 +127,10 @@ extern const f32 lbl_1_rodata_40, lbl_1_rodata_44, lbl_1_rodata_48, lbl_1_rodata
 extern const f32 lbl_1_rodata_50, lbl_1_rodata_54, lbl_1_rodata_58, lbl_1_rodata_5C;
 extern const f32 lbl_1_rodata_60, lbl_1_rodata_64, lbl_1_rodata_68, lbl_1_rodata_6C;
 extern const f32 lbl_1_rodata_70, lbl_1_rodata_74;
+extern const f32 lbl_1_rodata_C0;
+extern const double lbl_1_rodata_80, lbl_1_rodata_88, lbl_1_rodata_90, lbl_1_rodata_98;
+extern const double lbl_1_rodata_108, lbl_1_rodata_190, lbl_1_rodata_1B0;
+extern const f32 lbl_1_rodata_118, lbl_1_rodata_11C, lbl_1_rodata_120, lbl_1_rodata_124;
 extern const double lbl_1_rodata_130, lbl_1_rodata_138, lbl_1_rodata_148;
 extern const f32 lbl_1_rodata_17C;
 extern const VEC5 lbl_1_rodata_1D0;
@@ -133,6 +164,12 @@ void SLSaveBackup(void);
 void SLCurBoxNoSet(s32 boxNo);
 void SLSaveDataMake(s32 arg, OSTime *time);
 u16 SLCheckSumGet(s32 start, s32 len);
+void SLCurSlotNoSet(s32 slotNo);
+void SLSaveEmptySet(s16 slot, s16 idx);
+s32 SLBoxDataOffsetGet(s16 boxNo);
+s32 SLCheckSumCheck(void);
+void SLBoxBackupLoad(s16 boxNo);
+void SLCommonLoad(void);
 
 s32 HuMCProbe(s32 chan);
 void HuMCMicSet(s32 flag);
@@ -151,6 +188,8 @@ void fn_1_6E8(void);
 void fn_1_C60(void);
 void fn_1_C8C(void);
 void fn_1_179C(void);
+void fn_1_2654(s16 arg);
+void fn_1_2A40(void);
 void fn_1_35AC(void);
 void fn_1_3C80(s16 id, Vec *pos);
 void fn_1_3CC0(s16 id, f32 x, f32 y, f32 z);
@@ -159,6 +198,7 @@ void fn_1_50DC(void (*func)(void), s32 arg1);
 void fn_1_5130(void);
 void fn_1_6314(s16 id, s32 flag);
 void fn_1_63A0(s16 id, s32 flag);
+s32 fn_1_642C(s16 arg0);
 s32 fn_1_69B0(void);
 void fn_1_6A8C(void);
 void fn_1_7B64(void);
@@ -204,7 +244,7 @@ void fn_1_8B94(void);
 void fn_1_CB4(s32 arg);
 s32 fn_1_17CC(void);
 s32 fn_1_B63C(s16 arg);
-s32 fn_1_E210(s32 mesNo, s16 winId);
+s32 fn_1_E210(s16 mesNo, s16 winId);
 
 /* ======================================================================== */
 /* module entry */
@@ -468,6 +508,74 @@ void fn_1_179C(void)
     HuPrcEnd();
 }
 
+/* 0x2654 */
+void fn_1_2654(s16 arg)
+{
+    f32 scale;
+    s16 i;
+
+    for (i = 0; i < 3; i++) {
+        Hu3DModelPosGet(lbl_1_bss_D8[i].unk_8, &lbl_1_bss_68[i]);
+    }
+    Hu3DModelPosGet(*(s16 *)((u8 *)lbl_1_bss_2D8 + 4), &lbl_1_bss_68[i]);
+    if (arg == -1) {
+        for (i = 1; i <= 10; i++) {
+            scale = lbl_1_rodata_90 - cos(lbl_1_rodata_80 * (lbl_1_rodata_88 * ((double)i / lbl_1_rodata_108)) / lbl_1_rodata_98);
+            fn_1_3CC0(0, lbl_1_bss_68[0].x, lbl_1_bss_68[0].y + lbl_1_rodata_118 * scale, lbl_1_bss_68[0].z);
+            fn_1_3CC0(1, lbl_1_bss_68[1].x, lbl_1_bss_68[1].y + lbl_1_rodata_118 * scale, lbl_1_bss_68[1].z);
+            fn_1_3CC0(2, lbl_1_bss_68[2].x, lbl_1_bss_68[2].y + lbl_1_rodata_118 * scale, lbl_1_bss_68[2].z);
+            Hu3DModelPosSet(*(s16 *)((u8 *)lbl_1_bss_2D8 + 4), lbl_1_bss_68[3].x - lbl_1_rodata_11C * scale, lbl_1_bss_68[3].y, lbl_1_bss_68[3].z);
+            HuPrcVSleep();
+        }
+    } else {
+        for (i = 1; i <= 10; i++) {
+            scale = lbl_1_rodata_90 - cos(lbl_1_rodata_80 * (lbl_1_rodata_88 * ((double)i / lbl_1_rodata_108)) / lbl_1_rodata_98);
+            switch (arg) {
+            case 0:
+                fn_1_3CC0(0, lbl_1_bss_68[0].x, lbl_1_bss_68[0].y + lbl_1_rodata_120 * scale, lbl_1_bss_68[0].z);
+                break;
+            case 1:
+                fn_1_3CC0(1, lbl_1_bss_68[1].x, lbl_1_bss_68[1].y - lbl_1_rodata_124 * scale, lbl_1_bss_68[1].z);
+                break;
+            case 2:
+                fn_1_3CC0(2, lbl_1_bss_68[2].x, lbl_1_bss_68[2].y + lbl_1_rodata_120 * scale, lbl_1_bss_68[2].z);
+                break;
+            }
+            HuPrcVSleep();
+        }
+    }
+}
+
+/* 0x2A40 */
+void fn_1_2A40(void)
+{
+    Vec v14;
+    Vec v8;
+    Vec v20[4];
+    f32 scale;
+    s16 i;
+    s16 j;
+
+    for (i = 0; i < 3; i++) {
+        Hu3DModelPosGet(lbl_1_bss_D8[i].unk_8, &v14);
+        PSVECSubtract(&v14, &lbl_1_bss_68[i], &v20[i]);
+    }
+    Hu3DModelPosGet(*(s16 *)((u8 *)lbl_1_bss_2D8 + 4), &v14);
+    PSVECSubtract(&v14, &lbl_1_bss_68[i], &v20[i]);
+    for (i = 1; i <= 10; i++) {
+        scale = lbl_1_rodata_90 - sin(lbl_1_rodata_80 * (lbl_1_rodata_88 * ((double)i / lbl_1_rodata_108)) / lbl_1_rodata_98);
+        for (j = 0; j < 3; j++) {
+            PSVECScale(&v20[j], &v14, scale);
+            PSVECAdd(&lbl_1_bss_68[j], &v14, &v8);
+            fn_1_3C80(j, &v8);
+        }
+        PSVECScale(&v20[j], &v14, scale);
+        PSVECAdd(&lbl_1_bss_68[j], &v14, &v8);
+        Hu3DModelPosSetV(*(s16 *)((u8 *)lbl_1_bss_2D8 + 4), &v8);
+        HuPrcVSleep();
+    }
+}
+
 /* 0x35AC */
 void fn_1_35AC(void)
 {
@@ -552,6 +660,86 @@ void fn_1_63A0(s16 id, s32 flag)
     } else {
         Hu3DAnimAnimSet(lbl_1_bss_D8[id].unk_18, lbl_1_bss_CC[0]);
     }
+}
+
+/* 0x642C */
+s32 fn_1_642C(s16 arg0)
+{
+    HUWIN *w;
+    s32 ret;
+    int fxId;
+    int i;
+    HUPROCESS *proc1;
+    HUPROCESS *proc2;
+    HUPROCESS *proc3;
+    HUPROCESS *proc4;
+    f32 s;
+
+    w = &winData[lbl_1_bss_2E0];
+    proc1 = HuPrcChildCreate(fn_1_5130, 0x10, 0x3000, 0, HuPrcCurrentGet());
+    proc1->property = (void *)3;
+    Hu3DAnimAnimSet(lbl_1_bss_D8[arg0].unk_18, lbl_1_bss_CC[1]);
+    HuWinInsertMesSet(lbl_1_bss_2E0, (u32)&lbl_1_bss_D8[arg0].unk_44, 0);
+    HuWinMesSet(lbl_1_bss_2E0, 0x90013);
+    HuWinMesWait(lbl_1_bss_2E0);
+    HuWinChoiceSet(lbl_1_bss_2E0, -1);
+    while (w->stat != 0) {
+        if (UnMountCnt != 0) {
+            HuWinMesSet(lbl_1_bss_2E0, 0x90026);
+            HuWinMesWait(lbl_1_bss_2E0);
+            UnMountCnt = 0;
+            proc2 = HuPrcChildCreate(fn_1_5130, 0x10, 0x3000, 0, HuPrcCurrentGet());
+            proc2->property = (void *)1;
+            Hu3DAnimAnimSet(lbl_1_bss_D8[arg0].unk_18, lbl_1_bss_CC[0]);
+            return -4;
+        }
+        HuPrcVSleep();
+    }
+    ret = w->choice;
+    HuWinHomeClear(lbl_1_bss_2E0);
+    if (UnMountCnt != 0) {
+        HuWinMesSet(lbl_1_bss_2E0, 0x90026);
+        HuWinMesWait(lbl_1_bss_2E0);
+        UnMountCnt = 0;
+        proc3 = HuPrcChildCreate(fn_1_5130, 0x10, 0x3000, 0, HuPrcCurrentGet());
+        proc3->property = (void *)1;
+        Hu3DAnimAnimSet(lbl_1_bss_D8[arg0].unk_18, lbl_1_bss_CC[0]);
+        return -4;
+    }
+    if (ret == 0) {
+        fxId = HuAudFXPlay(0x486);
+        SLSaveEmptySet(curSlotNo, arg0);
+        ret = fn_1_D90C(-1, 0x90029);
+        HuAudFXStop(fxId);
+        fxId = HuAudFXPlay(0x487);
+        if (ret == 0) {
+            HuAudFXPlay(0x489);
+            for (i = 1; i <= 0x14; i++) {
+                s = lbl_1_rodata_90 - sin(lbl_1_rodata_80 * (lbl_1_rodata_88 * ((double)i / lbl_1_rodata_190)) / lbl_1_rodata_98);
+                Hu3DModelScaleSet(lbl_1_bss_D8[arg0].unk_8, lbl_1_rodata_C0 * s, lbl_1_rodata_C0 * s, lbl_1_rodata_C0 * s);
+                HuPrcVSleep();
+            }
+            HuPrcSleep(0x1e);
+            lbl_1_bss_D8[arg0].unk_0 = 0;
+            lbl_1_bss_D8[arg0].unk_0 = 0;
+            fn_1_36C4(arg0, arg0);
+            lbl_1_bss_D8[arg0].unk_12 = 1;
+            Hu3DAnimAnimSet(lbl_1_bss_D8[arg0].unk_18, lbl_1_bss_CC[0]);
+            for (i = 1; i <= 0xa; i++) {
+                s = (double)i / lbl_1_rodata_108;
+                Hu3DModelScaleSet(lbl_1_bss_D8[arg0].unk_8, lbl_1_rodata_C0 * s, lbl_1_rodata_C0 * s, lbl_1_rodata_C0 * s);
+                HuPrcVSleep();
+            }
+            HuWinMesSet(lbl_1_bss_2E0, 0x90016);
+            HuWinMesWait(lbl_1_bss_2E0);
+        }
+    } else {
+        ret = 0;
+    }
+    proc4 = HuPrcChildCreate(fn_1_5130, 0x10, 0x3000, 0, HuPrcCurrentGet());
+    proc4->property = (void *)1;
+    Hu3DAnimAnimSet(lbl_1_bss_D8[arg0].unk_18, lbl_1_bss_CC[0]);
+    return ret;
 }
 
 /* 0x69B0 */
@@ -862,6 +1050,60 @@ void fn_1_8A34(void)
     lbl_1_bss_C = 0;
 }
 
+/* 0x8B94 */
+void fn_1_8B94(void)
+{
+    HUSPR_GROUPID grp;
+    ANIMDATA *anim;
+    HUSPRID spr;
+    s16 k;
+    DATA48C *d;
+    u8 *msg;
+    s16 i;
+
+    grp = HuSprGrpCreate(0x12);
+    lbl_1_bss_42E = grp;
+    for (i = 0; i < 0x12; i++) {
+        d = &lbl_1_data_48C[i];
+        anim = HuSprAnimRead(HuDataSelHeapReadNum(d->unk_0, 0x10000000, 2));
+        spr = HuSprCreate(anim, d->unk_6, d->unk_4);
+        HuSprGrpMemberSet(grp, i, spr);
+        HuSprPosSet(grp, i, d->unk_8, d->unk_A);
+        HuSprAttrSet(grp, i, 4);
+    }
+    HuSprGrpPosSet(grp, lbl_1_rodata_240, lbl_1_rodata_244);
+    for (i = 0; i < 2; i++) {
+        HUWIN *w;
+        lbl_1_bss_3AC[i] = HuWinCreate(lbl_1_rodata_248, lbl_1_rodata_24C, 0x1f4, 0xfa, 0);
+        w = &winData[lbl_1_bss_3AC[i]];
+        HuWinBGTPLvlSet(lbl_1_bss_3AC[i], lbl_1_rodata_250);
+        anim = HuSprAnimRead(HuDataSelHeapReadNum(i + 0x23001F, 0x10000000, 2));
+        if (i == 0) {
+            HuWinAnimSet(lbl_1_bss_3AC[i], anim, 0, lbl_1_rodata_254, lbl_1_rodata_258);
+        } else {
+            HuWinAnimSet(lbl_1_bss_3AC[i], anim, 0, lbl_1_rodata_254, lbl_1_rodata_25C);
+        }
+        HuWinDispOff(lbl_1_bss_3AC[i]);
+        HuWinPriSet(lbl_1_bss_3AC[i], 0x6e);
+    }
+    lbl_1_bss_42A = 0;
+    for (k = 0; k < 7; k++) {
+        for (i = 0; i < 0x11; i++) {
+            lbl_1_bss_3B2[k][i] = 0;
+        }
+    }
+    for (k = 0; k < 7; k++) {
+        msg = (u8 *)HuWinMesPtrGet(k);
+        i = 0;
+        while (*msg != 0) {
+            if (*msg >= '0') {
+                lbl_1_bss_3B2[k][i++] = *msg;
+            }
+            msg++;
+        }
+    }
+}
+
 /* 0x8F34 */
 void fn_1_8F34(s32 arg0, s16 idx)
 {
@@ -893,7 +1135,7 @@ s16 fn_1_AAEC(s16 winId)
         }
     }
     if (count == 0) {
-        strcpy(lbl_1_bss_34C, &lbl_1_bss_3B2[frandmod(7) * 17]);
+        strcpy(lbl_1_bss_34C, (char *)lbl_1_bss_3B2[frandmod(7)]);
         HuWinMesSet(winId, (u32)lbl_1_bss_34C);
         return (s16)strlen(lbl_1_bss_34C);
     }
@@ -1954,4 +2196,56 @@ s16 fn_1_DD84(s16 mode)
         HuWinWarningKill(warnId);
     }
     return choice;
+}
+
+/* 0xE210 */
+s32 fn_1_E210(s16 arg0, s16 arg1)
+{
+    s16 choices[10];
+    HuVec2f maxSize;
+    s32 msgId;
+    HUWINID winId;
+    s16 choice;
+    s16 v;
+    HUWIN *w;
+
+    v = arg0 & ~0x10;
+    if (v == 7) {
+        msgId = 0x9003f;
+        choices[0] = 1;
+        choices[1] = 4;
+        choices[2] = 2;
+    } else if (v == 0xd) {
+        msgId = 0x90040;
+        choices[0] = 1;
+        choices[1] = 4;
+        choices[2] = 8;
+    } else if (v == 5) {
+        msgId = 0x90041;
+        choices[0] = 1;
+        choices[1] = 4;
+    }
+    HuWinMesMaxSizeGet(1, &maxSize, msgId);
+    w = &winData[arg1];
+    if ((f32)w->winH < maxSize.y) {
+        HuWinWarningClose(arg1);
+        winId = HuWinWarningCreate(lbl_1_rodata_2C0, lbl_1_rodata_2C4, (s16)maxSize.x, (s16)maxSize.y);
+    } else {
+        winId = arg1;
+    }
+    HuWinWarningOpen(winId);
+    if ((arg0 & 0x10) == 0) {
+        HuWinAttrSet(winId, 0x10);
+    }
+    HuWinMesSet(winId, msgId);
+    HuWinMesWait(winId);
+    choice = HuWinChoiceGet(winId, 0);
+    if (arg1 != winId) {
+        HuWinWarningClose(winId);
+        HuWinWarningKill(winId);
+    }
+    if (choice == -1) {
+        return -0x4d2;
+    }
+    return choices[choice];
 }
