@@ -10,6 +10,8 @@
 #include "game/wipe.h"
 #include "game/printfunc.h"
 #include "game/objdll.h"
+#include "game/armem.h"
+#include "game/memory.h"
 #include "msm.h"
 
 #include "math.h"
@@ -48,6 +50,7 @@ typedef struct MgData_s {
 
 extern MGDATA MgDataTbl[];
 extern OMOVL GameMesOvlPrev;
+extern s32 MgNoGet(s16 ovlNo);
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -468,6 +471,16 @@ static HU3D_MODELID smCharMdlId[SM_CHAR_MAX];
 static s16 smCharSelEndF[4];
 static s16 smCharOnF[SM_CHAR_MAX];
 
+static int smCharFileTbl[14] = {
+    0x00CC0000, 0x00CC0002, 0x00CC0004, 0x00CC0006, 0x00CC0008, 0x00CC000A, 0x00CC000C,
+    0x00CC000E, 0x00CC0010, 0x00CC0012, 0x00CC0014, 0x00CC0016, 0x00CC0018, 0x00CC001A,
+};
+
+static int smCharMotFileTbl[14] = {
+    0x00CC0001, 0x00CC0003, 0x00CC0005, 0x00CC0007, 0x00CC0009, 0x00CC000B, 0x00CC000D,
+    0x00CC000F, 0x00CC0011, 0x00CC0013, 0x00CC0015, 0x00CC0017, 0x00CC0019, 0x00CC001B,
+};
+
 static s16 fn_1_1D4C(s16 playerNo, s16 num)
 {
     int i;
@@ -527,11 +540,54 @@ static void fn_1_1EAC(void)
     }
 }
 
-static void fn_1_1FC8(OMOBJ *obj) {}
+static void fn_1_1FC8(OMOBJ *obj)
+{
+    int i;
+    for (i = 0; i < SM_CHAR_MAX; i++) {
+        void *data = HuDataSelHeapReadNum(smCharFileTbl[i], HU_MEMNUM_OVL, HEAP_MODEL);
+        smCharMdlId[i] = Hu3DModelCreate(data);
+        Hu3DModelPosSet(smCharMdlId[i], 0.0f, 0.0f, 0.0f);
+        Hu3DModelAttrSet(smCharMdlId[i], HU3D_MOTATTR_LOOP);
+        Hu3DMotionSet(smCharMdlId[i], Hu3DJointMotionData(smCharMdlId[i], smCharMotFileTbl[i]));
+    }
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        smCharSelEndF[i] = FALSE;
+    }
+    fn_1_1D4C(0, 0);
+    obj->objFunc = fn_1_21C0;
+}
 
 static void fn_1_21C0(OMOBJ *obj) {}
 
-static void fn_1_2F80(OMOBJ *obj) {}
+static void fn_1_2F80(OMOBJ *obj)
+{
+    int mg;
+    if (WipeCheck()) {
+        return;
+    }
+    while (HuARDMACheck())
+        ;
+    mg = MgNoGet(smPageData[(smPage * SM_PAGE_SIZE) + smCursorNo].ovl);
+    GwSystem.mgNo = mg;
+    OSReport("mgNo=%d\n", mg);
+    _ClearFlag(0x1000E);
+    _ClearFlag(0x30002);
+    _SetFlag(0x5);
+    if (HuPadBtn[0] & PAD_BUTTON_A) {
+        GwMgNightF = 1;
+    }
+    else {
+        GwMgNightF = 0;
+    }
+    if (mg == -1) {
+        omOvlCallEx(smPageData[(smPage * SM_PAGE_SIZE) + smCursorNo].ovl, 1, 0, 0);
+    }
+    else {
+        omOvlCallEx(DLL_instdll, 1, 0, 0);
+    }
+    GameMesOvlPrev = smPageData[(smPage * SM_PAGE_SIZE) + smCursorNo].ovl;
+    smChar1Prev = smCursorNo;
+}
 
 static void fn_1_313C(void) {}
 
