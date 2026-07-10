@@ -67,20 +67,22 @@ static void GateBattanOMExec(OMOBJ *obj);
 void mbGateBattanCreate(int masuId)
 {
     GATEBATTAN_WORK *work;
+    GATEBATTAN_WORK *temp;
     int i;
 
     HuVecF startPos;
     HuVecF endPos;
     HuVecF pos;
     HuVecF dir;
-    s16 path[MASU_LINK_MAX];
     int motTbl[] = {
         BOARD_HSF_battanIdle,
         BOARD_HSF_battanMove,
         HU_DATANUM_NONE,
     };
+    s16 path[MASU_LINK_MAX];
 
-    work = HuMemDirectMallocNum(HEAP_HEAP, sizeof(GATEBATTAN_WORK), HU_MEMNUM_OVL);
+    temp = HuMemDirectMallocNum(HEAP_HEAP, sizeof(GATEBATTAN_WORK), HU_MEMNUM_OVL);
+    work = temp;
     gateBattanDataP[gateBattanNum] = work;
     memset(work, 0, sizeof(GATEBATTAN_WORK));
     for(i=0; motTbl[i] >= 0; i++) {
@@ -161,7 +163,8 @@ int mbev_GateBattan(int playerNo, int masuId)
     float angle;
 
     mbMoveNumDispSet(playerNo, FALSE);
-    no = mbev_GateBattanMasuFind(GwPlayer[playerNo].masuId);
+    masuId = GwPlayer[playerNo].masuId;
+    no = mbev_GateBattanMasuFind(masuId);
     work = gateBattanDataP[no];
     mbObjPosGet(work->modelId, &modelPos);
     mbPlayerPosGet(playerNo, &playerPos);
