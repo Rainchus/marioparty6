@@ -444,7 +444,7 @@ config.libs = [
     DolphinLib(
         "demo",
         [
-            Object(NonMatching, "dolphin/demo/DEMOInit.c"),
+            Object(Matching, "dolphin/demo/DEMOInit.c"),
             Object(Matching, "dolphin/demo/DEMOFont.c"),
             Object(NonMatching, "dolphin/demo/DEMOPuts.c"),
             Object(Matching, "dolphin/demo/DEMOStats.c"),
