@@ -575,6 +575,7 @@ void __GXBypass(u32 reg);
 u16 __GXReadPEReg(u32 reg);
 void __GXPEInit(void);
 void __GXAbort();
+void GXResetWriteGatherPipe(void);
 
 /* GXPerf.c */
 void __GXSetBWDials(u16 cpDial, u16 tcDial, u16 peDial, u16 cpuRdDial, u16 cpuWrDial);
