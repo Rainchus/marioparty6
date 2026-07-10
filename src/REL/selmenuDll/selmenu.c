@@ -37,6 +37,139 @@ typedef struct sm_entry {
     OMOVL ovl;
 } SMEntry;
 
+static SMEntry smPageData[SM_PAGE_MAX * SM_PAGE_SIZE] = {
+    { TRUE, "601:PIKATTO HIPDROP", DLL_m601dll },
+    { TRUE, "602:HAYAOSI MACHIGAI SAGASI", DLL_m602dll },
+    { TRUE, "603:NICE SHOT!", DLL_m603dll },
+    { TRUE, "604:PATA2 JUMP", DLL_m604dll },
+    { TRUE, "605:NIGERO GORO2", DLL_m605dll },
+    { TRUE, "606:JAMASUNNA RACE", DLL_m606dll },
+    { TRUE, "607:DOTABATA POS", DLL_m607dll },
+    { TRUE, "608:GURU2 SNOW BOARD JUM", DLL_m608dll },
+    { TRUE, "609:TAKI NI OCHIRUZO", DLL_m609dll },
+    { TRUE, "610:RADICON RACE", DLL_m610dll },
+    { TRUE, "611:DOKI2 SALVAG", DLL_m611dll },
+    { TRUE, "612:ROUTE WO SAGASE", DLL_m612dll },
+    { TRUE, "613:KARE2 SIBAKARI", DLL_m613dll },
+    { TRUE, "614:HOVERCRAFT BATTL", DLL_m614dll },
+    { TRUE, "615:TATAKE ONPU BALL", DLL_m615dll },
+    { TRUE, "616:ERANDE U", DLL_m616dll },
+    { TRUE, "617:TOMOSE ROUSOKU", DLL_m617dll },
+    { TRUE, "618:WATATTE LIFT", DLL_m618dll },
+    { TRUE, "619:GOKUAKU GESS", DLL_m619dll },
+    { TRUE, "620:KURIBOH HOI2", DLL_m620dll },
+    { TRUE, "621:SANBO ROYAL", DLL_m621dll },
+    { TRUE, "622:SAGSE COIN BAKO", DLL_m622dll },
+    { TRUE, "623:TURUTTO COIN ATUME", DLL_m623dll },
+    { TRUE, "624:HAGURUMA WATARI", DLL_m624dll },
+    { TRUE, "625:SUICHUU SURVIVAL", DLL_m625dll },
+    { TRUE, "626:YUKI GASSEN", DLL_m626dll },
+    { TRUE, "627:KOROGASE GORO2 BALL", DLL_m627dll },
+    { TRUE, "628:4X4 ATTITTI", DLL_m628dll },
+    { TRUE, "629:WATTE FUUSEN", DLL_m629dll },
+    { TRUE, "630:3LINE DE UTE", DLL_m630dll },
+    { TRUE, "631:GORO2 KAMINARI", DLL_m631dll },
+    { TRUE, "632:HAKONIWA PANIC", DLL_m632dll },
+    { TRUE, "633:BIRI2 LASER", DLL_m633dll },
+    { TRUE, "634:MINNA DE OSOUJI", DLL_m634dll },
+    { TRUE, "635:DAICON NUKI", DLL_m635dll },
+    { TRUE, "636:DOT DE OEKAK", DLL_m636dll },
+    { TRUE, "637:REEL WO MAWASE", DLL_m637dll },
+    { TRUE, "638:GONDOLA RACE", DLL_m638dll },
+    { TRUE, "639:FUURYOKU HATUDEN", DLL_m639dll },
+    { TRUE, "640:ROBOT FACTOR", DLL_m640dll },
+    { TRUE, "641:TATAKE MOGUR", DLL_m641dll },
+    { TRUE, "642:SEESAW GAME", DLL_m642dll },
+    { TRUE, "643:KILLER NOBOR", DLL_m643dll },
+    { TRUE, "644:DOURO KOUJI", DLL_m644dll },
+    { TRUE, "645:MADO FUK", DLL_m645dll },
+    { TRUE, "646:MATOATE SCROLL", DLL_m646dll },
+    { TRUE, "647:MUSI2 RACE", DLL_m647dll },
+    { TRUE, "648:HASTLE SHOT", DLL_m648dll },
+    { TRUE, "649:PITTARI STAM", DLL_m649dll },
+    { TRUE, "650:WAN2 RAC", DLL_m650dll },
+    { TRUE, "651:BLACK HOLE", DLL_m651dll },
+    { TRUE, "652:KUNE2 TSURU2 rac", DLL_m652dll },
+    { TRUE, "653:RADICON SUMO", DLL_m653dll },
+    { TRUE, "654:ATARI WO MITSUKERO", DLL_m654dll },
+    { TRUE, "655:ERANDE TARZA", DLL_m655dll },
+    { TRUE, "656:SUBMARINE DERBY", DLL_m656dll },
+    { TRUE, "657:GETSUMEN CHAKURIKU", DLL_m657dll },
+    { TRUE, "658:PIKATTO WARP", DLL_m658dll },
+    { TRUE, "659:GRID INSEKI YOKE", DLL_m659dll },
+    { TRUE, "660:YUUREI GARDE", DLL_m660dll },
+    { TRUE, "661:OIKOME NIGAS", DLL_m661dll },
+    { TRUE, "662:NOPPO NO KI", DLL_m662dll },
+    { TRUE, "663:AOKI MOR", DLL_m663dll },
+    { TRUE, "664:TAIGA BATTLE", DLL_m664dll },
+    { TRUE, "665:BOSS BATTLE", DLL_m665dll },
+    { TRUE, "666:3HIKI NO HEIHOH", DLL_m666dll },
+    { TRUE, "667:MIC DE KAWASITE", DLL_m667dll },
+    { TRUE, "668:PYON2 FIGHT", DLL_m668dll },
+    { TRUE, "669:KURIBOH WO SUKUE", DLL_m669dll },
+    { TRUE, "670:FRUITS VOICE", DLL_m670dll },
+    { TRUE, "671:KOOPA NO TEKKYUU", DLL_m671dll },
+    { TRUE, "672:KOOPA NO MEMAWAS", DLL_m672dll },
+    { TRUE, "673:CRAYAMI DE GAHAH", DLL_m673dll },
+    { TRUE, "674:DONKEY NO TARUJUMP", DLL_m674dll },
+    { TRUE, "675:YUSUTTE BANANA", DLL_m675dll },
+    { TRUE, "676:KOROGATTE UHOHO", DLL_m676dll },
+    { TRUE, "677:KOOPA NO DAIYOGE", DLL_m677dll },
+    { TRUE, "678TUNAGETE BLOC", DLL_m678dll },
+    { TRUE, "679:MEIRO DOUJOH", DLL_m679dll },
+    { TRUE, "680:SHUFFLE FRUITS", DLL_m680dll },
+    { TRUE, "681:YAJIRUSI TAISO", DLL_m681dll },
+    { TRUE, "699:BASKET", DLL_m699dll },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { TRUE, "***:BOARD W0", DLL_w01dll },
+    { TRUE, "***:BOARD W0", DLL_w02dll },
+    { TRUE, "***:BOARD W0", DLL_w03dll },
+    { TRUE, "***:BOARD W0", DLL_w04dll },
+    { TRUE, "***:BOARD W0", DLL_w05dll },
+    { TRUE, "***:BOARD W0", DLL_w06dll },
+    { TRUE, "***:BOARD W1", DLL_w10dll },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { TRUE, "***:S01", DLL_s01dll },
+    { TRUE, "***:S02", DLL_s02dll },
+    { TRUE, "***:S03", DLL_s03dll },
+    { TRUE, "***:BOARD W1", DLL_w11dll },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { FALSE, "***:", DLL_selmenuDLL },
+    { TRUE, "***:MODE SEL", DLL_mdseldll },
+    { TRUE, "***:PARTY MODE", DLL_mdpartydll },
+    { TRUE, "***:SINGLE MODE", DLL_mdsingdll },
+    { TRUE, "***:OPTION", DLL_optiondll },
+    { TRUE, "***:MINIGAME MOD", DLL_mdminidll },
+    { TRUE, "***:MG DECATHRON", DLL_mgmdecathlondll },
+    { TRUE, "***:MG FREE PLAY", DLL_mgmfreedll },
+    { TRUE, "***:MG BATTL", DLL_mgmbattledll },
+    { TRUE, "***:MG TOURNAMEN", DLL_mgmtournamentdll },
+    { TRUE, "***:MIC QUIZ", DLL_micquizdll },
+    { TRUE, "***:MG RENSH", DLL_mgmrenshodll },
+    { TRUE, "***:MG BINGO", DLL_mgmbingodll },
+    { TRUE, "***:MIRACLE BOOK", DLL_miraclebookdll },
+    { TRUE, "***:ENDING", DLL_endingdll },
+    { TRUE, "***:filesel", DLL_fileseldll },
+    { TRUE, "***:MIC SEL", DLL_micquizseldll },
+    { TRUE, "***:BOOT", DLL_bootdll },
+    { TRUE, "***:OPTION", DLL_optiondll },
+    { TRUE, "***:MIKEACT", DLL_mikeactdll },
+    { TRUE, "***:MESS CHECK", DLL_meschkdll },
+};
+
 /* ---------------- .bss group A ---------------- */
 static s16 smPage;
 static s16 smCursorNoPrev[SM_PAGE_MAX];
@@ -110,13 +243,108 @@ static void fn_1_568(GW_PLAYER_CONF *dst, GW_PLAYER_CONF *src)
     }
 }
 
-static void fn_1_5C8(void) {}
+static void fn_1_5C8(void)
+{
+    int i;
+    smPadDStk = smPadDStkDown = smPadBtnDown = 0;
+    for (i = 0; i < 4; i++) {
+        smPadDStkAll[i] = smPadDStkDownAll[i] = smPadBtnDownAll[i] = 0;
+        if ((HuPadDStkRep[i] | HuPadBtn[i]) & PAD_BUTTON_LEFT) {
+            smPadDStkAll[i] |= SM_KEY_LEFT;
+        }
+        if ((HuPadDStkRep[i] | HuPadBtn[i]) & PAD_BUTTON_RIGHT) {
+            smPadDStkAll[i] |= SM_KEY_RIGHT;
+        }
+        if ((HuPadDStkRep[i] | HuPadBtn[i]) & PAD_BUTTON_UP) {
+            smPadDStkAll[i] |= SM_KEY_UP;
+        }
+        if ((HuPadDStkRep[i] | HuPadBtn[i]) & PAD_BUTTON_DOWN) {
+            smPadDStkAll[i] |= SM_KEY_DOWN;
+        }
+        smPadBtnDownAll[i] |= HuPadBtnDown[i];
+        smPadDStkDownAll[i] = (smPadDStkAll[i] ^ smPadDStkAllPrev[i]) & smPadDStkAll[i];
+        smPadDStkAllPrev[i] = smPadDStkAll[i];
+        smPadDStk |= smPadDStkAll[i];
+        smPadDStkDown |= smPadDStkDownAll[i];
+        smPadBtnDown |= smPadBtnDownAll[i];
+    }
+}
 
-static void fn_1_8EC(void) {}
+static void fn_1_8EC(void)
+{
+    int i;
+    SMEntry *entry;
+    fontcolor = FONT_COLOR_YELLOW;
+    print8(200, 160, 2.5f, "PAGE:%d/%d", smPage + 1, SM_PAGE_MAX);
+    for (i = 0; i < SM_PAGE_SIZE; i++) {
+        entry = &smPageData[(smPage * SM_PAGE_SIZE) + i];
+        if (entry->on == 1) {
+            if (i == smCursorNo) {
+                fontcolor = FONT_COLOR_CYAN;
+            }
+            else {
+                fontcolor = FONT_COLOR_GREEN;
+            }
+        }
+        else {
+            fontcolor = FONT_COLOR_DARK_GREEN;
+        }
+        print8(100, (float)((i + 10) * 8) * 2.5f, 2.5f, "%s", entry->name);
+    }
+}
 
-static void fn_1_A5C(s16 num) {}
+static void fn_1_A5C(s16 num)
+{
+    s16 page;
+    int i;
+    u16 on;
+    s16 pagePrev;
+    on = FALSE;
+    page = smPage;
+    pagePrev = page;
+    do {
+        page += num;
+        if (page >= SM_PAGE_MAX) {
+            page = 0;
+        }
+        else if (page < 0) {
+            page = SM_PAGE_MAX - 1;
+        }
+        for (i = 0; i < SM_PAGE_SIZE; i++) {
+            if (smPageData[(page * SM_PAGE_SIZE) + i].on == 1) {
+                on = TRUE;
+                break;
+            }
+        }
+    } while (!on);
+    smPage = page;
+    if (pagePrev == -1) {
+        smCursorNo = -1;
+        fn_1_BDC(1);
+        smCursorNoPrev[smPage] = smCursorNo;
+    }
+    else {
+        smCursorNoPrev[pagePrev] = smCursorNo;
+        smCursorNo = smCursorNoPrev[smPage];
+    }
+}
 
-static void fn_1_BDC(s16 num) {}
+static void fn_1_BDC(s16 num)
+{
+    s16 pos;
+    pos = smCursorNo;
+    do {
+        pos += num;
+        if (pos >= SM_PAGE_SIZE) {
+            pos = 0;
+        }
+        else if (pos < 0) {
+            pos = SM_PAGE_SIZE - 1;
+        }
+    } while (!smPageData[(smPage * SM_PAGE_SIZE) + pos].on);
+    smCursorNo = pos;
+    (void)pos;
+}
 
 static void fn_1_C64(OMOBJ *obj) {}
 
@@ -166,7 +394,27 @@ static void fn_1_1E5C(void)
     }
 }
 
-static void fn_1_1EAC(void) {}
+static void fn_1_1EAC(void)
+{
+    int i;
+    int j;
+    int num;
+    int charNo[SM_CHAR_MAX];
+    smCharOnF[4] = 1;
+    for (i = 0; i < 4; i++) {
+        num = 0;
+        for (j = 0; j < SM_CHAR_MAX; j++) {
+            if (smCharOnF[j]) {
+                continue;
+            }
+            charNo[num++] = j;
+        }
+        if (smPlayerConf[i].type == 1) {
+            smPlayerConf[i].charNo = charNo[rand8() % num];
+            smCharOnF[smPlayerConf[i].charNo] = 1;
+        }
+    }
+}
 
 static void fn_1_1FC8(OMOBJ *obj) {}
 
