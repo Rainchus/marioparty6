@@ -51,9 +51,6 @@ typedef struct MgData_s {
 extern MGDATA MgDataTbl[];
 extern OMOVL GameMesOvlPrev;
 extern s32 MgNoGet(s16 ovlNo);
-extern void CharDataClose(s16 charNo);
-extern s32 CharMotionAMemPGet(s16 charNo);
-extern void CharMotionInit(s16 charNo);
 
 #define GW_TYPE_MAN 0
 
