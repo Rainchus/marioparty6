@@ -195,6 +195,10 @@ static SMEntry smPageData[SM_PAGE_MAX * SM_PAGE_SIZE] = {
     { TRUE, "***:MESS CHECK", DLL_meschkdll },
 };
 
+static u32 smCharSelCamBitTbl[] = { HU3D_CAM0, HU3D_CAM1, HU3D_CAM2, HU3D_CAM3 };
+
+static u32 lbl_1_data_844[] = { 0, 1, 2, 3, 4, 5 };
+
 /* ---------------- .bss group A ---------------- */
 static s16 smPage;
 static s16 smCursorNoPrev[SM_PAGE_MAX];
@@ -258,7 +262,57 @@ void _epilog(void)
     }
 }
 
-void fn_1_A0(void) {}
+void fn_1_A0(void)
+{
+    static char *funcId = "SMOBJECTSETUP\n";
+    int i;
+    OMOBJMAN *objman;
+    HuVecF pos, dir;
+
+    OSReport("ObjectSetup:%08x\n", fn_1_A0);
+    OSReport("\n\n\n******* SMObjectSetup *********\n");
+    OSReport(funcId);
+    objman = omInitObjMan(50, 8192);
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        if (GwPlayerConf[i].charNo >= SM_CHAR_MAX) {
+            break;
+        }
+    }
+    if (i != GW_PLAYER_MAX) {
+        for (i = 0; i < GW_PLAYER_MAX; i++) {
+            GwPlayerConf[i].charNo = i;
+        }
+    }
+    smMainObj = omAddObjEx(objman, 100, 0, 0, -1, fn_1_C64);
+    smOutViewObj = omAddObjEx(objman, 32730, 0, 0, -1, omOutViewMulti);
+    omAddObjEx(objman, 100, 0, 0, -1, fn_1_4380);
+    smOutViewObj->work[0] = GW_PLAYER_MAX;
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        CRotM[i].x = -20.0f;
+        CRotM[i].y = 0.0f;
+        CRotM[i].z = 0.0f;
+        CenterM[i].x = 0.0f;
+        CenterM[i].y = 50.0f;
+        CenterM[i].z = 0.0f;
+        CZoomM[i] = 500.0f;
+        Hu3DCameraCreate(smCharSelCamBitTbl[i]);
+        Hu3DCameraPerspectiveSet(smCharSelCamBitTbl[i], 45.0f, 20.0f, 25000.0f, 4.0f / 3.0f);
+        Hu3DCameraViewportSet(smCharSelCamBitTbl[i], (i % 2) * 320.0f, (i / 2) * 240.0f, 320.0f, 240.0f, 0.0f, 1.0f);
+    }
+    Hu3DGLightCreate(0.0f, 0.0f, 100.0f, 0.0f, 0.0f, -1.0f, 255, 255, 255);
+    pos.x = 0.0f;
+    pos.y = 0.0f;
+    pos.z = 200.0f;
+    dir.x = dir.y = 0.0f;
+    dir.z = -1.0f;
+    SetDefLight(&pos, &dir, 255, 255, 255, 64, 64, 64, 255, 255, 255);
+    WipeCreate(WIPE_MODE_IN, WIPE_TYPE_NORMAL, 5);
+    GwSystem.subGameNo = -1;
+    _ClearFlag(0x10000);
+    GwSystem.turnNo = 1;
+    GwSystem.turnMax = 20;
+    HuMemHeapDump(HuMemHeapPtrGet(HEAP_MODEL), -1);
+}
 
 static void fn_1_568(GW_PLAYER_CONF *dst, GW_PLAYER_CONF *src)
 {
