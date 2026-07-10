@@ -241,29 +241,29 @@ static u16 smPadDStkDownAll[4];
 static u16 smPadDStkAllPrev[4] = {};
 
 /* forward declarations (address order) */
-void fn_1_A0(void);                 /* ObjectSetup */
-static void fn_1_568(GW_PLAYER_CONF *dst, GW_PLAYER_CONF *src); /* SMCopyConfig */
-static void fn_1_5C8(void);         /* SMBtnRead */
-static void fn_1_8EC(void);         /* SMPagePrint */
-static void fn_1_A5C(s16 num);      /* SMPageNoAdd */
-static void fn_1_BDC(s16 num);      /* SMCursorNoAdd */
-static void fn_1_C64(OMOBJ *obj);   /* SMInit */
-static void fn_1_10D8(OMOBJ *obj);  /* SMMain */
-static void fn_1_1B50(int pos);     /* SMGroupSet */
-static s16 fn_1_1D4C(s16 playerNo, s16 num); /* SMCharNoAdd */
-static void fn_1_1E5C(void);        /* SMCharMdlKill */
-static void fn_1_1EAC(void);        /* SMCharComSet */
-static void fn_1_1FC8(OMOBJ *obj);  /* SMCharSelInit */
-static void fn_1_21C0(OMOBJ *obj);  /* SMCharSelMain */
-static void fn_1_2F80(OMOBJ *obj);  /* SMExit */
-static void fn_1_313C(void);        /* SMPlayerConfPrint */
-static void fn_1_3940(OMOBJ *obj);  /* SMPlayerConfInit */
-static void fn_1_3980(OMOBJ *obj);  /* SMPlayerConfMain */
-static void fn_1_4380(OMOBJ *obj);  /* SMRandMain */
-static void fn_1_43A0(void);        /* SMStub */
-static void fn_1_43A4(OMOBJ *obj);  /* SMSound3DInit */
-static void fn_1_4408(OMOBJ *obj);  /* SMSound3DExec */
-static void fn_1_4C5C(void);        /* SMSound3DPrint */
+void ObjectSetup(void);                 /* ObjectSetup */
+static void SMCopyConfig(GW_PLAYER_CONF *dst, GW_PLAYER_CONF *src); /* SMCopyConfig */
+static void SMBtnRead(void);         /* SMBtnRead */
+static void SMPagePrint(void);         /* SMPagePrint */
+static void SMPageNoAdd(s16 num);      /* SMPageNoAdd */
+static void SMCursorNoAdd(s16 num);      /* SMCursorNoAdd */
+static void SMInit(OMOBJ *obj);   /* SMInit */
+static void SMMain(OMOBJ *obj);  /* SMMain */
+static void SMGroupSet(int pos);     /* SMGroupSet */
+static s16 SMCharNoAdd(s16 playerNo, s16 num); /* SMCharNoAdd */
+static void SMCharMdlKill(void);        /* SMCharMdlKill */
+static void SMCharComSet(void);        /* SMCharComSet */
+static void SMCharSelInit(OMOBJ *obj);  /* SMCharSelInit */
+static void SMCharSelMain(OMOBJ *obj);  /* SMCharSelMain */
+static void SMExit(OMOBJ *obj);  /* SMExit */
+static void SMPlayerConfPrint(void);        /* SMPlayerConfPrint */
+static void SMPlayerConfInit(OMOBJ *obj);  /* SMPlayerConfInit */
+static void SMPlayerConfMain(OMOBJ *obj);  /* SMPlayerConfMain */
+static void SMRandMain(OMOBJ *obj);  /* SMRandMain */
+static void SMStub(void);        /* SMStub */
+static void SMSound3DInit(OMOBJ *obj);  /* SMSound3DInit */
+static void SMSound3DExec(OMOBJ *obj);  /* SMSound3DExec */
+static void SMSound3DPrint(void);        /* SMSound3DPrint */
 
 int _prolog(void)
 {
@@ -273,7 +273,7 @@ int _prolog(void)
         (*ctor)();
     }
 
-    fn_1_A0();
+    ObjectSetup();
     return 0;
 }
 
@@ -286,14 +286,14 @@ void _epilog(void)
     }
 }
 
-void fn_1_A0(void)
+void ObjectSetup(void)
 {
     static char *funcId = "SMOBJECTSETUP\n";
     int i;
     OMOBJMAN *objman;
     HuVecF pos, dir;
 
-    OSReport("ObjectSetup:%08x\n", fn_1_A0);
+    OSReport("ObjectSetup:%08x\n", ObjectSetup);
     OSReport("\n\n\n******* SMObjectSetup *********\n");
     OSReport(funcId);
     objman = omInitObjMan(50, 8192);
@@ -307,9 +307,9 @@ void fn_1_A0(void)
             GwPlayerConf[i].charNo = i;
         }
     }
-    smMainObj = omAddObjEx(objman, 100, 0, 0, -1, fn_1_C64);
+    smMainObj = omAddObjEx(objman, 100, 0, 0, -1, SMInit);
     smOutViewObj = omAddObjEx(objman, 32730, 0, 0, -1, omOutViewMulti);
-    omAddObjEx(objman, 100, 0, 0, -1, fn_1_4380);
+    omAddObjEx(objman, 100, 0, 0, -1, SMRandMain);
     smOutViewObj->work[0] = GW_PLAYER_MAX;
     for (i = 0; i < GW_PLAYER_MAX; i++) {
         CRotM[i].x = -20.0f;
@@ -338,7 +338,7 @@ void fn_1_A0(void)
     HuMemHeapDump(HuMemHeapPtrGet(HEAP_MODEL), -1);
 }
 
-static void fn_1_568(GW_PLAYER_CONF *dst, GW_PLAYER_CONF *src)
+static void SMCopyConfig(GW_PLAYER_CONF *dst, GW_PLAYER_CONF *src)
 {
     int i;
     for (i = 0; i < 4; i++) {
@@ -346,7 +346,7 @@ static void fn_1_568(GW_PLAYER_CONF *dst, GW_PLAYER_CONF *src)
     }
 }
 
-static void fn_1_5C8(void)
+static void SMBtnRead(void)
 {
     int i;
     smPadDStk = smPadDStkDown = smPadBtnDown = 0;
@@ -373,7 +373,7 @@ static void fn_1_5C8(void)
     }
 }
 
-static void fn_1_8EC(void)
+static void SMPagePrint(void)
 {
     int i;
     SMEntry *entry;
@@ -396,7 +396,7 @@ static void fn_1_8EC(void)
     }
 }
 
-static void fn_1_A5C(s16 num)
+static void SMPageNoAdd(s16 num)
 {
     s16 page;
     int i;
@@ -423,7 +423,7 @@ static void fn_1_A5C(s16 num)
     smPage = page;
     if (pagePrev == -1) {
         smCursorNo = -1;
-        fn_1_BDC(1);
+        SMCursorNoAdd(1);
         smCursorNoPrev[smPage] = smCursorNo;
     }
     else {
@@ -432,7 +432,7 @@ static void fn_1_A5C(s16 num)
     }
 }
 
-static void fn_1_BDC(s16 num)
+static void SMCursorNoAdd(s16 num)
 {
     s16 pos;
     pos = smCursorNo;
@@ -449,17 +449,17 @@ static void fn_1_BDC(s16 num)
     (void)pos;
 }
 
-static void fn_1_C64(OMOBJ *obj)
+static void SMInit(OMOBJ *obj)
 {
     int i, j;
-    OSReport("SMinit:%08x\n", fn_1_C64);
+    OSReport("SMinit:%08x\n", SMInit);
     omDLLDBGOut();
     Hu3DBGColorSet(0, 0, 0);
-    fn_1_568(smPlayerConf, GwPlayerConf);
+    SMCopyConfig(smPlayerConf, GwPlayerConf);
     for (i = 0; i < GW_PLAYER_MAX; i++) {
         for (j = i + 1; j < GW_PLAYER_MAX; j++) {
             if (smPlayerConf[i].charNo == smPlayerConf[j].charNo) {
-                smPlayerConf[j].charNo = fn_1_1D4C(j, -1);
+                smPlayerConf[j].charNo = SMCharNoAdd(j, -1);
             }
         }
     }
@@ -477,7 +477,7 @@ static void fn_1_C64(OMOBJ *obj)
             smCursorNoPrev[i] = j;
         }
     }
-    fn_1_A5C(1);
+    SMPageNoAdd(1);
     if (GameMesOvlPrev != DLL_NONE) {
         for (i = 0; i < SM_PAGE_MAX * SM_PAGE_SIZE; i++) {
             if (GameMesOvlPrev == smPageData[i].ovl && smPageData[i].on == 1) {
@@ -488,43 +488,43 @@ static void fn_1_C64(OMOBJ *obj)
             }
         }
     }
-    obj->objFunc = fn_1_10D8;
+    obj->objFunc = SMMain;
 }
 
-static void fn_1_10D8(OMOBJ *obj)
+static void SMMain(OMOBJ *obj)
 {
-    fn_1_5C8();
-    fn_1_8EC();
+    SMBtnRead();
+    SMPagePrint();
     if (smPadDStkDown & SM_KEY_UP) {
-        fn_1_BDC(-1);
-        fn_1_1B50((smPage * SM_PAGE_SIZE) + smCursorNo);
+        SMCursorNoAdd(-1);
+        SMGroupSet((smPage * SM_PAGE_SIZE) + smCursorNo);
         return;
     }
     if (smPadDStkDown & SM_KEY_DOWN) {
-        fn_1_BDC(1);
-        fn_1_1B50((smPage * SM_PAGE_SIZE) + smCursorNo);
+        SMCursorNoAdd(1);
+        SMGroupSet((smPage * SM_PAGE_SIZE) + smCursorNo);
         return;
     }
     if (smPadDStkDown & SM_KEY_LEFT) {
-        fn_1_A5C(-1);
-        fn_1_1B50((smPage * SM_PAGE_SIZE) + smCursorNo);
+        SMPageNoAdd(-1);
+        SMGroupSet((smPage * SM_PAGE_SIZE) + smCursorNo);
         return;
     }
     if (smPadDStkDown & SM_KEY_RIGHT) {
-        fn_1_A5C(1);
-        fn_1_1B50((smPage * SM_PAGE_SIZE) + smCursorNo);
+        SMPageNoAdd(1);
+        SMGroupSet((smPage * SM_PAGE_SIZE) + smCursorNo);
         return;
     }
     if ((smPadBtnDown & PAD_BUTTON_A) || (smPadBtnDown & PAD_BUTTON_START)) {
-        obj->objFunc = fn_1_1FC8;
+        obj->objFunc = SMCharSelInit;
         return;
     }
     if (smPadBtnDown & PAD_BUTTON_Y) {
-        obj->objFunc = fn_1_3940;
+        obj->objFunc = SMPlayerConfInit;
         return;
     }
     if (smPadBtnDown & PAD_TRIGGER_Z) {
-        obj->objFunc = fn_1_43A4;
+        obj->objFunc = SMSound3DInit;
         return;
     }
     if (smPadBtnDown & PAD_BUTTON_X) {
@@ -532,7 +532,7 @@ static void fn_1_10D8(OMOBJ *obj)
     }
 }
 
-static void fn_1_1B50(int pos)
+static void SMGroupSet(int pos)
 {
     int i;
     int j;
@@ -598,7 +598,7 @@ static int smCharMotFileTbl[14] = {
     0x00CC000F, 0x00CC0011, 0x00CC0013, 0x00CC0015, 0x00CC0017, 0x00CC0019, 0x00CC001B,
 };
 
-static s16 fn_1_1D4C(s16 playerNo, s16 num)
+static s16 SMCharNoAdd(s16 playerNo, s16 num)
 {
     int i;
     s16 charNo;
@@ -627,7 +627,7 @@ static s16 fn_1_1D4C(s16 playerNo, s16 num)
     return charNo;
 }
 
-static void fn_1_1E5C(void)
+static void SMCharMdlKill(void)
 {
     int i;
     for (i = 0; i < SM_CHAR_MAX; i++) {
@@ -635,7 +635,7 @@ static void fn_1_1E5C(void)
     }
 }
 
-static void fn_1_1EAC(void)
+static void SMCharComSet(void)
 {
     int i;
     int j;
@@ -657,7 +657,7 @@ static void fn_1_1EAC(void)
     }
 }
 
-static void fn_1_1FC8(OMOBJ *obj)
+static void SMCharSelInit(OMOBJ *obj)
 {
     int i;
     for (i = 0; i < SM_CHAR_MAX; i++) {
@@ -670,11 +670,11 @@ static void fn_1_1FC8(OMOBJ *obj)
     for (i = 0; i < GW_PLAYER_MAX; i++) {
         smCharSelEndF[i] = FALSE;
     }
-    fn_1_1D4C(0, 0);
-    obj->objFunc = fn_1_21C0;
+    SMCharNoAdd(0, 0);
+    obj->objFunc = SMCharSelMain;
 }
 
-static void fn_1_21C0(OMOBJ *obj)
+static void SMCharSelMain(OMOBJ *obj)
 {
     int i;
 
@@ -704,13 +704,13 @@ static void fn_1_21C0(OMOBJ *obj)
         }
     }
     if (manDoneNum == manNum) {
-        fn_1_1D4C(0, 0);
-        fn_1_1EAC();
+        SMCharNoAdd(0, 0);
+        SMCharComSet();
         smPlayerConf[0].charNo = 4;
         smPlayerConf[1].charNo = 11;
         smPlayerConf[2].charNo = 12;
         smPlayerConf[3].charNo = 13;
-        fn_1_568(GwPlayerConf, smPlayerConf);
+        SMCopyConfig(GwPlayerConf, smPlayerConf);
         CharDataClose(-1);
         OSReport("%d,%d,%d,%d\n", GwPlayerConf[0].charNo, GwPlayerConf[1].charNo, GwPlayerConf[2].charNo, GwPlayerConf[3].charNo);
         if (!CharMotionAMemPGet(GwPlayerConf[0].charNo)) {
@@ -726,17 +726,17 @@ static void fn_1_21C0(OMOBJ *obj)
             CharMotionInit(GwPlayerConf[3].charNo);
         }
         WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_NORMAL, 20);
-        obj->objFunc = fn_1_2F80;
+        obj->objFunc = SMExit;
     }
-    fn_1_5C8();
+    SMBtnRead();
     for (i = 0; i < GW_PLAYER_MAX; i++) {
         port = smPlayerConf[i].padNo;
         if (!smCharSelEndF[i]) {
             if (smPadDStkDownAll[port] & SM_KEY_LEFT) {
-                smPlayerConf[port].charNo = fn_1_1D4C(i, -1);
+                smPlayerConf[port].charNo = SMCharNoAdd(i, -1);
             }
             if (smPadDStkDownAll[port] & SM_KEY_RIGHT) {
-                smPlayerConf[port].charNo = fn_1_1D4C(i, 1);
+                smPlayerConf[port].charNo = SMCharNoAdd(i, 1);
             }
             if (smPadBtnDownAll[port] & PAD_BUTTON_A) {
                 smCharSelEndF[i] = TRUE;
@@ -747,8 +747,8 @@ static void fn_1_21C0(OMOBJ *obj)
                 smCharSelEndF[i] = 0;
             }
             else {
-                fn_1_1E5C();
-                obj->objFunc = fn_1_10D8;
+                SMCharMdlKill();
+                obj->objFunc = SMMain;
                 return;
             }
         }
@@ -792,7 +792,7 @@ static void fn_1_21C0(OMOBJ *obj)
     }
 }
 
-static void fn_1_2F80(OMOBJ *obj)
+static void SMExit(OMOBJ *obj)
 {
     int mg;
     if (WipeCheck()) {
@@ -841,7 +841,7 @@ static s16 smPlayerConfChoiceNo;
         (void)color;                                                                                                                                   \
     } while (0)
 
-static void fn_1_313C(void)
+static void SMPlayerConfPrint(void)
 {
     int i;
     s16 x;
@@ -890,19 +890,19 @@ static void fn_1_313C(void)
 
 #undef DO_HILITE
 
-static void fn_1_3940(OMOBJ *obj)
+static void SMPlayerConfInit(OMOBJ *obj)
 {
     smPlayerConfEditF = 0;
     smPlayerConfNo = 0;
     smPlayerConfChoiceNo = 0;
-    obj->objFunc = fn_1_3980;
+    obj->objFunc = SMPlayerConfMain;
 }
 
-static void fn_1_3980(OMOBJ *obj)
+static void SMPlayerConfMain(OMOBJ *obj)
 {
     int offset;
-    fn_1_313C();
-    fn_1_5C8();
+    SMPlayerConfPrint();
+    SMBtnRead();
     if (!smPlayerConfEditF) {
         if (smPadDStkDown & SM_KEY_LEFT) {
             offset = ((smPlayerConfNo & 0x1) - 1) & 0x1;
@@ -929,7 +929,7 @@ static void fn_1_3980(OMOBJ *obj)
             return;
         }
         if ((smPadBtnDown & PAD_BUTTON_B) || (smPadBtnDown & PAD_BUTTON_Y)) {
-            obj->objFunc = fn_1_10D8;
+            obj->objFunc = SMMain;
             return;
         }
         if (smPadBtnDown & PAD_BUTTON_START) {
@@ -1007,16 +1007,16 @@ static void fn_1_3980(OMOBJ *obj)
         smPlayerConfEditF = 0;
     }
     else if (smPadBtnDown & PAD_BUTTON_Y) {
-        obj->objFunc = fn_1_10D8;
+        obj->objFunc = SMMain;
     }
 }
 
-static void fn_1_4380(OMOBJ *obj)
+static void SMRandMain(OMOBJ *obj)
 {
     rand8();
 }
 
-static void fn_1_43A0(void) {}
+static void SMStub(void) {}
 
 /* ---------------- .bss group D ---------------- */
 static s16 smEmiCompDataNo;
@@ -1024,19 +1024,19 @@ static s16 smEmiCompVal;
 static s16 smSound3DNo;
 s16 lbl_1_bss_0;
 
-static void fn_1_43A4(OMOBJ *obj)
+static void SMSound3DInit(OMOBJ *obj)
 {
     MSMSE *se = msmSeGetIndexPtr(smEmiCompDataNo);
     smEmiCompVal = se->comp;
-    obj->objFunc = fn_1_4408;
+    obj->objFunc = SMSound3DExec;
 }
 
-static void fn_1_4408(OMOBJ *obj)
+static void SMSound3DExec(OMOBJ *obj)
 {
     float speed;
     MSMSE *se;
 
-    fn_1_5C8();
+    SMBtnRead();
     if (smPadDStkDown & SM_KEY_UP) {
         smSound3DNo--;
         if (smSound3DNo < 0) {
@@ -1149,9 +1149,9 @@ static void fn_1_4408(OMOBJ *obj)
     }
 
     if (smPadBtnDown & PAD_BUTTON_B) {
-        obj->objFunc = fn_1_10D8;
+        obj->objFunc = SMMain;
     }
-    fn_1_4C5C();
+    SMSound3DPrint();
 }
 
 #define DO_HILITE(pos)                                                                                                                                 \
@@ -1164,7 +1164,7 @@ static void fn_1_4408(OMOBJ *obj)
         }                                                                                                                                              \
     } while (0)
 
-static void fn_1_4C5C(void)
+static void SMSound3DPrint(void)
 {
     char *onOffStr[] = { " ON", "OFF" };
     fontcolor = FONT_COLOR_YELLOW;

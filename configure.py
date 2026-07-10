@@ -739,7 +739,7 @@ config.libs = [
     Rel(
         "selmenuDll",
         objects={
-            Object(NonMatching, "REL/selmenuDll/selmenu.c", mw_version=config.linker_version),
+            Object(Matching, "REL/selmenuDll/selmenu.c", mw_version=config.linker_version),
             Object(
                 Matching,
                 "REL/selmenuDll/runtime.c",
