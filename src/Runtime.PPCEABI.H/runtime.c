@@ -44,6 +44,7 @@ asm void __cvt_dbl_usll(void);
 #define __cvt_sll_flt fn_1_EC28
 #define __cvt_ull_flt fn_1_ECDC
 #define __cvt_dbl_usll fn_1_ED7C
+#define __cvt_fp2unsigned fn_1_E404
 #endif
 
 void SAVE_FPR(14)(void);
@@ -165,7 +166,8 @@ static const u32 __constants[] = {
 #endif
 
 /* 803620AC-80362108 35C9EC 005C+00 0/0 42/42 89/89 .text            __cvt_fp2unsigned */
-#ifndef MP6_FILESEL_RUNTIME
+/* fileseldll (MP6_FILESEL_RUNTIME): emitted as fn_1_E404 at REL .text 0xE404, ahead of
+ * __save_fpr — the runtime's own object order in the original link. */
 asm u32 __cvt_fp2unsigned(register f64 d)
 {
 #ifdef __MWERKS__ // clang-format off
@@ -196,7 +198,6 @@ asm u32 __cvt_fp2unsigned(register f64 d)
 		blr
 #endif // clang-format on
 }
-#endif
 
 /* 80362108-80362134 35CA48 002C+00 0/0 0/0 0/0 .text            __save_fpr */
 asm void __save_fpr(void) {

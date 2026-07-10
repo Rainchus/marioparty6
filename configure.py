@@ -740,6 +740,7 @@ config.libs = [
         "fileseldll",
         objects={
             Object(NonMatching, "REL/fileseldll/filesel.c", mw_version=config.linker_version),
+            Object(NonMatching, "REL/fileseldll/saveload.c", mw_version=config.linker_version),
             Object(
                 Matching,
                 "REL/fileseldll/runtime.c",
