@@ -1,3 +1,14 @@
+#define _MATH_H
+#define M_PI 3.141592653589793
+double sin(double);
+double cos(double);
+#pragma cplusplus on
+extern inline double fabs(double x)
+{
+    return __fabs(x);
+}
+#pragma cplusplus reset
+
 #include "game/board/main.h"
 #include "game/board/camera.h"
 
@@ -9,7 +20,6 @@
 #include "game/process.h"
 
 #include "humath.h"
-#include "math.h"
 
 #define FLAG_BOARD_CAMERAMOT FLAGNUM(FLAG_GROUP_COMMON, 26)
 
