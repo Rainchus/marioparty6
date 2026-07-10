@@ -418,7 +418,7 @@ config.libs = [
             Object(NonMatching, "dolphin/mtx/mtx44.c"),
             Object(NonMatching, "dolphin/mtx/mtx44vec.c"),
             Object(NonMatching, "dolphin/mtx/vec.c"),
-            Object(NonMatching, "dolphin/mtx/quat.c"),
+            Object(Matching, "dolphin/mtx/quat.c"),
             Object(Matching, "dolphin/mtx/psmtx.c"),
         ],
     ),
