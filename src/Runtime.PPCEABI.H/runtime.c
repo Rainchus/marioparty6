@@ -46,22 +46,6 @@ asm void __cvt_dbl_usll(void);
 #define __cvt_dbl_usll fn_1_ED7C
 #endif
 
-#ifdef MP6_SELMENU_RUNTIME
-#define __cvt_fp2unsigned fn_1_502C
-#define __div2u fn_1_5280
-#define __div2i fn_1_536C
-#define __mod2u fn_1_54A4
-#define __mod2i fn_1_5588
-#define __shl2i fn_1_5694
-#define __shr2u fn_1_56B8
-#define __shr2i fn_1_56DC
-#define __cvt_sll_dbl fn_1_5704
-#define __cvt_ull_dbl fn_1_57B4
-#define __cvt_sll_flt fn_1_5850
-#define __cvt_ull_flt fn_1_5904
-#define __cvt_dbl_usll fn_1_59A4
-#endif
-
 void SAVE_FPR(14)(void);
 void SAVE_FPR(15)(void);
 void SAVE_FPR(16)(void);
