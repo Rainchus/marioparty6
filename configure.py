@@ -705,7 +705,7 @@ config.libs = [
             Object(NonMatching, "board/mgcall.c"),
             Object(NonMatching, "board/effect.c"),
             Object(NonMatching, "board/config.c"),
-            Object(NonMatching, "board/gate.c"),
+            Object(Matching, "board/gate.c"),
             Object(NonMatching, "board/last5.c"),
             Object(NonMatching, "board/telop.c"),
             Object(NonMatching, "board/wipe.c"),
