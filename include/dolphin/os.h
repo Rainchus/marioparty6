@@ -92,11 +92,12 @@ void OSTicksToCalendarTime(OSTime ticks, OSCalendarTime* td);
 
 typedef struct OSStopwatch {
 	char* name;
-	OSTime total;
 	u32 hits;
+	OSTime total;
 	OSTime min;
 	OSTime max;
 	OSTime last;
+	BOOL running;
 } OSStopwatch;
 
 void OSInitStopwatch(OSStopwatch* sw, char* name);
