@@ -736,6 +736,19 @@ config.libs = [
             Object(Matching, "REL/bootDll/opening.c", mw_version=config.linker_version),
         },
     ),
+    Rel(
+        "selmenuDll",
+        objects={
+            Object(NonMatching, "REL/selmenuDll/selmenu.c", mw_version=config.linker_version),
+            Object(
+                Matching,
+                "REL/selmenuDll/runtime.c",
+                source="Runtime.PPCEABI.H/runtime.c",
+                mw_version=config.linker_version,
+                extra_cflags=["-DMP6_REL_RUNTIME=1", "-DMP6_SELMENU_RUNTIME=1", "-proc 7400"],
+            ),
+        },
+    ),
 
 ]
 
