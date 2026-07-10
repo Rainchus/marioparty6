@@ -758,7 +758,118 @@ static void fn_1_3940(OMOBJ *obj)
     obj->objFunc = fn_1_3980;
 }
 
-static void fn_1_3980(OMOBJ *obj) {}
+static void fn_1_3980(OMOBJ *obj)
+{
+    int offset;
+    fn_1_313C();
+    fn_1_5C8();
+    if (!smPlayerConfEditF) {
+        if (smPadDStkDown & SM_KEY_LEFT) {
+            offset = ((smPlayerConfNo & 0x1) - 1) & 0x1;
+            smPlayerConfNo = (smPlayerConfNo & 0xFFFE) + offset;
+        }
+        else {
+            if (smPadDStkDown & SM_KEY_RIGHT) {
+                offset = ((smPlayerConfNo & 0x1) + 1) & 0x1;
+                smPlayerConfNo = (smPlayerConfNo & 0xFFFE) + offset;
+            }
+            else if (smPadDStkDown & SM_KEY_DOWN) {
+                if ((smPlayerConfNo += 2) >= 4) {
+                    smPlayerConfNo -= 4;
+                }
+            }
+            else if (smPadDStkDown & SM_KEY_UP) {
+                if ((smPlayerConfNo -= 2) < 0) {
+                    smPlayerConfNo += 4;
+                }
+            }
+        }
+        if (smPadBtnDown & PAD_BUTTON_A) {
+            smPlayerConfEditF = 1;
+            return;
+        }
+        if ((smPadBtnDown & PAD_BUTTON_B) || (smPadBtnDown & PAD_BUTTON_Y)) {
+            obj->objFunc = fn_1_10D8;
+            return;
+        }
+        if (smPadBtnDown & PAD_BUTTON_START) {
+            int i;
+            for (i = 0; i < 100; i++) {
+                int order1 = frandmod(GW_PLAYER_MAX);
+                int order2 = frandmod(GW_PLAYER_MAX);
+                int temp = smPlayerConf[order1].grpNo;
+                smPlayerConf[order1].grpNo = smPlayerConf[order2].grpNo;
+                smPlayerConf[order2].grpNo = temp;
+            }
+        }
+    }
+    else if (smPadDStkDown & SM_KEY_UP) {
+        if (--smPlayerConfChoiceNo < 0) {
+            smPlayerConfChoiceNo = 3;
+        }
+    }
+    else if (smPadDStkDown & SM_KEY_DOWN) {
+        if (++smPlayerConfChoiceNo > 3) {
+            smPlayerConfChoiceNo = 0;
+        }
+    }
+    else if (smPadDStkDown & SM_KEY_LEFT) {
+        switch (smPlayerConfChoiceNo) {
+            case 0:
+                smPlayerConf[smPlayerConfNo].type ^= 1;
+                break;
+
+            case 1:
+                if (--smPlayerConf[smPlayerConfNo].padNo < 0) {
+                    smPlayerConf[smPlayerConfNo].padNo = 3;
+                }
+                break;
+
+            case 2:
+                if (--smPlayerConf[smPlayerConfNo].grpNo < 0) {
+                    smPlayerConf[smPlayerConfNo].grpNo = 3;
+                }
+                break;
+
+            case 3:
+                if (--smPlayerConf[smPlayerConfNo].comDif < 0) {
+                    smPlayerConf[smPlayerConfNo].comDif = 3;
+                }
+                break;
+        };
+    }
+    else if (smPadDStkDown & SM_KEY_RIGHT) {
+        switch (smPlayerConfChoiceNo) {
+            case 0:
+                smPlayerConf[smPlayerConfNo].type ^= 1;
+                break;
+
+            case 1:
+                if (++smPlayerConf[smPlayerConfNo].padNo > 3) {
+                    smPlayerConf[smPlayerConfNo].padNo = 0;
+                }
+                break;
+
+            case 2:
+                if (++smPlayerConf[smPlayerConfNo].grpNo > 3) {
+                    smPlayerConf[smPlayerConfNo].grpNo = 0;
+                }
+                break;
+
+            case 3:
+                if (++smPlayerConf[smPlayerConfNo].comDif > 3) {
+                    smPlayerConf[smPlayerConfNo].comDif = 0;
+                }
+                break;
+        }
+    }
+    else if ((smPadBtnDown & PAD_BUTTON_A) || (smPadBtnDown & PAD_BUTTON_B)) {
+        smPlayerConfEditF = 0;
+    }
+    else if (smPadBtnDown & PAD_BUTTON_Y) {
+        obj->objFunc = fn_1_10D8;
+    }
+}
 
 static void fn_1_4380(OMOBJ *obj)
 {
