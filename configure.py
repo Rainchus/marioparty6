@@ -764,6 +764,18 @@ config.libs = [
             ),
         },
     ),
+    Rel(
+        "sequencedll",
+        objects={
+            Object(Matching, "REL/sequencedll/sequence.c", mw_version=config.linker_version),
+        },
+    ),
+    Rel(
+        "actmanDLL",
+        objects={
+            Object(Matching, "REL/actmanDLL/actman.c", mw_version=config.linker_version),
+        },
+    ),
 
 ]
 
