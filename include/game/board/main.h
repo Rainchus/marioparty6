@@ -1,0 +1,20 @@
+#ifndef _BOARD_MAIN_H
+#define _BOARD_MAIN_H
+
+#include "game/object.h"
+#include "game/process.h"
+#include "game/gamework.h"
+
+#include "datadir_enum.h"
+
+#ifndef HUSPR_GRP_NONE
+#define HUSPR_GRP_NONE -1
+#endif
+
+extern OMOBJMAN *mbObjMan;
+
+BOOL mbExitCheck(void);
+int mbBoardDataNumGet(int dataNum);
+int mbRandMod(int mod);
+
+#endif
