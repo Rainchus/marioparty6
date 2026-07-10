@@ -796,10 +796,10 @@ static inline void CameraMoveApply(HuVecF *pos, HuVecF *rot, HuVecF *offset, flo
     MBCAMERA *cameraP = mbCameraGet();
     MBCAMERAVIEWKEY *key1 = &cameraP->viewKey[0];
     MBCAMERAVIEWKEY *key2 = &cameraP->viewKey[1];
-    HuVecF rotTmp;
-    HuVecF posTmp;
     HuVecF ofsTmp;
-    cameraP->curveType = MB_CAMERA_CURVE_LINEAR;
+    HuVecF posTmp;
+    HuVecF rotTmp;
+    mbCameraCurveTypeSet(MB_CAMERA_CURVE_LINEAR);
     key1->fov = cameraP->fov;
     key1->zoom = cameraP->zoom;
     key1->rot = cameraP->rot;
@@ -841,7 +841,7 @@ void mbCameraMovePos(HuVecF *pos, HuVecF *rot, HuVecF *offset, float zoom, float
     } else {
         ofs = *offset;
     }
-    CameraMoveApply(pos, rot, &ofs, zoom, fov, maxTime);
+    CameraMoveApply(pos, rot, (HuVecF *)&ofs, zoom, fov, maxTime);
     if(pos) {
         mbCameraFocusPosSet(pos);
     }
@@ -852,22 +852,16 @@ void mbCameraMovePlayer(s16 playerNo, HuVecF *rot, HuVecF *offset, float zoom, f
     HuVecF pos;
     HuVecF ofs;
     if(playerNo == -1) {
-        if(!offset) {
-            ofs.x = ofs.y = ofs.z = 0;
-        } else {
-            ofs = *offset;
-        }
-        CameraMoveApply(NULL, rot, &ofs, zoom, fov, maxTime);
+        CameraMoveApply(NULL, rot, offset, zoom, fov, maxTime);
     } else {
         mbPlayerPosGet(playerNo, &pos);
         if(!offset) {
-            ofs.x = 0;
+            ofs.x = ofs.z = 0;
             ofs.y = 100;
-            ofs.z = 0;
         } else {
             ofs = *offset;
         }
-        CameraMoveApply(&pos, rot, &ofs, zoom, fov, maxTime);
+        CameraMoveApply((HuVecF *)&pos, rot, (HuVecF *)&ofs, zoom, fov, maxTime);
         mbCameraFocusPlayerSet(playerNo);
     }
 }
@@ -877,12 +871,7 @@ void mbCameraMoveObj(MBMODELID modelId, HuVecF *rot, HuVecF *offset, float zoom,
     HuVecF pos;
     HuVecF ofs;
     if(modelId == -1) {
-        if(!offset) {
-            ofs.x = ofs.y = ofs.z = 0;
-        } else {
-            ofs = *offset;
-        }
-        CameraMoveApply(NULL, rot, &ofs, zoom, fov, maxTime);
+        CameraMoveApply(NULL, rot, offset, zoom, fov, maxTime);
     } else {
         mbObjPosGet(modelId, &pos);
         if(!offset) {
@@ -890,7 +879,7 @@ void mbCameraMoveObj(MBMODELID modelId, HuVecF *rot, HuVecF *offset, float zoom,
         } else {
             ofs = *offset;
         }
-        CameraMoveApply(&pos, rot, &ofs, zoom, fov, maxTime);
+        CameraMoveApply((HuVecF *)&pos, rot, (HuVecF *)&ofs, zoom, fov, maxTime);
         mbCameraFocusObjSet(modelId);
     }
 }
@@ -900,12 +889,7 @@ void mbCameraMoveMasu(s16 masuId, HuVecF *rot, HuVecF *offset, float zoom, float
     HuVecF pos;
     HuVecF ofs;
     if(masuId == -1) {
-        if(!offset) {
-            ofs.x = ofs.y = ofs.z = 0;
-        } else {
-            ofs = *offset;
-        }
-        CameraMoveApply(NULL, rot, &ofs, zoom, fov, maxTime);
+        CameraMoveApply(NULL, rot, offset, zoom, fov, maxTime);
     } else {
         mbMasuPosGet(masuId, &pos);
         if(!offset) {
@@ -913,7 +897,7 @@ void mbCameraMoveMasu(s16 masuId, HuVecF *rot, HuVecF *offset, float zoom, float
         } else {
             ofs = *offset;
         }
-        CameraMoveApply(&pos, rot, &ofs, zoom, fov, maxTime);
+        CameraMoveApply((HuVecF *)&pos, rot, (HuVecF *)&ofs, zoom, fov, maxTime);
         mbCameraFocusMasuSet(masuId);
     }
 }
