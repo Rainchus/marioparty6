@@ -495,7 +495,7 @@ config.libs = [
             Object(NonMatching, "dolphin/gx/GXDraw.c"),
             Object(NonMatching, "dolphin/gx/GXDisplayList.c"),
             Object(NonMatching, "dolphin/gx/GXTransform.c"),
-            Object(NonMatching, "dolphin/gx/GXPerf.c"),
+            Object(Matching, "dolphin/gx/GXPerf.c"),
         ],
     ),
     DolphinLib(
