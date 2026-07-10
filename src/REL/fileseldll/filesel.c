@@ -135,6 +135,10 @@ extern const f32 lbl_1_rodata_70, lbl_1_rodata_74;
 extern const f32 lbl_1_rodata_C0;
 extern const double lbl_1_rodata_80, lbl_1_rodata_88, lbl_1_rodata_90, lbl_1_rodata_98;
 extern const double lbl_1_rodata_108, lbl_1_rodata_190, lbl_1_rodata_1B0;
+extern const f32 lbl_1_rodata_AC, lbl_1_rodata_184, lbl_1_rodata_1A8, lbl_1_rodata_1C0;
+extern const double lbl_1_rodata_1B8, lbl_1_rodata_1C8, lbl_1_rodata_F8, lbl_1_rodata_100;
+extern const Vec lbl_1_rodata_19C;
+extern char lbl_1_data_1F3[];
 extern const f32 lbl_1_rodata_118, lbl_1_rodata_11C, lbl_1_rodata_120, lbl_1_rodata_124;
 extern const double lbl_1_rodata_130, lbl_1_rodata_138, lbl_1_rodata_148;
 extern const f32 lbl_1_rodata_17C;
@@ -225,6 +229,7 @@ s32 fn_1_642C(s16 arg0);
 s32 fn_1_69B0(void);
 void fn_1_6A8C(void);
 void fn_1_7B64(void);
+void fn_1_7A0C(void);
 void fn_1_7DEC(void);
 void fn_1_7E58(F7E58_Arg *arg);
 void fn_1_82F0(OMOBJ *obj);
@@ -1518,6 +1523,146 @@ void fn_1_6A8C(void)
     GXPosition3f32(-camPos.x, camPos.y, -nearz);
 
     GXSetColorUpdate(1);
+}
+
+/* 0x6E54 */
+void fn_1_6E54(s16 a, s32 b)
+{
+    HUPROCESS *proc1;
+    HUPROCESS *proc2;
+    FILESEL_WORK *wp;
+    HUPROCESS *proc3;
+    FILESEL_WORK *bp;
+    Vec vpos;
+    Vec scale30;
+    Vec pos24;
+    Vec pos18;
+    Vec rot0c;
+    s16 i;
+    s16 j;
+    s32 dir;
+    f32 phase;
+    f32 sv;
+    f32 dirf;
+
+    vpos = lbl_1_rodata_19C;
+    Hu3DModelPosGet(lbl_1_bss_2D8[0], &pos18);
+    Hu3DModelRotGet(lbl_1_bss_2D8[0], &rot0c);
+    rot0c.x = (f32)((s32)rot0c.x % 360);
+    if (rot0c.x > lbl_1_rodata_184) {
+        rot0c.x -= lbl_1_rodata_78;
+    }
+    rot0c.y = (f32)((s32)rot0c.y % 360);
+    if (rot0c.y > lbl_1_rodata_184) {
+        rot0c.y -= lbl_1_rodata_78;
+    }
+    rot0c.z = (f32)((s32)rot0c.z % 360);
+    if (rot0c.z > lbl_1_rodata_184) {
+        rot0c.z -= lbl_1_rodata_78;
+    }
+    if (b == 0) {
+        HuWinDispOff(lbl_1_bss_2DE);
+        HuWinExClose(lbl_1_bss_2E0);
+        Hu3DModelScaleGet(lbl_1_bss_2D8[2], &scale30);
+        if (scale30.x > lbl_1_rodata_17C) {
+            for (i = 1; i <= 10; i++) {
+                phase = (f32)i / lbl_1_rodata_44;
+                Hu3DModelRotSet(lbl_1_bss_2D8[2], lbl_1_rodata_38, lbl_1_rodata_1A8 * phase, lbl_1_rodata_38);
+                sv = 1.0 - phase;
+                Hu3DModelScaleSet(lbl_1_bss_2D8[2], sv, sv, sv);
+                HuPrcVSleep();
+            }
+        }
+        for (i = 1; i <= 20; i++) {
+            phase = (f32)sin(lbl_1_rodata_80 * (lbl_1_rodata_88 * ((f32)i / lbl_1_rodata_2C)) / lbl_1_rodata_98);
+            scale30.x = (1.0 - phase) * pos18.x;
+            scale30.y = (1.0 - phase) * pos18.y;
+            scale30.z = (1.0 - phase) * pos18.z;
+            Hu3DModelPosSetV(lbl_1_bss_2D8[0], &scale30);
+            scale30.x = (1.0 - phase) * rot0c.x;
+            scale30.y = (1.0 - phase) * rot0c.y;
+            scale30.z = (1.0 - phase) * rot0c.z;
+            Hu3DModelRotSetV(lbl_1_bss_2D8[0], &scale30);
+            HuPrcVSleep();
+        }
+        proc1 = HuPrcChildCreate(fn_1_7A0C, 0x10, 0x3000, 0, HuPrcCurrentGet());
+        proc1->property = (void *)0;
+        HuPrcSleep(0x28);
+        HuAudFXPlay(0x48c);
+        fn_1_8510(0, &vpos);
+    } else {
+        for (i = 0; i < 3; i++) {
+            lbl_1_bss_D8[a].unk_62 = 0;
+        }
+        HuWinDispOff(lbl_1_bss_2DE);
+        HuWinExClose(lbl_1_bss_2E0);
+        for (i = 0; i < 3; i++) {
+            lbl_1_bss_D8[a].unk_62 = 2;
+        }
+        for (i = 1; i <= 10; i++) {
+            phase = (f32)i / lbl_1_rodata_44;
+            for (j = 0; j < 3; j++) {
+                if (j != a) {
+                    bp = &lbl_1_bss_D8[j];
+                    Hu3DModelRotSet(bp->unk_8, lbl_1_rodata_38, lbl_1_rodata_1A8 * phase, lbl_1_rodata_38);
+                    sv = lbl_1_rodata_F8 * (1.0 - phase);
+                    Hu3DModelScaleSet(bp->unk_8, sv, sv, sv);
+                }
+            }
+            Hu3DModelRotSet(lbl_1_bss_2D8[2], lbl_1_rodata_38, lbl_1_rodata_1A8 * phase, lbl_1_rodata_38);
+            sv = 1.0 - phase;
+            Hu3DModelScaleSet(lbl_1_bss_2D8[2], sv, sv, sv);
+            HuPrcVSleep();
+        }
+        bp = &lbl_1_bss_D8[a];
+        Hu3DModelPosGet(bp->unk_8, &pos24);
+        OSReport(lbl_1_data_1F3, pos24.x, pos24.y, pos24.z);
+        if ((s32)frandmod(2) == 0) {
+            dir = 1;
+        } else {
+            dir = -1;
+        }
+        dirf = (f32)dir;
+        for (i = 1; i <= 80; i++) {
+            if (i <= 20) {
+                phase = (f32)sin(lbl_1_rodata_80 * (lbl_1_rodata_88 * ((f32)i / lbl_1_rodata_2C)) / lbl_1_rodata_98);
+                scale30.x = (1.0 - phase) * pos18.x;
+                scale30.y = (1.0 - phase) * pos18.y;
+                scale30.z = (1.0 - phase) * pos18.z;
+                Hu3DModelPosSetV(lbl_1_bss_2D8[0], &scale30);
+                scale30.x = (1.0 - phase) * rot0c.x;
+                scale30.y = (1.0 - phase) * rot0c.y;
+                scale30.z = (1.0 - phase) * rot0c.z;
+                Hu3DModelRotSetV(lbl_1_bss_2D8[0], &scale30);
+                Hu3DShadowTPLvlSet(lbl_1_rodata_100 * (1.0 - phase));
+            }
+            if (i == 10) {
+                proc2 = HuPrcChildCreate(fn_1_7B64, 0x10, 0x3000, 0, HuPrcCurrentGet());
+                proc2->property = (void *)a;
+                HuAudFXPlay(0x48b);
+            }
+            if (i > 10) {
+                phase = ((f32)i - lbl_1_rodata_44) / lbl_1_rodata_AC;
+                scale30.x = (1.0 - phase) * pos24.x;
+                scale30.y = (1.0 - phase) * pos24.y + lbl_1_rodata_1B0 * sin(lbl_1_rodata_80 * (lbl_1_rodata_184 * phase) / lbl_1_rodata_98);
+                scale30.z = pos24.z + lbl_1_rodata_1B8 * sin(lbl_1_rodata_80 * (lbl_1_rodata_184 * phase) / lbl_1_rodata_98) - lbl_1_rodata_1C0 * phase;
+                wp = &lbl_1_bss_D8[a];
+                wp->unk_64 = scale30;
+                Hu3DModelRotSet(bp->unk_8, lbl_1_rodata_38, lbl_1_rodata_40 * phase, 45.0f * phase * dirf);
+                sv = lbl_1_rodata_1C8 + lbl_1_rodata_1C8 * (1.0 - phase);
+                Hu3DModelScaleSet(bp->unk_8, sv, sv, sv);
+            }
+            if (i == 40) {
+                proc3 = HuPrcChildCreate(fn_1_7A0C, 0x10, 0x3000, 0, HuPrcCurrentGet());
+                proc3->property = (void *)0;
+            }
+            if (i == 75) {
+                HuAudFXPlay(0x48c);
+                fn_1_8510(0, &vpos);
+            }
+            HuPrcVSleep();
+        }
+    }
 }
 
 /* 0x7A0C */
