@@ -682,12 +682,73 @@ static void fn_1_2F80(OMOBJ *obj)
     smChar1Prev = smCursorNo;
 }
 
-static void fn_1_313C(void) {}
+static char *smPlayerConfStrTbl[] = { "PLAYER:%d", " PAD%d:%s", "PADNO:%d", "  GRP:%d", "  DIF:%s" };
 
 /* ---------------- .bss group C ---------------- */
 static s16 smPlayerConfEditF;
 static s16 smPlayerConfNo;
 static s16 smPlayerConfChoiceNo;
+
+#define DO_HILITE(option)                                                                                                                              \
+    do {                                                                                                                                               \
+        s32 color;                                                                                                                                     \
+        if (smPlayerConfChoiceNo == option) {                                                                                                          \
+            color = fontcolor = FONT_COLOR_CYAN;                                                                                                        \
+        }                                                                                                                                              \
+        else {                                                                                                                                         \
+            color = fontcolor = FONT_COLOR_GREEN;                                                                                                       \
+        }                                                                                                                                              \
+        (void)color;                                                                                                                                   \
+    } while (0)
+
+static void fn_1_313C(void)
+{
+    int i;
+    s16 x;
+    s16 y;
+    s16 w;
+    char *typeStr[] = { "HUMAN", "COM" };
+    char *diffStr[] = { "EASY", "NORMAL", "HARD", "VERYHARD" };
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        w = 128;
+        x = ((320 - w) / 2) + ((i % 2) * 320);
+        y = ((i / 2) * 240) + 48;
+        if (smPlayerConfEditF == 0 && smPlayerConfNo == i) {
+            fontcolor = FONT_COLOR_CYAN;
+        }
+        else {
+            fontcolor = FONT_COLOR_GREEN;
+        }
+        print8(x, y, 2.0f, smPlayerConfStrTbl[0], i);
+        if (smPlayerConfEditF == 0) {
+            fontcolor = FONT_COLOR_DARK_GREEN;
+            print8(((i % 2) * 320) + 64, ((i / 2) * 240) + 80, 2.0f, smPlayerConfStrTbl[1], smPlayerConf[i].padNo, typeStr[smPlayerConf[i].type]);
+            print8(((i % 2) * 320) + 64, ((i / 2) * 240) + 96, 2.0f, smPlayerConfStrTbl[2], smPlayerConf[i].padNo);
+            print8(((i % 2) * 320) + 64, ((i / 2) * 240) + 112, 2.0f, smPlayerConfStrTbl[3], smPlayerConf[i].grpNo);
+            print8(((i % 2) * 320) + 64, ((i / 2) * 240) + 128, 2.0f, smPlayerConfStrTbl[4], diffStr[smPlayerConf[i].comDif]);
+        }
+        else if (smPlayerConfEditF == 1 && smPlayerConfNo == i) {
+            DO_HILITE(0);
+            print8(((i % 2) * 320) + 64, ((i / 2) * 240) + 80, 2.0f, smPlayerConfStrTbl[1], smPlayerConf[i].padNo, typeStr[smPlayerConf[i].type]);
+            DO_HILITE(1);
+            print8(((i % 2) * 320) + 64, ((i / 2) * 240) + 96, 2.0f, smPlayerConfStrTbl[2], smPlayerConf[i].padNo);
+            DO_HILITE(2);
+            print8(((i % 2) * 320) + 64, ((i / 2) * 240) + 112, 2.0f, smPlayerConfStrTbl[3], smPlayerConf[i].grpNo);
+            DO_HILITE(3);
+            print8(((i % 2) * 320) + 64, ((i / 2) * 240) + 128, 2.0f, smPlayerConfStrTbl[4], diffStr[smPlayerConf[i].comDif]);
+        }
+        else {
+            fontcolor = FONT_COLOR_DARK_GREEN;
+            print8(((i % 2) * 320) + 64, ((i / 2) * 240) + 80, 2.0f, smPlayerConfStrTbl[1], smPlayerConf[i].padNo, typeStr[smPlayerConf[i].type]);
+            print8(((i % 2) * 320) + 64, ((i / 2) * 240) + 96, 2.0f, smPlayerConfStrTbl[2], smPlayerConf[i].padNo);
+            print8(((i % 2) * 320) + 64, ((i / 2) * 240) + 112, 2.0f, smPlayerConfStrTbl[3], smPlayerConf[i].grpNo);
+            print8(((i % 2) * 320) + 64, ((i / 2) * 240) + 128, 2.0f, smPlayerConfStrTbl[4], diffStr[smPlayerConf[i].comDif]);
+        }
+    }
+}
+
+#undef DO_HILITE
 
 static void fn_1_3940(OMOBJ *obj)
 {
