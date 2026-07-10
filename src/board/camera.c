@@ -39,7 +39,7 @@ static void Camera1LayerHook(s16 layerNo);
 static void Camera2LayerHook(s16 layerNo);
 static void CameraMotionMain(MBCAMERA *cameraP);
 static BOOL CameraFocusCenterCalc(HuVecF *center, HuVecF *focusPos);
-static float CameraCanterCalc(HuVecF *rot, HuVecF *center, float fov);
+static float CameraCanterCalc(HuVecF *rot, float fov, HuVecF *center);
 static void CameraMotionSet(MBCAMERA *cameraP);
 static void CameraLookAt(MBCAMERA *cameraP);
 static inline void CameraMoveApply(HuVecF *pos, HuVecF *rot, HuVecF *offset, float zoom, float fov, s16 maxTime);
@@ -206,7 +206,7 @@ static void CameraMotionMain(MBCAMERA *cameraP)
     if(cameraP->focusNum == 0) {
         return;
     }
-    zoom = CameraCanterCalc(&cameraP->rot, &pos, cameraP->fov);
+    zoom = CameraCanterCalc(&cameraP->rot, cameraP->fov, &pos);
     VECAdd(&pos, &cameraP->offset, &pos);
     time = (cameraP->moveOn) ? cameraP->speed : 1.0f;
     cameraP->center.x += time * (pos.x - cameraP->center.x);
@@ -226,9 +226,9 @@ static BOOL CameraFocusCenterCalc(HuVecF *center, HuVecF *focusPos)
 {
     MBCAMERA *cameraP = mbCameraGet();
     int i;
-    HuVecF apos;
-    HuVecF targetBegin;
     HuVecF targetEnd;
+    HuVecF targetBegin;
+    HuVecF apos;
     if(cameraP->focusNum == 0) {
         return FALSE;
     }
@@ -273,22 +273,22 @@ static BOOL CameraFocusCenterCalc(HuVecF *center, HuVecF *focusPos)
     return TRUE;
 }
 
-static float CameraCanterCalc(HuVecF *rot, HuVecF *center, float fov)
+static float CameraCanterCalc(HuVecF *rot, float fov, HuVecF *center)
 {
     MBCAMERA *cameraP = mbCameraGet();
     int i, j;
     HuVecF localCenter;
     HuVecF focusPos[MB_CAMERA_FOCUS_MAX];
     HuVecF dir[2];
-    HuVecF rot2;
-    HuVecF rot1;
     HuVecF ofs2;
     HuVecF ofs1;
+    HuVecF rot2;
+    HuVecF rot1;
     HuVecF aim;
     float targetDist[2];
     float len;
-    float weight;
     float zoom;
+    float weight;
     float zoomMax;
     if(rot == NULL) {
         rot = &cameraP->rot;
