@@ -36,7 +36,7 @@ typedef struct filesel_work {
     /* 0x1C */ OSCalendarTime unk_1C;
     /* 0x44 */ char unk_44[0x11];
     /* 0x55 */ u8 unk_55[0x03];
-    /* 0x58 */ ANIMDATA *unk_58; /* fn_1_2C6C: HuSprAnimMake result (p->unk_58->bmp->data) */
+    /* 0x58 */ ANIMDATA *unk_58; /* FileselInit: HuSprAnimMake result (p->unk_58->bmp->data) */
     /* 0x5C */ void *unk_5C;
     /* 0x60 */ u8 unk_60[2];
     /* 0x62 */ u8 unk_62;
@@ -121,7 +121,7 @@ extern char lbl_1_data_E2[];
 extern char lbl_1_data_1F3[];
 
 /* ===== newly integrated giant functions: module .bss/.data/.rodata (ref by dtk name) ===== */
-extern s16 lbl_1_bss_2DE;              /* HUWINID (giant2 fn_1_5244, giant3, giant5 fn_1_CB4) */
+extern s16 lbl_1_bss_2DE;              /* HUWINID (giant2 FileselCopy, giant3, giant5 fn_1_CB4) */
 extern Vec lbl_1_bss_2E4[];            /* Vec[] scratch, stride 0xC (giant5 fn_1_CB4 writes [0..2]) */
 extern ANIMDATA *lbl_1_bss_A8[];       /* ANIMDATA*[8] anim table (giant3 fn_1_36C4) */
 extern s32 lbl_1_bss_0[2];                /* 457C enable flag (CameraMove moveF static) (giant5 fn_1_457C) */
@@ -134,17 +134,17 @@ extern char lbl_1_data_1EB[];          /* "%04d" (giant3 fn_1_36C4) */
 extern char lbl_1_data_1F0[];          /* "%d"   (giant3 fn_1_36C4) */
 
 
-/* ===== final integration wave: NameEnterMain / fn_1_17CC / fn_1_2C6C (ref by dtk name) ===== */
+/* ===== final integration wave: NameEnterMain / FileselSelect / FileselInit (ref by dtk name) ===== */
 extern s16 lbl_1_bss_37E;              /* NameEnterMain: entered-char count (name length)   */
 extern u16 lbl_1_bss_380[];            /* NameEnterMain: temp buffer of entered char codes  */
 extern s16 lbl_1_bss_42C;              /* NameEnterMain: number of grid pages               */
 extern B234Point *lbl_1_data_47C[];    /* NameEnterMain: array of ptrs to grid-point tables */
-extern int lbl_1_data_98[];            /* fn_1_2C6C: 8 data-file ids (preload loop)     */
-extern char lbl_1_data_1A0[];          /* fn_1_2C6C: Hu3DAnimCreate bmpName             */
-extern char lbl_1_data_1AD[];          /* fn_1_2C6C: Hu3DAnimCreate bmpName             */
-extern char lbl_1_data_1BB[];          /* fn_1_2C6C: Hu3DAnimCreate bmpName             */
-extern char lbl_1_data_1C8[];          /* fn_1_2C6C: Hu3DModelObjPtrGet objName         */
-extern char lbl_1_data_1DD[];          /* fn_1_2C6C: strcpy src                         */
+extern int lbl_1_data_98[];            /* FileselInit: 8 data-file ids (preload loop)     */
+extern char lbl_1_data_1A0[];          /* FileselInit: Hu3DAnimCreate bmpName             */
+extern char lbl_1_data_1AD[];          /* FileselInit: Hu3DAnimCreate bmpName             */
+extern char lbl_1_data_1BB[];          /* FileselInit: Hu3DAnimCreate bmpName             */
+extern char lbl_1_data_1C8[];          /* FileselInit: Hu3DModelObjPtrGet objName         */
+extern char lbl_1_data_1DD[];          /* FileselInit: strcpy src                         */
 
 /* main-DOL globals (no header) */
 extern s16 curSlotNo;
@@ -155,13 +155,13 @@ extern s64 SLSerialNo[];
 /* ==================== save-lib funcs (no header; only what THIS TU calls) ==================== */
 s32 SLSaveFlagGet(void);
 void SLSaveFlagSet(s32 flag);
-s32 SLCurBoxNoSet(s32 boxNo);   /* fn_1_17CC: MUST return a value (non-void) — that is the match;
+s32 SLCurBoxNoSet(s32 boxNo);   /* FileselSelect: MUST return a value (non-void) — that is the match;
                                    the saveload.c TU declares this void (its own original shape) */
 void SLSaveDataMake(s32 arg, OSTime *time);
 void SLSaveEmptySet(s16 slot, s16 idx);
 s32 SLBoxDataOffsetGet(s16 boxNo);
 void SLCommonLoad(void);
-void SLCommonSet(void);   /* fn_1_17CC: no repo header declares this — TU-local extern */
+void SLCommonSet(void);   /* FileselSelect: no repo header declares this — TU-local extern */
 
 s32 HuMCProbe(s32 chan);
 void HuMCMicSet(s32 flag);
@@ -174,7 +174,7 @@ void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, s32 wrapS, s32 wrapT,
 
 /* ==================== forward decls: functions defined in this TU ==================== */
 void ObjectSetup(void);
-void fn_1_374(void);
+void FileselMain(void);
 void fn_1_680(void);
 void fn_1_6E8(void);
 void fn_1_C60(void);
@@ -190,7 +190,7 @@ void fn_1_50DC(void (*func)(void), s32 arg1);
 void fn_1_5130(void);
 void fn_1_6314(s16 id, s32 flag);
 void fn_1_63A0(s16 id, s32 flag);
-s32 fn_1_642C(s16 arg0);
+s32 FileselEraseConfirm(s16 arg0);
 s32 fn_1_69B0(void);
 void FileselWipeDraw(void);
 void fn_1_7B64(void);
@@ -206,9 +206,9 @@ s16 fn_1_AAEC(s16 winId);
 s16 fn_1_ABF8(s16 id, f32 refX, f32 refY, f32 dirX, f32 dirY);
 void fn_1_B234(B234Rect *r);
 void NameEnterClose(void);
-void fn_1_3D14(void);         /* defined later; called by fn_1_2C6C (keep bl, no inline) */
-s32 fn_1_5244(s16 arg);       /* defined later; called by fn_1_17CC (keep bl, no inline) */
-s32 NameEnterMain(s16 no);        /* defined later; called by fn_1_17CC (keep bl, no inline) */
+void fn_1_3D14(void);         /* defined later; called by FileselInit (keep bl, no inline) */
+s32 FileselCopy(s16 arg);       /* defined later; called by FileselSelect (keep bl, no inline) */
+s32 NameEnterMain(s16 no);        /* defined later; called by FileselSelect (keep bl, no inline) */
 
 /* ============ callees in REL/fileseldll/saveload.c (cross-TU; pair by name) ============ */
 void FileCommonInit(void);
@@ -218,13 +218,13 @@ s32 FileClear(s16 arg);
 s32 FileSaveMesOpen(s16 winId_in, s32 arg1);
 
 /* ==================== forward decls: intra-TU (pair by name) ==================== */
-void fn_1_2C6C(void);
+void FileselInit(void);
 void fn_1_15AC(void);
 void fn_1_36C4(s16 a, s16 b);
 void fn_1_6E54(s16 a, s32 b);
 void NameEnterInit(void);
 void fn_1_CB4(s32 arg);
-s32 fn_1_17CC(void);
+s32 FileselSelect(void);
 
 /* ======================================================================== */
 /* module entry */
@@ -281,7 +281,7 @@ void ObjectSetup(void)
                           480.0f, 0.0f, 1.0f);
     omCameraViewSetMulti(1, &lbl_1_data_0);
     omCameraViewSetMulti(2, &lbl_1_data_1C);
-    HuPrcChildCreate(fn_1_374, 0x100, 0x3000, 0, HuPrcCurrentGet());
+    HuPrcChildCreate(FileselMain, 0x100, 0x3000, 0, HuPrcCurrentGet());
     Hu3DBGColorSet(0, 0, 0);
     HuWinInit(1);
     HuWinMesLanguageSet(GwLanguage);
@@ -291,7 +291,7 @@ void ObjectSetup(void)
 }
 
 /* 0x0374 */
-void fn_1_374(void)
+void FileselMain(void)
 {
     s32 flag;
     s16 i;
@@ -299,7 +299,7 @@ void fn_1_374(void)
 
     flag = 1;
     fn_1_6E8();
-    fn_1_2C6C();
+    FileselInit();
     SLSaveFlagSet(1);
     WipeCreate(1, 0, 0x3c);
     while (WipeCheck()) {
@@ -321,7 +321,7 @@ void fn_1_374(void)
     HuAudFXPlay(0x48f);
     fn_1_CB4(1);
 L_454:
-    status = fn_1_17CC();
+    status = FileselSelect();
     if (status == -0x4d2) {
         goto L_56C;
     }
@@ -626,7 +626,7 @@ void fn_1_179C(void)
  * result vreg advances the volatile-scratch allocation from the call site onward, matching the
  * target's r0/r4/r5 numbering. Body is otherwise giant3's reconstruction, unchanged.
  * Placed before all in-TU callees so -inline auto keeps real bl calls. */
-s32 fn_1_17CC(void)
+s32 FileselSelect(void)
 {
     s16 sel;
     s16 i;
@@ -724,7 +724,7 @@ L_192C:
                 }
                 if ((count >= 3 && ret == 1) || (count < 3 && ret == 2)) {
                     lbl_1_bss_D8[sel].unk_12 = 2;
-                    ret = fn_1_642C(sel);
+                    ret = FileselEraseConfirm(sel);
                     lbl_1_bss_D8[sel].unk_12 = 1;
                     if (ret == -0x4d2) {
                         goto L_241C;
@@ -742,7 +742,7 @@ L_192C:
                 } else {
                     lbl_1_bss_D8[sel].unk_12 = 3;
                     fn_1_63A0(sel, 1);
-                    ret = fn_1_5244(sel);
+                    ret = FileselCopy(sel);
                     fn_1_63A0(sel, 0);
                     lbl_1_bss_D8[sel].unk_12 = 1;
                     if (ret == -4) {
@@ -974,7 +974,7 @@ void fn_1_2A40(void)
  * unk_58 is ANIMDATA* (p->unk_58->bmp->data). The `i = i;` no-op emits nothing but gives
  * `i` +2 allocator refs so it outranks `grp` for callee-saved r29 (i=r29/grp=r28 as target);
  * without it MWCC 2.6 -O0,p swaps the pair (99.69). Do not delete it. */
-void fn_1_2C6C(void)
+void FileselInit(void)
 {
     FILESEL_WORK *p;
     s16 j;
@@ -1469,7 +1469,7 @@ void fn_1_5130(void)
 }
 
 /* 0x5244 */
-s32 fn_1_5244(s16 arg)
+s32 FileselCopy(s16 arg)
 {
     HUPROCESS *proc;
     HUPROCESS *procB;
@@ -1720,7 +1720,7 @@ void fn_1_63A0(s16 id, s32 flag)
 }
 
 /* 0x642C */
-s32 fn_1_642C(s16 arg0)
+s32 FileselEraseConfirm(s16 arg0)
 {
     HUWIN *w;
     s32 ret;
