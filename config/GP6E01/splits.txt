@@ -782,7 +782,7 @@ dolphin/thp/THPDec.c:
 	.rodata     start:0x80216370 end:0x80216400
 	.bss        start:0x802898C0 end:0x802899F0
 	.sbss       start:0x802C0980 end:0x802C0A98
-	.sdata2     start:0x802C20C0 end:0x802C20F0
+	.sdata2     start:0x802C20C0 end:0x802C20E0
 
 dolphin/thp/THPAudio.c:
 	.text       start:0x800CA334 end:0x800CA864

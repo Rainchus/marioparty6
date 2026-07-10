@@ -103,21 +103,70 @@ typedef struct CARDID {
 } CARDID;
 
 void __CARDDefaultApiCallback(s32 chan, s32 result);
+s32 __CARDIsWritable(CARDControl* card, CARDDir* ent);
+
+s32 __CARDEraseSector(s32 chan, u32 addr, CARDCallback callback);
+s32 __CARDPutControlBlock(struct CARDControl* card, s32 result);
+void __CARDSyncCallback(s32 chan, s32 result);
+u16* __CARDGetFatBlock(CARDControl* card);
+
+/* CARDBios */
+void __CARDExtHandler(s32 chan, OSContext* context);
+void __CARDExiHandler(s32 chan, OSContext* context);
+void __CARDTxHandler(s32 chan, OSContext* context);
+void __CARDUnlockedHandler(s32 chan, OSContext* context);
+s32 __CARDEnableInterrupt(s32 chan, BOOL enable);
+s32 __CARDReadStatus(s32 chan, u8* status);
+s32 __CARDReadVendorID(s32 chan, u16* vendorId);
+s32 __CARDClearStatus(s32 chan);
+s32 __CARDStart(s32 chan, CARDCallback txCallback, CARDCallback exiCallback);
+s32 __CARDReadSegment(s32 chan, CARDCallback callback);
+s32 __CARDWritePage(s32 chan, CARDCallback callback);
+u16 __CARDGetFontEncode(void);
+void __CARDSetDiskID(const DVDDiskID* id);
+s32 __CARDGetControlBlock(s32 chan, struct CARDControl** pcard);
+s32 __CARDSync(s32 chan);
+
+/* CARDBlock */
+s32 __CARDAllocBlock(s32 chan, u32 cBlock, CARDCallback callback);
+s32 __CARDFreeBlock(s32 chan, u16 nBlock, CARDCallback callback);
+s32 __CARDUpdateFatBlock(s32 chan, u16* fat, CARDCallback callback);
+
+/* CARDCheck */
+void __CARDCheckSum(void* ptr, int length, u16* checksum, u16* checksumInv);
+s32 __CARDVerify(CARDControl* card);
+
+/* CARDDir */
+CARDDir* __CARDGetDirBlock(CARDControl* card);
+s32 __CARDUpdateDir(s32 chan, CARDCallback callback);
+
+/* CARDFormat */
+s32 __CARDFormatRegionAsync(s32 chan, u16 encode, CARDCallback callback);
+
+/* CARDMount */
+void __CARDMountCallback(s32 chan, s32 result);
+
+/* CARDOpen */
+BOOL __CARDCompareFileName(CARDDir* ent, const char* fileName);
+s32 __CARDAccess(CARDControl* card, CARDDir* ent);
+BOOL __CARDIsPublic(CARDDir* ent);
+s32 __CARDIsReadable(CARDControl* card, CARDDir* ent);
+s32 __CARDGetFileNo(CARDControl* card, const char* fileName, s32* pfileNo);
+BOOL __CARDIsOpened(CARDControl* card, s32 fileNo);
+
+/* CARDRdwr */
+s32 __CARDRead(s32 chan, u32 addr, s32 length, void* dst, CARDCallback callback);
+s32 __CARDWrite(s32 chan, u32 addr, s32 length, void* dst, CARDCallback callback);
+
+/* CARDRead */
+s32 __CARDSeek(CARDFileInfo* fileInfo, s32 length, s32 offset, CARDControl** pcard);
+
+/* CARDUnlock */
+s32 __CARDUnlock(s32 chan, u8 flashID[12]);
 
 #define CARDIsValidBlockNo(card, iBlock)                                                           \
   (CARD_NUM_SYSTEM_BLOCK <= (iBlock) && (iBlock) < (card)->cBlock)
 #define __CARDGetDirCheck(dir) ((CARDDirCheck*)&(dir)[CARD_MAX_FILE])
-
-CARDDir* __CARDGetDirBlock(CARDControl* card);
-u16* __CARDGetFatBlock(CARDControl* card);
-s32 __CARDUpdateFatBlock(s32 chan, u16* fat, CARDCallback callback);
-void __CARDCheckSum(void* ptr, int length, u16* checkSum, u16* checkSumInv);
-u16 __CARDGetFontEncode();
-void __CARDExiHandler(s32 chan, OSContext* context);
-void __CARDExtHandler(s32 chan, OSContext* context);
-void __CARDUnlockedHandler(s32 chan, OSContext* context);
-s32 __CARDAccess(CARDControl* card, CARDDir* ent);
-BOOL __CARDIsWritable(CARDDir* ent);
 
 #define TRUNC(n, a) (((u32)(n)) & ~((a)-1))
 #define OFFSET(n, a) (((u32)(n)) & ((a)-1))
@@ -125,6 +174,7 @@ BOOL __CARDIsWritable(CARDDir* ent);
 extern CARDControl __CARDBlock[2];
 extern DVDDiskID __CARDDiskNone;
 extern u16 __CARDVendorID;
+extern u8 __CARDPermMask;
 
 #ifdef __cplusplus
 }

@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define OFFSET(addr, align) (((u32)(addr) & ((align)-1)))
+
 __OSExceptionHandler __OSGetExceptionHandler(__OSException exception);
 OSTime __OSGetSystemTime();
 OSTime __OSTimeToSystemTime(OSTime);
