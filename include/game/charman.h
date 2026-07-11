@@ -9,8 +9,8 @@
 #include "datanum/charmot.h"
 
 
-#define CHARVOICEID(no) (MSM_SE_VOICE_MARIO+(no))
-#define CHARSEID(no) (MSM_SE_MARIO+(no))
+#define CHARVOICEID(no) (MSM_SE_CHARVOICE_MARIO+(no))
+#define CHARSEID(no) (MSM_SE_CHAR_MARIO+(no))
 
 #define CHARNO_NONE -1
 #define CHARNO_MARIO 0
@@ -23,10 +23,11 @@
 #define CHARNO_KINOPIO 7
 #define CHARNO_TERESA 8
 #define CHARNO_MINIKOOPA 9
-#define CHARNO_MINIKOOPAR 10
-#define CHARNO_MINIKOOPAG 11
-#define CHARNO_MINIKOOPAB 12
-#define CHARNO_MAX 13
+#define CHARNO_KINOPICO 10
+#define CHARNO_MINIKOOPAR 11
+#define CHARNO_MINIKOOPAG 12
+#define CHARNO_MINIKOOPAB 13
+#define CHARNO_MAX 14
 
 #define CHAR_MODEL0 (1 << 0)
 #define CHAR_MODEL1 (1 << 1)
@@ -37,7 +38,7 @@
 #define CHAR_MOT_MAX 32
 
 #define CHAR_NPC_MAX 14
-#define CHAR_NPC_NO_BASE 14
+#define CHAR_NPC_NO_BASE 15
 #define CHAR_NPC_NONE -1
 
 #define CHAR_MOTNO(dataNum) FILENUM(dataNum)
@@ -89,11 +90,11 @@ void CharEffectShoeHitCreate(s16 cameraBit, HuVecF *pos, HuVecF *rot);
 void CharEffectLayerSet(s16 layerNo);
 void CharMotionVoiceOnSet(s16 charNo, s16 motNo, BOOL voiceOn);
 void CharModelVoicePanAutoSet(s16 charNo, BOOL voicePanAuto);
-void CharModelFxFlagSet(s16 charNo, BOOL fxFlag);
+void CharModelVoiceFlagSet(s16 charNo, BOOL fxFlag);
 void CharMotionUpdateSet(s16 charNo, unsigned int dataNum, BOOL updateF);
 s32 CharNpcDustSet(HU3D_MODELID modelId, HU3D_MOTIONID motId, s16 type, s16 npcNo);
 s32 CharNpcDustVoiceOffSet(HU3D_MODELID modelId, HU3D_MOTIONID motId, s16 type);
-void CharModelStepFxSet(s16 charNo, s16 stepFx);
+void CharModelStepSet(s16 charNo, s16 stepFx);
 
 void CharModelLandDustCreate(s16 charNo, HuVecF *pos);
 void CharEffectDustCreate(s16 cameraBit, float scale, HuVecF *pos);
@@ -111,6 +112,22 @@ void CharLoseVoicePlay(s16 charNo1, s16 charNo2, s16 charNo3, s16 charNo4);
 s16 CharMotionTotalTimeGet(s16 charNo, int motNo);
 s16 CharMotionExtraTimeGet(s16 charNo, int motNo);
 
-extern unsigned int charDataDirTbl[CHARNO_MAX][6];
+void CharMotionLoad(s16 *statList);
+void CharEffectSmokeCreateScale(s16 cameraBit, HuVecF *pos, float scale);
+void CharModelLandDustCreateStep(s16 charNo, HuVecF *pos);
+void CharEffectHipDropCreate(s16 charNo, HuVecF *pos);
+void CharEffectWarnCreate(s16 charNo, float scale);
+u32 CharAttrGet(s16 charNo);
+HU3D_LIGHTID CharLightCreateV(HuVecF *pos, HuVecF *dir, GXColor *color);
+HU3D_LIGHTID CharLightCreate(float posX, float posY, float posZ, float dirX, float dirY, float dirZ, u8 r, u8 g, u8 b);
+void CharLightSpotSet(s32 func, float cutoff);
+void CharLightInfinitytSet(void);
+void CharLightPointSet(s32 func, float cutoff, float brightness);
+void CharLightColorSet(u8 r, u8 g, u8 b, u8 a);
+void CharLightPosAimSetV(HuVecF *pos, HuVecF *aim);
+void CharLightPosAimSet(float posX, float posY, float posZ, float aimX, float aimY, float aimZ);
+void CharLightStaticSet(BOOL staticF);
+
+extern unsigned int CharDataDirTbl[CHARNO_MAX][6];
 
 #endif

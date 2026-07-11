@@ -253,7 +253,7 @@ AMEM_PTR HuAR_MRAMtoARAM2(void *dirPtr) {
     return aMemP;
 }
 
-void HuAR_ARAMtoMRAM(AMEM_PTR aMemP) {
+void *HuAR_ARAMtoMRAM(AMEM_PTR aMemP) {
     HuAR_ARAMtoMRAMNum(aMemP, 0);
 }
 

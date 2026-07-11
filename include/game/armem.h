@@ -16,7 +16,7 @@ void HuAMemDump(void);
 AMEM_PTR HuAR_DVDtoARAM(unsigned int dir);
 AMEM_PTR HuAR_MRAMtoARAM(int dir);
 AMEM_PTR HuAR_MRAMtoARAM2(void *dirPtr);
-void HuAR_ARAMtoMRAM(AMEM_PTR aMemP);
+void *HuAR_ARAMtoMRAM(AMEM_PTR aMemP);
 void *HuAR_ARAMtoMRAMNum(AMEM_PTR aMemP, s32 num);
 s32 HuARDMACheck(void);
 AMEM_PTR HuARDirCheck(unsigned int dir);
