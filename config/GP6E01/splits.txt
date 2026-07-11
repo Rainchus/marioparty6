@@ -350,18 +350,18 @@ game/actman.c:
 game/mggamemes.c:
 	.text       start:0x800872E4 end:0x80091828
 	.data       start:0x8023A2F0 end:0x8023A988
-	.bss        start:0x802868D8 end:0x802870C0
+	.bss        start:0x802868D8 end:0x802870A8
 	.sdata      start:0x802BF8C0 end:0x802BF968
-	.sbss       start:0x802C04A8 end:0x802C04D8
+	.sbss       start:0x802C04A8 end:0x802C04D4
 	.sdata2     start:0x802C1D40 end:0x802C1E48
 
 game/mic.c:
 	.text       start:0x80091828 end:0x8009764C
 	.rodata     start:0x80216338 end:0x80216350
 	.data       start:0x8023A988 end:0x8023ADA8
-	.bss        start:0x802870C0 end:0x80287660
+	.bss        start:0x802870A8 end:0x80287660
 	.sdata      start:0x802BF968 end:0x802BF9B0
-	.sbss       start:0x802C04D8 end:0x802C0568
+	.sbss       start:0x802C04D4 end:0x802C0568
 	.sdata2     start:0x802C1E48 end:0x802C1EC8
 
 dolphin/base/PPCArch.c:
