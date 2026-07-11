@@ -142,10 +142,10 @@ static void SeqModeWin(s16 mode, s16 frameNo)
     if(frameNo == 0) {
         if(jumpNum >= 10) {
             CharMotionShiftSet(charNo, charMotId[3], 0, 8, HU3D_MOTATTR_NONE);
-            HuAudSStreamPlay(MSM_STREAM_TEST);
+            HuAudJinglePlay(0x43);
         } else {
             CharMotionShiftSet(charNo, charMotId[4], 0, 8, HU3D_MOTATTR_NONE);
-            HuAudSStreamPlay(MSM_STREAM_MODESEL);
+            HuAudJinglePlay(0x45);
         }
     }
 }

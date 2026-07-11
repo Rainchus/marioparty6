@@ -767,7 +767,12 @@ config.libs = [
     Rel(
         "sequencedll",
         objects={
-            Object(NonMatching, "REL/sequencedll/sequence.c", mw_version=config.linker_version),
+            Object(
+                Matching,
+                "REL/sequencedll/sequence.c",
+                mw_version=config.linker_version,
+                extra_cflags=["-pooldata off"],
+            ),
         },
     ),
     Rel(
