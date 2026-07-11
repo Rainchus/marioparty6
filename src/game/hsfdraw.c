@@ -1,3 +1,11 @@
+/* Block math.h's extern inline sqrtf: its static _half/_three would prepend
+ * 16 bytes to .sdata2 that the original hsfdraw.o does not have. dolphin/math.h
+ * provides the auto-const variant whose literals pool in expansion order. */
+#define _MATH_H
+#include "dolphin/math.h"
+
+static inline float acosf(float x) { return (float)acos((double)x); }
+
 #include "game/hu3d.h"
 
 #include "game/hsfload.h"
@@ -48,7 +56,6 @@ static void MDFaceCnt(HSF_OBJECT *objPtr, HSF_FACE *face);
 void GXResetWriteGatherPipe(void);
 
 
-static HU3D_DRAW_OBJ *DrawObjData;
 static HSF_ATTRIBUTE *BmpPtrBak[8];
 static Mtx MTXBuf[MTXBUF_MAX];
 static HuVecF scaleBuf[MTXBUF_MAX];
@@ -69,6 +76,7 @@ static void *DLBufStartP;
 static HSF_DRAWDATA *DrawData;
 static s32 drawCnt;
 static s16 lightBit;
+static HU3D_DRAW_OBJ *DrawObjData;
 static s16 DrawObjIdx;
 static HSF_CONSTDATA *Hu3DObjInfoP;
 static s16 reflectionMapNo;
@@ -1245,7 +1253,7 @@ void Hu3DTevStageTexSet(HU3D_DRAW_OBJ *drawObj, HSF_MATERIAL *matP)
                     if(animWorkP->attr & HU3D_ATTRANIM_ATTR_TEXMTX) {
                         GXLoadTexMtxImm(Hu3DTexScrData[animWorkP->texScrId].texMtx, texMtxTbl[texCoordId], GX_MTX2x4);
                         GXSetTexCoordGen(texCoordId, GX_TG_MTX2x4, GX_TG_TEX0, texMtxTbl[texCoordId]);
-                        tevTexCoordId = (u16) texCoordId;
+                        tevTexCoordId = (GXTexCoordID) texCoordId;
                         texCoordId++;
                     } else if(animWorkP->attr & HU3D_ATTRANIM_ATTR_ANIM3D) {
                         PSMTXTrans(mtx, animWorkP->trans3D.x, animWorkP->trans3D.y, animWorkP->trans3D.z);
@@ -1254,18 +1262,18 @@ void Hu3DTevStageTexSet(HU3D_DRAW_OBJ *drawObj, HSF_MATERIAL *matP)
                         MTXInverse(mtx, mtx);
                         GXLoadTexMtxImm(mtx, texMtxTbl[texCoordId], GX_MTX2x4);
                         GXSetTexCoordGen(texCoordId, GX_TG_MTX2x4, GX_TG_TEX0, texMtxTbl[texCoordId]);
-                        tevTexCoordId = (u16) texCoordId;
+                        tevTexCoordId = (GXTexCoordID) texCoordId;
                         texCoordId++;
                     } else if(animWorkP->attr & HU3D_ATTRANIM_ATTR_ANIM2D) {
                         PSMTXScale(mtx, animWorkP->scale.x, animWorkP->scale.y, 1.0f);
                         mtxTransCat(mtx, animWorkP->trans.x, animWorkP->trans.y, 0.0f);
                         GXLoadTexMtxImm(mtx, texMtxTbl[texCoordId], GX_MTX2x4);
                         GXSetTexCoordGen(texCoordId, GX_TG_MTX2x4, GX_TG_TEX0, texMtxTbl[texCoordId]);
-                        tevTexCoordId = (u16) texCoordId;
+                        tevTexCoordId = (GXTexCoordID) texCoordId;
                         texCoordId++;
                     } else {
                         GXSetTexCoordGen(texCoordId, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
-                        tevTexCoordId = (u16) texCoordId;
+                        tevTexCoordId = (GXTexCoordID) texCoordId;
                         texCoordId++;
                     }
                 } else {
@@ -1281,7 +1289,7 @@ void Hu3DTevStageTexSet(HU3D_DRAW_OBJ *drawObj, HSF_MATERIAL *matP)
                     } else {
                         GXSetTexCoordGen(texCoordId, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
                     }
-                    tevTexCoordId = (u16) texCoordId;
+                    tevTexCoordId = (GXTexCoordID) texCoordId;
                     texCoordId++;
                 }
                 GXSetTevOrder(tevStage, tevTexCoordId, i, GX_COLOR0A0);
@@ -1681,39 +1689,6 @@ static void FlushKColor(void)
     }
 }
 
-static void SetReflect(HU3D_DRAW_OBJ *drawObj, s16 tevStage, s16 texCoord, u8 color)
-{
-    GXTevKColorSel kColorSel;
-
-    switch (kColorIdx % 3) {
-        case 0:
-            kColor.r = color;
-            break;
-        case 1:
-            kColor.g = color;
-            break;
-        case 2:
-            kColor.b = color;
-            kColor.a = 255;
-            GXSetTevKColor(kColorTbl[kColorIdx / 3], kColor);
-            break;
-    }
-    kColorSel = kColorSelTbl[kColorIdx];
-    GXSetTevKColorSel(tevStage, kColorSel);
-    GXSetTevKAlphaSel(tevStage, kColorSelATbl[kColorIdx / 3]);
-    kColorIdx++;
-    if(kColorIdx > 12) {
-        kColorIdx = 11;
-    }
-    GXSetTexCoordGen(texCoord, GX_TG_MTX2x4, GX_TG_NRM, GX_TEXMTX8);
-    GXSetTevOrder(tevStage, texCoord, reflectionMapNo, GX_COLOR0A0);
-    GXSetTevColorIn(tevStage, GX_CC_CPREV, GX_CC_TEXC, GX_CC_KONST, GX_CC_ZERO);
-    GXSetTevColorOp(tevStage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-    GXSetTevAlphaIn(tevStage, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
-    GXSetTevAlphaOp(tevStage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_FALSE, GX_TEVPREV);
-    SetReflectTexMtx(drawObj);
-}
-
 static void SetHiliteTexMtx(HU3D_DRAW_OBJ *drawObj)
 {
     HuVecF dir;
@@ -1762,6 +1737,39 @@ static void SetHiliteTexMtx(HU3D_DRAW_OBJ *drawObj)
         PSMTXTrans(mtx, 0.5f, 0.5f, 0.0f);
         PSMTXConcat(mtx, scale, hiliteMtx);
     }
+}
+
+static void SetReflect(HU3D_DRAW_OBJ *drawObj, s16 tevStage, s16 texCoord, u8 color)
+{
+    GXTevKColorSel kColorSel;
+
+    switch (kColorIdx % 3) {
+        case 0:
+            kColor.r = color;
+            break;
+        case 1:
+            kColor.g = color;
+            break;
+        case 2:
+            kColor.b = color;
+            kColor.a = 255;
+            GXSetTevKColor(kColorTbl[kColorIdx / 3], kColor);
+            break;
+    }
+    kColorSel = kColorSelTbl[kColorIdx];
+    GXSetTevKColorSel(tevStage, kColorSel);
+    GXSetTevKAlphaSel(tevStage, kColorSelATbl[kColorIdx / 3]);
+    kColorIdx++;
+    if(kColorIdx > 12) {
+        kColorIdx = 11;
+    }
+    GXSetTexCoordGen(texCoord, GX_TG_MTX2x4, GX_TG_NRM, GX_TEXMTX8);
+    GXSetTevOrder(tevStage, texCoord, reflectionMapNo, GX_COLOR0A0);
+    GXSetTevColorIn(tevStage, GX_CC_CPREV, GX_CC_TEXC, GX_CC_KONST, GX_CC_ZERO);
+    GXSetTevColorOp(tevStage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaIn(tevStage, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
+    GXSetTevAlphaOp(tevStage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_FALSE, GX_TEVPREV);
+    SetReflectTexMtx(drawObj);
 }
 
 static void SetReflectTexMtx(HU3D_DRAW_OBJ *drawObj)
@@ -1983,7 +1991,7 @@ static void LoadTexture(HU3D_MODEL *modelP, HSF_BITMAP *bmpPtr, HSF_ATTRIBUTE *a
     s16 texColId;
 
     if(!bmpPtr) {
-        OSReport("Error: No Texture\n");
+        OSReport("Error: No Texture\n\0");
         return;
     }
     sizeX = bmpPtr->sizeX;
@@ -3190,7 +3198,7 @@ s16 HmfInverseMtxF3X3(Mtx src, Mtx dst)
     return TRUE;
 }
 
-static void SetDefLightColor(GXLightObj *lightObj, u8 colorR, u8 colorG, u8 colorB, u8 ambR, u8 ambG, u8 ambB, u8 matR, u8 matG, u8 matB)
+static inline void SetDefLightColor(GXLightObj *lightObj, u8 colorR, u8 colorG, u8 colorB, u8 ambR, u8 ambG, u8 ambB, u8 matR, u8 matG, u8 matB)
 {
     GXColor color;
 
@@ -3575,7 +3583,7 @@ void Hu3DObjHookSet(HU3D_MODELID modelId, char *objName, HU3D_OBJ_HOOK hook)
         }
     }
     if(i == hsf->objectNum) {
-        OSReport("Error: Not Found ObjectName(%s)\n", objName);
+        OSReport("Error: Not Found ObjectName(%s)\n\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", objName);
         (void)i;
     }
 }
