@@ -172,4 +172,6 @@ extern float CZoom;
 extern HuVecF Center;
 extern HuVecF CRot;
 
+void omMasterInit(s32 watchPrio, OVLTBL *ovlTbl, OMOVL ovlMax, OMOVL ovlInit);
+
 #endif

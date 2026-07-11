@@ -11,5 +11,6 @@ extern u32 GlobalCounter;
 void HuSysVWaitSet(s16 vWait);
 s16 HuSysVWaitGet(s16 prev);
 s16 HuLoadProcModeGet(void);
+void HuLoadProcStart(void (*hook)(void));
 
 #endif

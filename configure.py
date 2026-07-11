@@ -308,7 +308,7 @@ config.libs = [
         "cflags": cflags_game,
         "host": False,
         "objects": [
-            Object(NonMatching, "game/main.c"),
+            Object(Matching, "game/main.c"),
             Object(Matching, "game/pad.c"),
             Object(Matching, "game/dvd.c"),
             Object(Matching, "game/data.c"),
