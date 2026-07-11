@@ -767,7 +767,7 @@ config.libs = [
     Rel(
         "sequencedll",
         objects={
-            Object(Matching, "REL/sequencedll/sequence.c", mw_version=config.linker_version),
+            Object(NonMatching, "REL/sequencedll/sequence.c", mw_version=config.linker_version),
         },
     ),
     Rel(
