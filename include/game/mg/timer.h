@@ -26,6 +26,10 @@
 #define MGTIMER_OFFTYPE_FADEOUT 1
 #define MGTIMER_OFFTYPE_FLASH 2
 
+#define MGTIMER_POS_TOP 0
+#define MGTIMER_POS_BOTTOM 1
+#define MGTIMER_POS_RIGHT 2
+
 
 typedef struct MgTimer_s {
     s32 mode;

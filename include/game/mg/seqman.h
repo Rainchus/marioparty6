@@ -78,7 +78,9 @@ void MgSeqModeDelaySet(s16 mode, s16 delay);
 u32 MgSeqModeHookAdd(s16 mode, MGSEQ_FUNC func);
 void MgSeqModeHookReset(s16 mode);
 u32 MgSeqFrameNoGet();
-void MgSeqMaxTimeSet(s16 maxTime);
+void MgSeqFrameNoSet(u32 frameNo);
+s16 MgSeqGameMesIdGet();
+void MgSeqTimerKill(s16 maxTime);
 void MgSeqStatBitSet(u16 bit);
 void MgSeqStatBitReset(u16 bit);
 
