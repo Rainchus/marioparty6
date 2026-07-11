@@ -7,8 +7,6 @@
 #include "game/charman.h"
 #include "game/mg/colman.h"
 
-typedef struct HsfObject_s HSFOBJECT;
-
 typedef struct MgPlayer_s MGPLAYER;
 typedef struct MgActor_s MGACTOR;
 
@@ -95,32 +93,30 @@ struct MgActor_s {
     int param;
     int type;
     HuVecF oldPos;
-    HuVecF vel;
-    HuVecF unk_2C;
-    HuVecF unk_38;
-    HuVecF unk_44;
-    HuVecF pos;
-    HuVecF moveDir;
-    HuVecF colNorm;
     HuVecF forceA;
     HuVecF forceB;
+    float terminalVelY;
+    int correctHookParam;
+    MGACTOR_CORRECT_HOOK correctHook;
+    HuVecF push;
+    HuVecF pos;
+    HuVecF vel;
     float rotY;
     float gravity;
     float velY;
-    float terminalVelY;
     u16 colMesh;
+    HuVecF colOfs;
+    HuVecF colNorm;
+    u32 colGroundAttr;
     HSFOBJECT *colObj;
     s16 colFace;
-    u32 colGroundAttr;
-    int correctHookParam;
-    MGACTOR_CORRECT_HOOK correctHook;
 };
 
 struct MgPlayer_s {
     s16 playerNo;
     s16 charNo;
     s8 padNo;
-    s8 camBit;
+    u16 camBit;
     OMOBJ *omObj;
     u32 actionFlag;
     u16 motNo;
@@ -177,26 +173,39 @@ void MgActorColAttrSet(MGACTOR *actorP, u32 mask);
 void MgActorColAttrReset(MGACTOR *actorP, u32 mask);
 u32 MgActorColAttrGet(MGACTOR *actorP, u32 mask);
 void MgPlayerModeFuncSet(MGPLAYER *playerP, MGPLAYER_MODE_FUNC *funcTbl);
-MGPLAYER *MgPlayerCreate(s16 playerNo, MGACTOR_PARAM *param, s16 model, s16 camBit, u32 actionFlag, unsigned int *motDataNum);
-MGPLAYER *MgPlayerCreateJumpAlt(s16 playerNo, MGACTOR_PARAM *param, s16 model, s16 camBit, u32 actionFlag, unsigned int *motDataNum, unsigned int flag);
+MGPLAYER *MgPlayerCreate(s16 playerNo, MGACTOR_PARAM *param, s16 model, u16 camBit, u32 actionFlag, unsigned int *motDataNum);
+MGPLAYER *MgPlayerCreateJumpAlt(s16 playerNo, MGACTOR_PARAM *param, s16 model, u16 camBit, u32 actionFlag, unsigned int *motDataNum, unsigned int flag);
 MGACTOR *MgActorCreate(MGACTOR_PARAM *param, int mdlId);
 void MgActorColMapMaskSet(int mdlNo, u32 mask);
 u32 MgActorColMapMaskGet(int mdlNo);
+void MgActorColMaskSet(MGACTOR *actorP, u32 mask);
+u32 MgActorColMaskGet(MGACTOR *actorP);
 void MgActorColCylReset(void);
 void MgActorColCylSet(void);
+void MgActorColBounceSet(MGACTOR *actorP, float bounce);
 
 void MgActorKill(MGACTOR *actorP);
 
 void MgActorExec(void);
 
 BOOL MgActorColMapPolyGet(HuVecF *pos1, HuVecF *pos2, u32 mask, MGACTOR_COLMAP_POLY *outPoly);
-void MgActorPosUpdate(MGACTOR *actorP, HuVecF *pos);
+void MgPlayerPosSet(MGPLAYER *playerP, HuVecF *pos);
 void MgActorPosSet(MGACTOR *actorP, HuVecF *pos);
-
-void MgPlayerPauseOn(MGPLAYER *playerP);
-void MgPlayerPauseOff(MGPLAYER *playerP, HuVecF *pos);
-void MgActorPauseOn(MGACTOR *actorP);
-void MgActorPauseOff(MGACTOR *actorP, HuVecF *pos);
+void MgActorPosSetRaw(MGACTOR *actorP, HuVecF *pos);
+void MgActorPosGet(MGACTOR *actorP, HuVecF *pos);
+void MgActorPushSet(MGACTOR *actorP, HuVecF *push);
+void MgActorRotYSet(MGACTOR *actorP, float rotY);
+void MgActorRotYGet(MGACTOR *actorP, float *rotY);
+void MgActorGravitySet(MGACTOR *actorP, float gravity);
+void MgActorVelYSet(MGACTOR *actorP, float velY);
+void MgActorVelSet(MGACTOR *actorP, HuVecF *vel);
+BOOL MgActorColMeshGet(MGACTOR *actorP, int *mesh);
+BOOL MgActorColNormalGet(MGACTOR *actorP, HuVecF *normal);
+BOOL MgActorColCodeGet(MGACTOR *actorP, u32 *code);
+void MgPlayerDespawn(MGPLAYER *playerP);
+void MgPlayerSpawn(MGPLAYER *playerP, HuVecF *pos);
+void MgPlayerColDisable(MGACTOR *actorP);
+void MgPlayerColEnable(MGACTOR *actorP, HuVecF *pos);
 
 void MgActorColAttrParamSet(COL_ATTRPARAM *param, u32 polyAttr);
 void MgActorColAttrParamGet(COL_ATTRPARAM *param, u32 polyAttr);
@@ -206,7 +215,6 @@ void MgPlayerAttrReset(MGPLAYER *playerP, u16 attr);
 void MgPlayerAttrSet(MGPLAYER *playerP, u16 attr);
 
 u16 MgPlayerVibAttrCheck(MGPLAYER *playerP, u16 attr);
-void MgPlayerVibAttrReset(MGPLAYER *playerP, u16 attr);
 void MgPlayerVibAttrSet(MGPLAYER *playerP, u16 attr);
 
 u16 MgPlayerModeAttrCheck(MGPLAYER *playerP, u16 attr);
@@ -214,5 +222,6 @@ void MgPlayerModeAttrReset(MGPLAYER *playerP, u16 attr);
 void MgPlayerModeAttrSet(MGPLAYER *playerP, u16 attr);
 
 BOOL MgPlayerStunSet(MGPLAYER *playerP, int stunType, float angle, int maxTime);
+BOOL MgPlayerModeIdleSet(MGPLAYER *playerP);
 
 #endif

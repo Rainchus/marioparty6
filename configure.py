@@ -360,7 +360,7 @@ config.libs = [
             Object(Matching, "game/mgscore.c"),
             Object(Matching, "game/seqman.c"),
             Object(NonMatching, "game/colman.c"),
-            Object(NonMatching, "game/actman.c"),
+            Object(Matching, "game/actman.c"),
             Object(NonMatching, "game/mggamemes.c"),
             Object(NonMatching, "game/mic.c"),
             Object(Matching, "game/code_80146BA0.c"),
