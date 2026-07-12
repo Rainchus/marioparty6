@@ -365,6 +365,7 @@ config.libs = [
             Object(Matching, "game/mic.c"),
             Object(Matching, "game/code_80146BA0.c"),
             Object(Matching, "game/kerent.c"),
+            Object(Matching, "board/malloc.c"),
         ],
     },
     DolphinLib(
