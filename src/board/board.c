@@ -740,6 +740,7 @@ void mbSaveInit(s32 boardNo)
 {
     s32 i;
     s32 j;
+    s8 handicap;
     GwSystem.boardNo = boardNo;
     _ClearFlag(FLAG_BOARD_SAVEINIT);
     _ClearFlag(FLAG_MG_PRACTICE);
@@ -754,7 +755,7 @@ void mbSaveInit(s32 boardNo)
             GwPlayer[i].star = 0;
             GwSystem.tagF = FALSE;
         } else {
-            s32 handicap = GwPlayer[i].handicap;
+            handicap = GwPlayer[i].handicap;
             GwPlayer[i].star = handicap;
         }
         mbMasuPlayerPrizeReset(i);
