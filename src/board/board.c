@@ -59,10 +59,9 @@ static MBHOOK lightResetFunc;
 static MBHOOK lightSetFunc;
 static MBHOOK closeHook;
 static MBHOOK initHook;
-static BOOL mbSaveNewF;
-static HUPROCESS *mbMainProc;
-
 OMOBJMAN *mbObjMan;
+HUPROCESS *mbMainProc;
+static BOOL mbSaveNewF;
 
 extern void mbBoardDataDirRead(void);
 extern void mbMathInit(void);
@@ -170,7 +169,7 @@ void mbObjectSetup(s32 boardNo, MBHOOK init, MBHOOK close)
     mbMathInit();
     if (mbSaveNewF) {
         if (!_CheckFlag(FLAG_BOARD_TUTORIAL)) {
-            if (GWPartyGet()) {
+            if (GWPartyGet() != FALSE) {
                 GWMgInstDispSet(GwCommon.partyMgInstDispF);
                 GWMgComDispSet(GwCommon.partyMgComDispF);
                 GWMgPackSet(GwCommon.partyMgPack);
@@ -202,8 +201,7 @@ void mbObjectSetup(s32 boardNo, MBHOOK init, MBHOOK close)
         GwSystem.curTime = GwSystem.nextTime = 0;
         nightF = GwMgNightF;
         if (nightF == 1) {
-            GwSystem.nextTime = 1;
-            GwSystem.curTime = 1;
+            GwSystem.curTime = GwSystem.nextTime = 1;
         }
         GwSystem.timeTurn = 0;
         GwSystem.timeTurnMax = 3;
@@ -252,7 +250,7 @@ void mbObjectSetup(s32 boardNo, MBHOOK init, MBHOOK close)
     mbObjMan = omInitObjMan(64, 8194);
     HuPrcDestructorSet2(mbObjMan, mbOMDestroy);
     omSystemKeyCheckSetup(mbObjMan);
-    mbMainProc = HuPrcChildCreate(mbMain, 8208, 0x18000, 0, mbObjMan);
+    mbMainProc = HuPrcChildCreate(mbMain, 8208, 0x8000, 0, mbObjMan);
     HuPrcDestructorSet2(mbMainProc, mbMainKill);
     GwSystem.boardNo = boardNo;
 }
@@ -516,7 +514,7 @@ void evdef_ChangeTime(void)
     mbCameraMoveOnSet(FALSE);
     mbWipeFadeIn();
     mbTelopTimeChangeCreate();
-    while (!mbTelopTimeChangeCheck()) {
+    while (mbTelopTimeChangeCheck()) {
         HuPrcVSleep();
     }
     mbWipeDissolveFadeOut();
