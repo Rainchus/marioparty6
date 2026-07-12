@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "game/hsfload.h"
 #include "string.h"
 #include "ctype.h"

@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "game/ShapeExec.h"
 #include "game/EnvelopeExec.h"
 

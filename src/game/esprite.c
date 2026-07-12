@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "game/esprite.h"
 #include "game/data.h"
 #include "game/sprite.h"

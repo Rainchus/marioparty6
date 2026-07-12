@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "game/ClusterExec.h"
 #include "game/EnvelopeExec.h"
 #include "game/hu3d.h"

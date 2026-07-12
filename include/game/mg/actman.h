@@ -108,7 +108,7 @@ struct MgActor_s {
     HuVecF colOfs;
     HuVecF colNorm;
     u32 colGroundAttr;
-    HSFOBJECT *colObj;
+    HSF_OBJECT *colObj;
     s16 colFace;
 };
 
@@ -151,7 +151,7 @@ typedef struct MgActorColMapPoly_s {
     HuVecF pos;
     u32 code;
     int mdlNo;
-    HSFOBJECT *obj;
+    HSF_OBJECT *obj;
     int triNo;
 } MGACTOR_COLMAP_POLY;
 

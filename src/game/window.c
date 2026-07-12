@@ -1,3 +1,7 @@
+#define _MATH_H
+#define M_PI 3.141592653589793
+double sin(double x);
+double cos(double x);
 #include "game/window.h"
 #include "game/gamework.h"
 #include "game/process.h"

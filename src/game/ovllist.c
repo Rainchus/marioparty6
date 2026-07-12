@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "game/object.h"
 
 #define DLL(name) { "dll/" #name ".rel", 0 },

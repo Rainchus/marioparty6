@@ -10,6 +10,10 @@ extern inline float fabsf(float x)
 #include "game/hu3d.h"
 #include "game/frand.h"
 
+
+
+
+
 typedef struct ColBroad_s {
     float t;
     COLBODY *body1;
@@ -37,6 +41,7 @@ typedef struct ColWork_s {
     COLNARROW *narrowCol;
     s16 *colOrder1;
     s16 *colOrder2;
+    u32 unk;
 } COLWORK;
 
 typedef struct ColTri_s {
@@ -3183,7 +3188,7 @@ void ColMapInit(HU3D_MODELID *mdlId, s16 mdlNum, int bodyNum)
                     }
                 }
                 if(meshNum == 256) {
-                    OSReport("( colman.c : ColMapInit ) | テンポラリのバッファをオーバーライトしています\n");
+        OSReport("( colman.c : ColMapInit ) | テンポラリのバッファをオーバーライトしています\n\0\0\0\0");
                 }
                 memset(&colMesh[meshNum], 0, sizeof(COLMESH));
                 colMesh[meshNum].tri = triP;

@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "game/objdll.h"
 #include "game/dvd.h"
 #include "game/memory.h"

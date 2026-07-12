@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "game/sprite.h"
 #include "game/init.h"
 #include "game/hu3d.h"

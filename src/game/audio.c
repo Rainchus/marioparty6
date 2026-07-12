@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "game/audio.h"
 #include "game/memory.h"
 #include "game/armem.h"

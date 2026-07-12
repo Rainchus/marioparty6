@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "game/object.h"
 #include "game/gamework.h"
 #include "game/hu3d.h"

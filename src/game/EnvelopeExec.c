@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "game/EnvelopeExec.h"
 #include "game/hsfex.h"
 

@@ -1,3 +1,5 @@
+/* This TU does not use the inline sqrt helpers pulled in by dolphin.h. */
+#define _MATH_H
 #include "dolphin.h"
 #include "humath.h"
 #include "game/main.h"

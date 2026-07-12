@@ -1,3 +1,8 @@
+#define _MATH_H
+#define M_PI 3.141592653589793
+double sin(double x);
+double cos(double x);
+double tan(double x);
 #include "string.h"
 #include "game/init.h"
 #include "game/disp.h"

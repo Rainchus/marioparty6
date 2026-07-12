@@ -1,3 +1,6 @@
+#define _MATH_H
+#define M_PI 3.141592653589793
+double sin(double x);
 #include "game/sprite.h"
 #include "game/memory.h"
 #include "game/init.h"
