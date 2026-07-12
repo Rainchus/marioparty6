@@ -148,10 +148,10 @@ static OSAlarm MCThreadAlarm;
 static u8 MCUnkResponseData[0x60];
 static MCSelWinWork_s MCSelWinWork;
 static u8 MCCurResponse[0x60];
-static u8 pad_08_802870A8_bss[0x1c];
 static u32 PlayerSession[4];
 static OSMessageQueue MCMessageQueue;
 static OSThread MCThread;
+static u8 pad_08_802870A8_bss[0x18];
 
 static u32 gap_10_802C0564_sbss;
 static u8 *MCThreadStack;
