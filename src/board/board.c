@@ -287,6 +287,7 @@ static void mbMain(void)
 {
     s32 interruptF = FALSE;
     s32 i;
+    s32 nightF;
     mbWipeWait();
     if (GwSystem.turnNo > GwSystem.turnMax && !_CheckFlag(FLAG_BOARD_TUTORIAL)) {
         _ClearFlag(FLAG_BOARD_MOVE_DONE);
@@ -296,7 +297,9 @@ static void mbMain(void)
     mbInit();
     if (!_CheckFlag(FLAG_BOARD_OPENING)) {
         if (_CheckFlag(FLAG_BOARD_DEBUG)) {
-            if (GWPartyGet()) {
+            BOOL partyF;
+            partyF = GWPartyGet();
+            if (partyF) {
                 i = mbStarNoRandGet();
                 if (i >= 0) {
                     mbStarNoSet(i);
@@ -343,7 +346,12 @@ static void mbMain(void)
         }
     }
     GwSystem.curTime = GwSystem.nextTime;
-    GwMgNightF = !GwSystem.curTime;
+    if (GwSystem.curTime == 0) {
+        nightF = TRUE;
+    } else {
+        nightF = FALSE;
+    }
+    GwMgNightF = nightF;
     if (mbReturnMgCheck()) {
         if (!GWPartyGet()) {
             interruptF = mbev_SingleMgEnd(0);
