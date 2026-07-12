@@ -1,6 +1,5 @@
 #define _DOLPHIN_MATH
 #define _MATH_H
-#pragma pool_data off
 
 #include "game/board/main.h"
 #include "game/board/pause.h"
