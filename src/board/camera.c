@@ -28,13 +28,17 @@ extern inline double fabs(double x)
 #define MBNO_MAX 11
 
 typedef struct listenerParam_s {
-    int no;
     float sndDist;
     float sndSpeed;
     float startDis;
     float frontSurDis;
     float backSurDis;
 } LISTENERPARAM;
+
+typedef struct listenerParamEntry_s {
+    int no;
+    LISTENERPARAM param;
+} LISTENERPARAMENTRY;
 
 BOOL mbPauseEnableCheck(void);
 void mbObjPosGet(MBMODELID modelId, HuVecF *pos);
@@ -75,20 +79,20 @@ static s16 cameraStackLevel;
 void mbCameraInit(void)
 {
     MBCAMERA *cameraP = mbCameraGet();
-    const LISTENERPARAM listenerParamTbl[MBNO_MAX] = {
-        { 0, 8000, 1000, 0, 4000, 4000 },
-        { 1, 8000, 1000, 0, 4000, 4000 },
-        { 2, 8000, 1000, 0, 4000, 4000 },
-        { 3, 8000, 1000, 0, 4000, 4000 },
-        { 4, 8000, 1000, 0, 4000, 4000 },
-        { 5, 8000, 1000, 0, 4000, 4000 },
-        { 6, 8000, 1000, 0, 4000, 4000 },
-        { 7, 8000, 1000, 0, 4000, 4000 },
-        { 8, 8000, 1000, 0, 4000, 4000 },
-        { 9, 8000, 1000, 0, 4000, 4000 },
-        { 10, 8000, 1000, 0, 4000, 4000 },
+    const LISTENERPARAMENTRY listenerParamTbl[MBNO_MAX] = {
+        { 0, { 8000, 1000, 0, 4000, 4000 } },
+        { 1, { 8000, 1000, 0, 4000, 4000 } },
+        { 2, { 8000, 1000, 0, 4000, 4000 } },
+        { 3, { 8000, 1000, 0, 4000, 4000 } },
+        { 4, { 8000, 1000, 0, 4000, 4000 } },
+        { 5, { 8000, 1000, 0, 4000, 4000 } },
+        { 6, { 8000, 1000, 0, 4000, 4000 } },
+        { 7, { 8000, 1000, 0, 4000, 4000 } },
+        { 8, { 8000, 1000, 0, 4000, 4000 } },
+        { 9, { 8000, 1000, 0, 4000, 4000 } },
+        { 10, { 8000, 1000, 0, 4000, 4000 } },
     };
-    const float *listenerParam;
+    const LISTENERPARAM *listenerParam;
     HU3D_CAMERA *cam;
     HuVecF pos;
     HuVecF dir;
@@ -138,14 +142,15 @@ void mbCameraInit(void)
     if(i >= MBNO_MAX) {
         i = 0;
     }
-    listenerParam = &listenerParamTbl[i].sndDist;
+    listenerParam = &listenerParamTbl[i].param;
     pos.x = pos.y = 0;
     pos.z = 100000;
     dir.x = 0;
     dir.y = 0;
     dir.z = -1;
     VECNormalize(&dir, &dir);
-    HuAudFXListnerSetEX(&pos, &dir, listenerParam[0], listenerParam[1], listenerParam[2], listenerParam[3], listenerParam[4]);
+    HuAudFXListnerSetEX(&pos, &dir, listenerParam->sndDist, listenerParam->sndSpeed, listenerParam->startDis,
+                       listenerParam->frontSurDis, listenerParam->backSurDis);
     cameraOMObj = omAddObjEx(mbObjMan, 32256, 0, 0, OM_GRP_NONE, CameraOMExec);
     Hu3DCameraLayerHookSet(HU3D_CAM0, 0, Camera0LayerHook);
     Hu3DCameraLayerHookSet(HU3D_CAM1, 0, Camera1LayerHook);
@@ -636,7 +641,7 @@ int mbCameraStackPush(void)
     return i + 1;
 }
 
-void mbCameraStackIdxSet(s16 idx, s16 maxTime)
+void mbCameraStackIdxSet(s16 idx, int maxTime)
 {
     MBCAMERA *cameraP = &cameraStack[idx - 1];
     int i;
@@ -652,10 +657,10 @@ void mbCameraStackIdxSet(s16 idx, s16 maxTime)
     }
 }
 
-void mbCameraStackPop(s16 maxTime)
+void mbCameraStackPop(int maxTime)
 {
-    s16 level = cameraStackLevel;
-    MBCAMERA *cameraP = &cameraStack[level - 1];
+    s16 idx = cameraStackLevel;
+    MBCAMERA *cameraP = &cameraStack[idx - 1];
     int i;
     cameraP->dispOn = FALSE;
     if(cameraP->focusNum == 0) {
@@ -687,11 +692,14 @@ BOOL mbCameraCullCheck(HuVecF *pos, float radius)
     boundX = 1.2f*(tanHalfFov*-viewPos.z);
     boundY = tanHalfFov*-viewPos.z;
     r = radius/HuCos(cameraP->fov*0.5f);
-    if(fabs(viewPos.x)-r < boundX && fabs(viewPos.y)-r < boundY && (viewPos.z-radius) <= 0.0f) {
-        return TRUE;
-    } else {
-        return FALSE;
+    if(fabs(viewPos.x)-r < boundX) {
+        if(fabs(viewPos.y)-r < boundY) {
+            if((viewPos.z-radius) <= 0.0f) {
+                return TRUE;
+            }
+        }
     }
+    return FALSE;
 }
 
 void mbCameraMoveOnSet(BOOL moveOn)
