@@ -37,21 +37,6 @@ static unsigned long fiReq;
 static void DEMOWriteStats(unsigned char update);
 static void DEMOWriteStats(unsigned char update);
 
-void DEMOSetStats(DemoStatData *stat, unsigned long nstats, DEMO_STAT_DISP disp)
-{
-    if (!stat || nstats == 0) {
-        DemoStatEnable = FALSE;
-    }
-    else {
-        DemoStatEnable = TRUE;
-        DemoStat = stat;
-        DemoStatIndx = 0;
-        DemoStatMaxIndx = nstats;
-        DemoStatDisp = disp;
-        DemoStatStrLen = strlen(DemoStat->text);
-    }
-}
-
 static void DEMOWriteStats(unsigned char update)
 {
     unsigned long cnt0;
