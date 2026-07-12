@@ -12,8 +12,6 @@
 
 #define COLBODY_ATTR_RESET (1 << 24)
 
-typedef struct HsfObject_s HSFOBJECT;
-
 typedef struct ColNarrowParam_s {
     int paramA;
     int paramB;
@@ -58,18 +56,19 @@ typedef struct ColBodyPoint_s {
     HuVecF normal;
     u32 polyAttr;
     u16 meshNo;
-    HSFOBJECT *obj;
+    HSF_OBJECT *obj;
     s16 faceNo;
 } COLBODY_POINT;
 
 struct ColBody_s {
     COLBODY_PARAM param;
     u32 groundAttr;
+    u32 hitAttr;
     HuVecF pos[2];
-    s32 unk4C;
     s16 colPointNum;
-    COLBODY_POINT colPoint[5];
-    u8 unk11C[0xB8];
+    COLBODY_POINT colPoint[9];
+    HuVecF oldPos;
+    HuVecF moveDir;
     u32 paramAttr;
     float colT;
     float oldColT;
@@ -92,7 +91,7 @@ void ColBodyPosSet(HuVecF *pos, int no);
 void ColBodyPosGet(HuVecF *pos, int no);
 void ColBodyParamSet(COLBODY_PARAM *param, int no);
 COLBODY *ColBodyGetSafe(int no);
-BOOL ColMapPolyGet(HuVecF *pos1, HuVecF *pos2, u32 mask, HuVecF *outPos, u32 *outCode, int *outMdlNo, HSFOBJECT **outObj, int *outTriNo);
+BOOL ColMapPolyGet(HuVecF *pos1, HuVecF *pos2, u32 mask, HuVecF *outPos, u32 *outCode, int *outMdlNo, HSF_OBJECT **outObj, int *outTriNo);
 void ColBodyExec(void);
 
 #endif
