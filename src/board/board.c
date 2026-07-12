@@ -21,12 +21,6 @@ static inline void GWMgPackSet(s32 value)
     GwSystem.mgPack = value;
 }
 
-static inline void GWCurTimeFlip(s32 unused, GW_SYSTEM *systemP)
-{
-    (void)unused;
-    systemP->curTime = systemP->curTime ^ 1;
-}
-
 static void mbOMDestroy(void);
 static void mbMain(void);
 static void mbMainKill(void);
@@ -59,9 +53,9 @@ static MBHOOK lightResetFunc;
 static MBHOOK lightSetFunc;
 static MBHOOK closeHook;
 static MBHOOK initHook;
-OMOBJMAN *mbObjMan;
+BOOL mbSaveNewF;
 HUPROCESS *mbMainProc;
-static BOOL mbSaveNewF;
+OMOBJMAN *mbObjMan;
 
 extern void mbBoardDataDirRead(void);
 extern void mbMathInit(void);
@@ -273,7 +267,7 @@ static void mbOMDestroy(void)
     if (_CheckFlag(FLAG_BOARD_TURN_NOSTART)) {
         omOvlReturnEx(1, TRUE);
     } else {
-        if (GWPartyGet() && !_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+        if (GWPartyGet() != FALSE && !_CheckFlag(FLAG_BOARD_TUTORIAL)) {
             omOvlGotoEx(92, TRUE, 0, 0);
         } else {
             omOvlReturnEx(1, TRUE);
@@ -470,7 +464,7 @@ static void mbMainKill(void)
 void mbChangeTimeSet(void)
 {
     GwSystem.nextTime = GwSystem.curTime;
-    GWCurTimeFlip(0, &GwSystem);
+    GwSystem.curTime ^= 1;
 }
 
 BOOL mbNextTimeSet(void)
@@ -544,7 +538,7 @@ void mbInit(void)
     if (!SLSaveFlagGet()) {
         GWSaveModeSet(GW_SAVE_MODE_NEVER);
     }
-    if (GwSystem.mgInstDispF) {
+    if (GWMgInstDispGet()) {
         _SetFlag(5);
     } else {
         _ClearFlag(5);
@@ -586,7 +580,7 @@ void mbInit(void)
     mbTauntInit();
     Hu3DReflectNoSet(0);
     mbCapMasuObjInit();
-    if (!GWPartyGet()) {
+    if (GWPartyGet() == FALSE) {
         mbSingleInit();
     }
     if (_CheckFlag(FLAG_BOARD_TUTORIAL)) {
@@ -603,7 +597,7 @@ void mbClose(void)
         mbMathClose();
         return;
     }
-    if (!GWPartyGet()) {
+    if (GWPartyGet() == FALSE) {
         mbSingleClose();
     }
     mbTauntClose();
@@ -743,7 +737,6 @@ void mbSaveInit(s32 boardNo)
 {
     s32 i;
     s32 j;
-    s8 handicap;
     GwSystem.boardNo = boardNo;
     _ClearFlag(FLAG_BOARD_SAVEINIT);
     _ClearFlag(FLAG_MG_PRACTICE);
@@ -754,11 +747,11 @@ void mbSaveInit(s32 boardNo)
     GwSystem.turnNo = 1;
     for (i = 0; i < GW_PLAYER_MAX; i++) {
         GwPlayer[i].coin = 0;
-        if (!GWPartyGet() || _CheckFlag(FLAG_BOARD_TUTORIAL)) {
+        if (GWPartyGet() == FALSE || _CheckFlag(FLAG_BOARD_TUTORIAL)) {
             GwPlayer[i].star = 0;
             GwSystem.tagF = FALSE;
         } else {
-            handicap = GwPlayer[i].handicap;
+            s32 handicap = GwPlayer[i].handicap;
             GwPlayer[i].star = handicap;
         }
         mbMasuPlayerPrizeReset(i);
