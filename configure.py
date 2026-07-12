@@ -631,8 +631,8 @@ config.libs = [
         "cflags": cflags_libhu,
         "host": False,
         "objects": [
-            Object(NonMatching, "libhu/setvf.c"),
-            Object(NonMatching, "libhu/subvf.c"),
+            Object(Matching, "libhu/setvf.c"),
+            Object(Matching, "libhu/subvf.c"),
         ],
     },
     {
