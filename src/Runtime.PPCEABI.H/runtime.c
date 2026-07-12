@@ -161,7 +161,9 @@ const u32 lbl_1_rodata_88[] = {
 };
 #define __constants lbl_1_rodata_88
 #else
-extern const u32 __constants_1_rodata_290[];
+const u32 __constants_1_rodata_290[] = {
+    0x00000000, 0x00000000, 0x41F00000, 0x00000000, 0x41E00000, 0x00000000,
+};
 #define __constants __constants_1_rodata_290
 #endif
 #else
