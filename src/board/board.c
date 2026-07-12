@@ -161,6 +161,8 @@ BOOL mbReturnMgCheck(void);
 
 void mbObjectSetup(s32 boardNo, MBHOOK init, MBHOOK close)
 {
+    s16 nightF;
+
     omSysPauseEnable(FALSE);
     mbPauseDisableSet(TRUE);
     mbSaveNewF = !_CheckFlag(FLAG_BOARD_SAVEINIT);
@@ -198,12 +200,10 @@ void mbObjectSetup(s32 boardNo, MBHOOK init, MBHOOK close)
         GwSystem.starTotal = 0;
         GwSystem.last5Effect = 0;
         GwSystem.curTime = GwSystem.nextTime = 0;
-        {
-            s16 nightF = GwMgNightF;
-            if (nightF == 1) {
-                GwSystem.nextTime = 1;
-                GwSystem.curTime = GwSystem.nextTime;
-            }
+        nightF = GwMgNightF;
+        if (nightF == 1) {
+            GwSystem.nextTime = 1;
+            GwSystem.curTime = 1;
         }
         GwSystem.timeTurn = 0;
         GwSystem.timeTurnMax = 3;
@@ -378,12 +378,15 @@ static void mbMain(void)
         if (!_CheckFlag(FLAG_BOARD_LAST5)) {
             if (GWPartyGet()) {
                 mbev_Last5();
+                _SetFlag(FLAG_BOARD_LAST5);
             } else {
                 mbTelopLastTurnCreate();
-            }
-            if (!_CheckFlag(FLAG_BOARD_LAST5)) {
-                mbSingleCall(12, 0);
-                _SetFlag(FLAG_BOARD_LAST5);
+                if (!_CheckFlag(FLAG_BOARD_LAST5)) {
+                    if (!GWPartyGet()) {
+                        mbSingleCall(12, 0);
+                        _SetFlag(FLAG_BOARD_LAST5);
+                    }
+                }
             }
         }
     }
@@ -532,13 +535,10 @@ BOOL mbReturnMgCheck(void)
 
 void mbInit(void)
 {
-    BOOL closeF;
-    BOOL playerF;
-    BOOL partyF;
     if (!SLSaveFlagGet()) {
         GWSaveModeSet(GW_SAVE_MODE_NEVER);
     }
-    if (GwSystem.mgInstDispF == TRUE) {
+    if (GwSystem.mgInstDispF) {
         _SetFlag(5);
     } else {
         _ClearFlag(5);
@@ -552,8 +552,7 @@ void mbInit(void)
         _ClearFlag(FLAGNUM(FLAG_GROUP_COMMON, 19));
         _ClearFlag(FLAG_BOARD_MOVE_DONE);
     }
-    closeF = mbReturnMgCheck();
-    if (closeF) {
+    if (mbReturnMgCheck()) {
         mbMgCallDataClose();
     }
     HuSprExecLayerCameraSet(32, 2, 7);
@@ -573,8 +572,7 @@ void mbInit(void)
     mbPlayerTurnInitHookSet(NULL);
     mbPlayerTurnCloseHookSet(NULL);
     initHook();
-    playerF = mbReturnMgCheck();
-    mbPlayerInit(!playerF);
+    mbPlayerInit(!mbReturnMgCheck());
     mbStatusInit();
     mbDiceInit();
     mbLightSet();
@@ -582,8 +580,7 @@ void mbInit(void)
     mbTauntInit();
     Hu3DReflectNoSet(0);
     mbCapMasuObjInit();
-    partyF = GWPartyGet();
-    if (!partyF) {
+    if (!GWPartyGet()) {
         mbSingleInit();
     }
     if (_CheckFlag(FLAG_BOARD_TUTORIAL)) {
