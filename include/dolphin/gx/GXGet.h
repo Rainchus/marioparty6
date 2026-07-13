@@ -18,8 +18,11 @@ void* GXGetTexObjData(const GXTexObj* obj);
 void GXGetProjectionv(f32* p);
 void GXGetLightPos(const GXLightObj* lt_obj, f32* x, f32* y, f32* z);
 void GXGetLightColor(const GXLightObj* lt_obj, GXColor* color);
+void GXGetVtxDesc(GXAttr attr, GXAttrType* type);
+void GXGetVtxDescv(GXVtxDescList* vcd);
 void GXGetVtxAttrFmt(GXVtxFmt idx, GXAttr attr, GXCompCnt* compCnt, GXCompType* compType,
                      u8* shift);
+void GXGetVtxAttrFmtv(GXVtxFmt fmt, GXVtxAttrFmtList* vat);
 
 #ifdef __cplusplus
 }

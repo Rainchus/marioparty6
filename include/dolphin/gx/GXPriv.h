@@ -136,6 +136,7 @@ do { \
     VERIF_RAS_REG(value); \
 } while (0)
 
+#ifdef DEBUG
 #define GX_WRITE_SOME_REG2(a, b, c, addr) \
 do { \
     long regAddr; \
@@ -147,6 +148,16 @@ do { \
         gx->indexBase[regAddr] = c; \
     } \
 } while (0)
+#else
+#define GX_WRITE_SOME_REG2(a, b, c, addr) \
+do { \
+    GX_WRITE_U8(a); \
+    GX_WRITE_U8(b); \
+    GX_WRITE_U32(c); \
+} while (0)
+#endif
+
+#ifdef DEBUG
 #define GX_WRITE_SOME_REG3(a, b, c, addr) \
 do { \
     long regAddr; \
@@ -158,6 +169,14 @@ do { \
         gx->indexStride[regAddr] = c; \
     } \
 } while (0)
+#else
+#define GX_WRITE_SOME_REG3(a, b, c, addr) \
+do { \
+    GX_WRITE_U8(a); \
+    GX_WRITE_U8(b); \
+    GX_WRITE_U32(c); \
+} while (0)
+#endif
 #define GX_WRITE_SOME_REG4(a, b, c, addr) \
 do { \
     long regAddr; \
