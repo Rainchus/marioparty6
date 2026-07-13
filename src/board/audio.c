@@ -1,3 +1,5 @@
+#define _MATH_H
+
 #include "game/board/audio.h"
 #include "game/board/main.h"
 #include "game/charman.h"
