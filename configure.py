@@ -560,11 +560,15 @@ config.libs = [
     },
     {
         "lib": "sdk_mic",
-        "mw_version": config.linker_version,
+        "mw_version": "GC/2.7",
         "cflags": cflags_sdk_mic,
         "host": False,
         "objects": [
-            Object(NonMatching, "dolphin/mic/mic.c"),
+            Object(
+                NonMatching,
+                "dolphin/mic/mic.c",
+                extra_cflags=["-use_lmw_stmw on"],
+            ),
             Object(NonMatching, "dolphin/mic/m2s.c"),
         ],
     },
