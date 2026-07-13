@@ -258,6 +258,7 @@ u32 OSGetConsoleSimulatedMemSize(void);
 #include <dolphin/os/OSMessage.h>
 #include <dolphin/os/OSModule.h>
 #include <dolphin/os/OSMutex.h>
+#include <dolphin/os/OSReboot.h>
 #include <dolphin/os/OSReset.h>
 #include <dolphin/os/OSResetSW.h>
 #include <dolphin/os/OSSemaphore.h>
