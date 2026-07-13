@@ -6,6 +6,17 @@
 #include "game/hu3d.h"
 #include <string.h>
 
+typedef struct MasuFindWork_s {
+    s16 id;
+    s16 linkNo;
+} MASUFINDWORK;
+
+typedef BOOL (*MASUFINDCHECK)(int id, u32 value, u32 mask);
+
+static MASUFINDWORK masuFindWork[MASU_MAX];
+static s16 masuFindResult[MASU_MAX];
+static u8 masuFindVisit[MASU_MAX];
+
 static int masuLayer;
 static s16 masuNum[MASU_LAYER_MAX];
 static MASU *masuData[MASU_LAYER_MAX];
@@ -20,6 +31,10 @@ static MASUEVENTHOOK masuev_HatenaHook;
 static MASUPATHCHECKHOOK masuev_LinkTblHook;
 static s16 masuMdlId;
 static BOOL masuNextDispF;
+static s16 masuFindNo;
+static s16 masuFindStep;
+static s16 masuFindId;
+static s16 masuFindResultNum;
 
 typedef struct MasuDisp_s {
     int type;
@@ -175,7 +190,7 @@ void mbMasuMAttrSet(s16 id, u32 attr)
     masuData[masuLayer][id].mAttr = attr;
 }
 
-u16 mbMasuTypeGet(s16 id)
+int mbMasuTypeGet(s16 id)
 {
     return masuData[masuLayer][id].type;
 }
@@ -508,6 +523,36 @@ s16 mbMasuLinkParentGet(s16 id, s16 *linkTbl)
         }
     }
     return linkNum;
+}
+
+static BOOL MasuTypeCheck(int id, u32 type, u32 unused)
+{
+    return mbMasuTypeGet(id) == type;
+}
+
+static BOOL MasuAttrCheck(int id, u32 attr, u32 unused)
+{
+    return mbMasuAttrGet(id) & attr;
+}
+
+static BOOL MasuMAttrCheck(int id, u32 attr, u32 unused)
+{
+    return mbMasuMAttrGet(id) & attr;
+}
+
+static BOOL MasuAttrMatchCheck(int id, u32 mask, u32 attr)
+{
+    return (mbMasuAttrGet(id) & mask) == attr;
+}
+
+static BOOL MasuMAttrMatchCheck(int id, u32 mask, u32 attr)
+{
+    return (mbMasuMAttrGet(id) & mask) == attr;
+}
+
+static BOOL MasuIdCheck(int id, u32 targetId, u32 unused)
+{
+    return id == targetId;
 }
 
 int mbMasuTypeListGet(s16 type, s16 *list)

@@ -44,7 +44,7 @@ u16 mbMasuAttrGet(s16 id);
 void mbMasuAttrSet(s16 id, u16 attr);
 u32 mbMasuMAttrGet(s16 id);
 void mbMasuMAttrSet(s16 id, u32 attr);
-u16 mbMasuTypeGet(s16 id);
+int mbMasuTypeGet(s16 id);
 void mbMasuTypeSet(s16 id, int type);
 void mbMasuTypeChange(u16 oldType, u16 newType);
 BOOL mbMasuDispCheck(s16 id);
