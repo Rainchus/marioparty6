@@ -787,10 +787,188 @@ dolphin/thp/THPDec.c:
 dolphin/thp/THPAudio.c:
 	.text       start:0x800CA334 end:0x800CA864
 
+musyx/runtime/seq.c:
+	.text       start:0x800CA864 end:0x800CE830
+	.data       start:0x8023F720 end:0x8023F770
+	.bss        start:0x802899F0 end:0x80297330
+	.sbss       start:0x802C0A98 end:0x802C0AB8
+	.sdata2     start:0x802C20E0 end:0x802C2100
+
+musyx/runtime/synth.c:
+	.text       start:0x800CE830 end:0x800D1CCC
+	.bss        start:0x80297330 end:0x80298918
+	.sbss       start:0x802C0AB8 end:0x802C0B00
+	.sdata2     start:0x802C2100 end:0x802C2140
+
+musyx/runtime/seq_api.c:
+	.text       start:0x800D1CCC end:0x800D1F4C
+
+musyx/runtime/snd_synthapi.c:
+	.text       start:0x800D1F4C end:0x800D24F4
+
+musyx/runtime/stream.c:
+	.text       start:0x800D24F4 end:0x800D60F8
+	.bss        start:0x80298918 end:0x8029A218
+	.sbss       start:0x802C0B00 end:0x802C0B08
+	.sdata2     start:0x802C2140 end:0x802C2158
+
+musyx/runtime/synthdata.c:
+	.text       start:0x800D60F8 end:0x800D7E90
+	.bss        start:0x8029A218 end:0x802A4850
+	.sbss       start:0x802C0B08 end:0x802C0B50
+
+musyx/runtime/synthmacros.c:
+	.text       start:0x800D7E90 end:0x800DCE30
+	.data       start:0x8023F770 end:0x8023FBB8
+	.bss        start:0x802A4850 end:0x802A4870
+	.sbss       start:0x802C0B50 end:0x802C0B70
+	.sdata2     start:0x802C2158 end:0x802C2180
+
+musyx/runtime/synthvoice.c:
+	.text       start:0x800DCE30 end:0x800DEB94
+	.bss        start:0x802A4870 end:0x802A5830
+	.sbss       start:0x802C0B70 end:0x802C0B88
+
+musyx/runtime/synth_ac.c:
+	.text       start:0x800DEB94 end:0x800DECB4
+	.data       start:0x8023FBB8 end:0x8023FFB8
+	.sdata2     start:0x802C2180 end:0x802C2198
+
+musyx/runtime/synth_dbtab.c:
+	.data       start:0x8023FFB8 end:0x80240740
+
+musyx/runtime/synth_adsr.c:
+	.text       start:0x800DECB4 end:0x800DF474
+	.sdata2     start:0x802C2198 end:0x802C21C0
+
+musyx/runtime/synth_vsamples.c:
+	.text       start:0x800DF474 end:0x800DFC28
+	.bss        start:0x802A5830 end:0x802A6180
+
+musyx/runtime/s_data.c:
+	.text       start:0x800DFC28 end:0x800E0818
+	.bss        start:0x802A6180 end:0x802A6798
+	.sbss       start:0x802C0B88 end:0x802C0B98
+
+musyx/runtime/hw_dspctrl.c:
+	.text       start:0x800E0818 end:0x800E3DEC
+	.rodata     start:0x80216400 end:0x80216438
+	.data       start:0x80240740 end:0x80242198
+	.bss        start:0x802A6798 end:0x802A6E78
+	.sbss       start:0x802C0B98 end:0x802C0BD8
+
+musyx/runtime/hw_volconv.c:
+	.text       start:0x800E3DEC end:0x800E44DC
+	.data       start:0x80242198 end:0x802423C0
+	.sdata2     start:0x802C21C0 end:0x802C21F8
+
+musyx/runtime/snd3d.c:
+	.text       start:0x800E44DC end:0x800E6714
+	.bss        start:0x802A6E78 end:0x802A80C8
+	.sbss       start:0x802C0BD8 end:0x802C0BF8
+	.sdata2     start:0x802C21F8 end:0x802C2240
+
+musyx/runtime/snd_init.c:
+	.text       start:0x800E6714 end:0x800E6870
+
+musyx/runtime/snd_math.c:
+	.text       start:0x800E6870 end:0x800E6C30
+	.sdata2     start:0x802C2240 end:0x802C2260
+
+musyx/runtime/snd_midictrl.c:
+	.text       start:0x800E6C30 end:0x800E8F30
+	.rodata     start:0x80216438 end:0x80216548
+	.data       start:0x802423C0 end:0x80242450
+	.bss        start:0x802A80C8 end:0x802AEEC8
+
+musyx/runtime/snd_service.c:
+	.text       start:0x800E8F30 end:0x800E9204
+	.rodata     start:0x80216548 end:0x80216578
+	.data       start:0x80242450 end:0x80242C60
+	.sdata      start:0x802BFB18 end:0x802BFB20
+	.sdata2     start:0x802C2260 end:0x802C2268
+
+musyx/runtime/hardware.c:
+	.text       start:0x800E9204 end:0x800EA298
+	.rodata     start:0x80216578 end:0x80216678
+	.sdata      start:0x802BFB20 end:0x802BFB30
+	.sbss       start:0x802C0BF8 end:0x802C0C08
+	.sdata2     start:0x802C2268 end:0x802C2290
+
+musyx/runtime/dsp_import.c:
+	.data       start:0x80242C60 end:0x80244B20
+	.sdata      start:0x802BFB30 end:0x802BFB38
+
+musyx/runtime/hw_aramdma.c:
+	.text       start:0x800EA298 end:0x800EAF78
+	.bss        start:0x802AEEC8 end:0x802AF7E0
+	.sbss       start:0x802C0C08 end:0x802C0C28
+
+musyx/runtime/hw_dolphin.c:
+	.text       start:0x800EAF78 end:0x800EB470
+	.bss        start:0x802AF7E0 end:0x802B1840
+	.sbss       start:0x802C0C28 end:0x802C0C50
+
+musyx/runtime/hw_memory.c:
+	.text       start:0x800EB470 end:0x800EB4C4
+
+musyx/runtime/CheapReverb/creverb_fx.c:
+	.text       start:0x800EB4C4 end:0x800EB580
+
+musyx/runtime/CheapReverb/creverb.c:
+	.text       start:0x800EB580 end:0x800EBE3C
+	.data       start:0x80244B20 end:0x80244B30
+	.sdata2     start:0x802C2290 end:0x802C22D0
+
+musyx/runtime/StdReverb/reverb_fx.c:
+	.text       start:0x800EBE3C end:0x800EBEFC
+
+musyx/runtime/StdReverb/reverb.c:
+	.text       start:0x800EBEFC end:0x800ECC34
+	.data       start:0x80244B30 end:0x80244B50
+	.sdata2     start:0x802C22D0 end:0x802C2318
+
+musyx/runtime/Delay/delay_fx.c:
+	.text       start:0x800ECC34 end:0x800ECFE0
+
+musyx/runtime/Chorus/chorus_fx.c:
+	.text       start:0x800ECFE0 end:0x800ED848
+	.data       start:0x80244B50 end:0x80245350
+	.sdata2     start:0x802C2318 end:0x802C2320
+
+Runtime.PPCEABI.H/__va_arg.c:
+	.text       start:0x800ED848 end:0x800ED910
+
 Runtime.PPCEABI.H/global_destructor_chain.c:
 	.text       start:0x800ED910 end:0x800ED970
 	.dtors      start:0x80216048 end:0x8021604C
 	.sbss       start:0x802C0C50 end:0x802C0C58
+
+Runtime.PPCEABI.H/__mem.c:
+	.init       start:0x80003458 end:0x80003590
+
+Runtime.PPCEABI.H/New.cp:
+	extab       start:0x800056C0 end:0x80005720
+	extabindex  start:0x80005800 end:0x80005830
+	.text       start:0x800ED970 end:0x800EDAE4
+	.sbss       start:0x802C0C58 end:0x802C0C60
+
+Runtime.PPCEABI.H/NewMore.cp:
+	extab       start:0x80005720 end:0x80005738
+	extabindex  start:0x80005830 end:0x80005854
+	.text       start:0x800EDAE4 end:0x800EDBF8
+	.rodata     start:0x80216678 end:0x802166E8
+	.data       start:0x80245350 end:0x80245380
+	.sdata      start:0x802BFB38 end:0x802BFB50
+
+Runtime.PPCEABI.H/NMWException.cpp:
+	extab       start:0x80005738 end:0x80005780
+	extabindex  start:0x80005854 end:0x800058A8
+	.text       start:0x800EDBF8 end:0x800EE0E4
+	.sdata      start:0x802BFB50 end:0x802BFB58
+
+Runtime.PPCEABI.H/ptmf.c:
+	.text       start:0x800EE0E4 end:0x800EE178
 
 Runtime.PPCEABI.H/runtime.c:
 	.text       start:0x800EE178 end:0x800EE854
@@ -801,6 +979,337 @@ Runtime.PPCEABI.H/__init_cpp_exceptions.cpp:
 	.ctors      start:0x80216020 end:0x80216024
 	.dtors      start:0x80216040 end:0x80216048
 	.sdata      start:0x802BFB58 end:0x802BFB60
+
+Runtime.PPCEABI.H/Gecko_ExceptionPPC.cpp:
+	extab       start:0x80005780 end:0x800057F4
+	extabindex  start:0x800058A8 end:0x800058FC
+	.text       start:0x800EE8D0 end:0x800EFD08
+	.rodata     start:0x80216700 end:0x80216798
+	.data       start:0x80245380 end:0x80245468
+	.bss        start:0x802B1840 end:0x802B1850
+	.sdata      start:0x802BFB60 end:0x802BFB70
+
+Runtime.PPCEABI.H/GCN_mem_alloc.c:
+	.text       start:0x800EFD08 end:0x800EFE78
+	.rodata     start:0x80216798 end:0x80216810
+
+MSL_C.PPCEABI.bare.H/abort_exit.c:
+	.text       start:0x800EFE78 end:0x800EFFCC
+	.bss        start:0x802B1850 end:0x802B1950
+	.sbss       start:0x802C0C60 end:0x802C0C70
+
+MSL_C.PPCEABI.bare.H/alloc.c:
+	.text       start:0x800EFFCC end:0x800F0E78
+	.rodata     start:0x80216810 end:0x80216828
+	.bss        start:0x802B1950 end:0x802B1988
+	.sbss       start:0x802C0C70 end:0x802C0C78
+
+MSL_C.PPCEABI.bare.H/errno.c:
+	.sbss       start:0x802C0C78 end:0x802C0C80
+
+MSL_C.PPCEABI.bare.H/ansi_files.c:
+	.text       start:0x800F0E78 end:0x800F0F80
+	.data       start:0x80245468 end:0x802455A8
+	.bss        start:0x802B1988 end:0x802B1C88
+
+MSL_C.PPCEABI.bare.H/ansi_fp.c:
+	.text       start:0x800F0F80 end:0x800F1B98
+	.rodata     start:0x80216828 end:0x80216908
+	.data       start:0x802455A8 end:0x802456D0
+	.sdata2     start:0x802C2320 end:0x802C2328
+
+MSL_C.PPCEABI.bare.H/arith.c:
+	.text       start:0x800F1B98 end:0x800F1BA8
+
+MSL_C.PPCEABI.bare.H/assert.c:
+	.text       start:0x800F1BA8 end:0x800F1BF4
+	.rodata     start:0x80216908 end:0x80216938
+
+MSL_C.PPCEABI.bare.H/buffer_io.c:
+	.text       start:0x800F1BF4 end:0x800F1CEC
+
+MSL_C.PPCEABI.bare.H/ctype.c:
+	.text       start:0x800F1CEC end:0x800F1D28
+	.data       start:0x802456D0 end:0x802458D0
+
+MSL_C.PPCEABI.bare.H/direct_io.c:
+	.text       start:0x800F1D28 end:0x800F2054
+
+MSL_C.PPCEABI.bare.H/file_io.c:
+	.text       start:0x800F2054 end:0x800F224C
+
+MSL_C.PPCEABI.bare.H/FILE_POS.c:
+	.text       start:0x800F224C end:0x800F2518
+
+MSL_C.PPCEABI.bare.H/mbstring.c:
+	.text       start:0x800F2518 end:0x800F265C
+	.sdata2     start:0x802C2328 end:0x802C2330
+
+MSL_C.PPCEABI.bare.H/mem.c:
+	.text       start:0x800F265C end:0x800F27CC
+
+MSL_C.PPCEABI.bare.H/mem_funcs.c:
+	.text       start:0x800F27CC end:0x800F2AAC
+
+MSL_C.PPCEABI.bare.H/misc_io.c:
+	.text       start:0x800F2AAC end:0x800F2ABC
+
+MSL_C.PPCEABI.bare.H/printf.c:
+	.text       start:0x800F2ABC end:0x800F4C1C
+	.rodata     start:0x80216938 end:0x80216960
+	.data       start:0x802458D0 end:0x80245B00
+	.sdata      start:0x802BFB70 end:0x802BFB78
+	.sdata2     start:0x802C2330 end:0x802C2338
+
+MSL_C.PPCEABI.bare.H/float.c:
+	.sdata      start:0x802BFB78 end:0x802BFB80
+
+MSL_C.PPCEABI.bare.H/qsort.c:
+	.text       start:0x800F4C1C end:0x800F4D8C
+
+MSL_C.PPCEABI.bare.H/signal.c:
+	.text       start:0x800F4D8C end:0x800F4E3C
+	.bss        start:0x802B1C88 end:0x802B1CA0
+
+MSL_C.PPCEABI.bare.H/string.c:
+	.text       start:0x800F4E3C end:0x800F5118
+
+MSL_C.PPCEABI.bare.H/uart_console_io.c:
+	.text       start:0x800F5118 end:0x800F51E4
+	.sbss       start:0x802C0C80 end:0x802C0C88
+
+MSL_C.PPCEABI.bare.H/wchar_io.c:
+	.text       start:0x800F51E4 end:0x800F526C
+
+MSL_C.PPCEABI.bare.H/e_acos.c:
+	.text       start:0x800F526C end:0x800F557C
+	.sdata2     start:0x802C2338 end:0x802C23C8
+
+MSL_C.PPCEABI.bare.H/e_asin.c:
+	.text       start:0x800F557C end:0x800F57E0
+	.sdata2     start:0x802C23C8 end:0x802C2460
+
+MSL_C.PPCEABI.bare.H/e_atan2.c:
+	.text       start:0x800F57E0 end:0x800F5A70
+	.sdata2     start:0x802C2460 end:0x802C24B8
+
+MSL_C.PPCEABI.bare.H/e_exp.c:
+	.text       start:0x800F5A70 end:0x800F5C8C
+	.rodata     start:0x80216960 end:0x80216990
+	.sdata2     start:0x802C24B8 end:0x802C2530
+
+MSL_C.PPCEABI.bare.H/e_fmod.c:
+	.text       start:0x800F5C8C end:0x800F5FC8
+	.rodata     start:0x80216990 end:0x802169A0
+
+MSL_C.PPCEABI.bare.H/e_log.c:
+	.text       start:0x800F5FC8 end:0x800F6244
+	.sbss       start:0x802C0C88 end:0x802C0C90
+	.sdata2     start:0x802C2530 end:0x802C25B0
+
+MSL_C.PPCEABI.bare.H/e_log10.c:
+	.text       start:0x800F6244 end:0x800F6354
+	.sbss       start:0x802C0C90 end:0x802C0C98
+	.sdata2     start:0x802C25B0 end:0x802C25E0
+
+MSL_C.PPCEABI.bare.H/e_pow.c:
+	.text       start:0x800F6354 end:0x800F6BE0
+	.rodata     start:0x802169A0 end:0x802169D0
+	.sdata2     start:0x802C25E0 end:0x802C26F0
+
+MSL_C.PPCEABI.bare.H/e_rem_pio2.c:
+	.text       start:0x800F6BE0 end:0x800F6F80
+	.rodata     start:0x802169D0 end:0x80216B58
+	.sdata2     start:0x802C26F0 end:0x802C2748
+
+MSL_C.PPCEABI.bare.H/k_cos.c:
+	.text       start:0x800F6F80 end:0x800F7074
+	.sdata2     start:0x802C2748 end:0x802C2790
+
+MSL_C.PPCEABI.bare.H/k_rem_pio2.c:
+	.text       start:0x800F7074 end:0x800F7EC8
+	.rodata     start:0x80216B58 end:0x80216BA8
+	.sdata2     start:0x802C2790 end:0x802C27D0
+
+MSL_C.PPCEABI.bare.H/k_sin.c:
+	.text       start:0x800F7EC8 end:0x800F7F68
+	.sdata2     start:0x802C27D0 end:0x802C2808
+
+MSL_C.PPCEABI.bare.H/k_tan.c:
+	.text       start:0x800F7F68 end:0x800F817C
+	.rodata     start:0x80216BA8 end:0x80216C10
+	.sdata2     start:0x802C2808 end:0x802C2840
+
+MSL_C.PPCEABI.bare.H/s_atan.c:
+	.text       start:0x800F817C end:0x800F837C
+	.rodata     start:0x80216C10 end:0x80216CA8
+	.sdata2     start:0x802C2840 end:0x802C2868
+
+MSL_C.PPCEABI.bare.H/s_ceil.c:
+	.text       start:0x800F837C end:0x800F84C0
+	.sdata2     start:0x802C2868 end:0x802C2878
+
+MSL_C.PPCEABI.bare.H/s_copysign.c:
+	.text       start:0x800F84C0 end:0x800F84E8
+
+MSL_C.PPCEABI.bare.H/s_cos.c:
+	.text       start:0x800F84E8 end:0x800F85BC
+	.sdata2     start:0x802C2878 end:0x802C2880
+
+MSL_C.PPCEABI.bare.H/s_floor.c:
+	.text       start:0x800F85BC end:0x800F8704
+	.sdata2     start:0x802C2880 end:0x802C2890
+
+MSL_C.PPCEABI.bare.H/s_frexp.c:
+	.text       start:0x800F8704 end:0x800F8790
+	.sdata2     start:0x802C2890 end:0x802C2898
+
+MSL_C.PPCEABI.bare.H/s_ldexp.c:
+	.text       start:0x800F8790 end:0x800F8954
+	.sdata2     start:0x802C2898 end:0x802C28C0
+
+MSL_C.PPCEABI.bare.H/s_modf.c:
+	.text       start:0x800F8954 end:0x800F8A50
+
+MSL_C.PPCEABI.bare.H/s_sin.c:
+	.text       start:0x800F8A50 end:0x800F8B28
+	.sdata2     start:0x802C28C0 end:0x802C28C8
+
+MSL_C.PPCEABI.bare.H/s_tan.c:
+	.text       start:0x800F8B28 end:0x800F8BA0
+	.sdata2     start:0x802C28C8 end:0x802C28D0
+
+MSL_C.PPCEABI.bare.H/w_acos.c:
+	.text       start:0x800F8BA0 end:0x800F8BC0
+
+MSL_C.PPCEABI.bare.H/w_asin.c:
+	.text       start:0x800F8BC0 end:0x800F8BE0
+
+MSL_C.PPCEABI.bare.H/w_atan2.c:
+	.text       start:0x800F8BE0 end:0x800F8C00
+
+MSL_C.PPCEABI.bare.H/w_exp.c:
+	.text       start:0x800F8C00 end:0x800F8C20
+
+MSL_C.PPCEABI.bare.H/w_fmod.c:
+	.text       start:0x800F8C20 end:0x800F8C40
+
+MSL_C.PPCEABI.bare.H/w_log.c:
+	.text       start:0x800F8C40 end:0x800F8C60
+
+MSL_C.PPCEABI.bare.H/w_log10.c:
+	.text       start:0x800F8C60 end:0x800F8C80
+
+MSL_C.PPCEABI.bare.H/w_pow.c:
+	.text       start:0x800F8C80 end:0x800F8CA0
+
+MSL_C.PPCEABI.bare.H/math_ppc.c:
+	.text       start:0x800F8CA0 end:0x800F8E2C
+
+TRK_MINNOW_DOLPHIN/mainloop.c:
+	.text       start:0x800F8E2C end:0x800F8F24
+
+TRK_MINNOW_DOLPHIN/nubevent.c:
+	.text       start:0x800F8F24 end:0x800F914C
+	.bss        start:0x802B1CA0 end:0x802B1CC8
+
+TRK_MINNOW_DOLPHIN/nubinit.c:
+	.text       start:0x800F914C end:0x800F92CC
+	.rodata     start:0x80216CA8 end:0x80216CC8
+	.bss        start:0x802B1CC8 end:0x802B1CD0
+
+TRK_MINNOW_DOLPHIN/msg.c:
+	.text       start:0x800F92CC end:0x800F94A8
+
+TRK_MINNOW_DOLPHIN/msgbuf.c:
+	.text       start:0x800F94A8 end:0x800F9ED4
+	.rodata     start:0x80216CC8 end:0x80216CE8
+	.bss        start:0x802B1CD0 end:0x802B3680
+
+TRK_MINNOW_DOLPHIN/serpoll.c:
+	.text       start:0x800F9ED4 end:0x800FA2A0
+	.bss        start:0x802B3680 end:0x802B3698
+
+TRK_MINNOW_DOLPHIN/usr_put.c:
+	.text       start:0x800FA2A0 end:0x800FA32C
+
+TRK_MINNOW_DOLPHIN/dispatch.c:
+	.text       start:0x800FA32C end:0x800FA3C8
+	.data       start:0x80245B00 end:0x80245B88
+	.bss        start:0x802B3698 end:0x802B36A0
+
+TRK_MINNOW_DOLPHIN/msghndlr.c:
+	.text       start:0x800FA3C8 end:0x800FCC28
+	.data       start:0x80245B88 end:0x80245BC0
+	.bss        start:0x802B36A0 end:0x802B36A8
+
+TRK_MINNOW_DOLPHIN/support.c:
+	.text       start:0x800FCC28 end:0x800FD4E8
+
+TRK_MINNOW_DOLPHIN/mutex_TRK.c:
+	.text       start:0x800FD4E8 end:0x800FD500
+
+TRK_MINNOW_DOLPHIN/notify.c:
+	.text       start:0x800FD500 end:0x800FD5D8
+
+TRK_MINNOW_DOLPHIN/flush_cache.c:
+	.text       start:0x800FD5D8 end:0x800FD610
+
+TRK_MINNOW_DOLPHIN/mem_TRK.c:
+	.init       start:0x80003590 end:0x800035E4
+	.text       start:0x800FD610 end:0x800FD6CC
+
+TRK_MINNOW_DOLPHIN/targimpl.c:
+	.text       start:0x800FD6CC end:0x800FEF60
+	.rodata     start:0x80216CE8 end:0x80216D70
+	.data       start:0x80245BC0 end:0x80245BF0
+	.bss        start:0x802B36A8 end:0x802B3C28
+
+TRK_MINNOW_DOLPHIN/targsupp.s:
+	.text       start:0x800FEF60 end:0x800FEF80
+
+TRK_MINNOW_DOLPHIN/__exception.s:
+	.init       start:0x800035E4 end:0x80005518
+
+TRK_MINNOW_DOLPHIN/dolphin_trk.c:
+	.init       start:0x80005518 end:0x8000561C
+	.text       start:0x800FEF80 end:0x800FF0C0
+	.data       start:0x80245BF0 end:0x80245C30
+	.bss        start:0x802B3C28 end:0x802B3C30
+
+TRK_MINNOW_DOLPHIN/mpc_7xx_603e.c:
+	.text       start:0x800FF0C0 end:0x800FF438
+
+TRK_MINNOW_DOLPHIN/main_TRK.c:
+	.text       start:0x800FF438 end:0x800FF47C
+	.bss        start:0x802B3C30 end:0x802B3C38
+
+TRK_MINNOW_DOLPHIN/dolphin_trk_glue.c:
+	.text       start:0x800FF47C end:0x800FF928
+	.rodata     start:0x80216D70 end:0x80216DB8
+	.data       start:0x80245C30 end:0x80245C50
+	.bss        start:0x802B3C38 end:0x802B5E60
+
+TRK_MINNOW_DOLPHIN/targcont.c:
+	.text       start:0x800FF928 end:0x800FF95C
+
+TRK_MINNOW_DOLPHIN/target_options.c:
+	.text       start:0x800FF95C end:0x800FF978
+	.bss        start:0x802B5E60 end:0x802B5E68
+
+TRK_MINNOW_DOLPHIN/mslsupp.c:
+	.text       start:0x800FF978 end:0x800FFAF0
+
+OdemuExi2/DebuggerDriver.c:
+	.text       start:0x800FFAF0 end:0x80100570
+	.sdata      start:0x802BFB80 end:0x802BFB88
+	.sbss       start:0x802C0C98 end:0x802C0CB0
+
+amcstubs/AmcExi2Stubs.c:
+	.text       start:0x80100570 end:0x801005A0
+
+odenotstub/odenotstub.c:
+	.text       start:0x801005A0 end:0x801005A8
 
 dolphin/mic/mic.c:
 	.text       start:0x801005A8 end:0x801025C8
