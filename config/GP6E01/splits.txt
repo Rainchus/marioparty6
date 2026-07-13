@@ -789,12 +789,18 @@ dolphin/thp/THPAudio.c:
 
 Runtime.PPCEABI.H/global_destructor_chain.c:
 	.text       start:0x800ED910 end:0x800ED970
-	.dtors      start:0x80216040 end:0x80216044
+	.dtors      start:0x80216048 end:0x8021604C
 	.sbss       start:0x802C0C50 end:0x802C0C58
 
 Runtime.PPCEABI.H/runtime.c:
 	.text       start:0x800EE178 end:0x800EE854
 	.rodata     start:0x802166E8 end:0x80216700
+
+Runtime.PPCEABI.H/__init_cpp_exceptions.cpp:
+	.text       start:0x800EE854 end:0x800EE8D0
+	.ctors      start:0x80216020 end:0x80216024
+	.dtors      start:0x80216040 end:0x80216048
+	.sdata      start:0x802BFB58 end:0x802BFB60
 
 dolphin/mic/mic.c:
 	.text       start:0x801005A8 end:0x801025C8
