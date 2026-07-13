@@ -625,10 +625,6 @@ void __GXShadowDispList(void *list, u32 nbytes);
 void __GXShadowIndexState(u32 idx_reg, u32 reg_data);
 void __GXPrintShadowState(void);
 
-/* GXStubs.c */
-
-void __GXSetRange(float nearz, float fgSideX);
-
 /* GXTexture.c */
 
 void __GetImageTileCount(GXTexFmt fmt, u16 wd, u16 ht, u32 *rowTiles, u32 *colTiles, u32 *cmpTiles);
