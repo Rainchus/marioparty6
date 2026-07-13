@@ -406,7 +406,7 @@ config.libs = [
             Object(Matching, "dolphin/os/OSSemaphore.c"),
             Object(Matching, "dolphin/os/OSStopwatch.c"),
             Object(Matching, "dolphin/os/OSSync.c"),
-            Object(NonMatching, "dolphin/os/OSThread.c"),
+            Object(Matching, "dolphin/os/OSThread.c"),
             Object(Matching, "dolphin/os/OSTime.c"),
             Object(NonMatching, "dolphin/os/__start.c"),
             Object(Matching, "dolphin/os/__ppc_eabi_init.c"),
