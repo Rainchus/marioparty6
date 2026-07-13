@@ -255,13 +255,12 @@ static inline BOOL msmStreamIsPlay(MSM_STREAM_SLOT* slot) {
 void msmStreamStopAll(s32 speed)
 {
     MSM_STREAM_SLOT* slot;
-    u32 offset;
     s32 i;
 
     msmSysIrqDisable();
-    for (i = 0, offset = 0; i < StreamInfo.header.chanMax; offset += sizeof(*slot), i++) {
+    for (i = 0; i < StreamInfo.header.chanMax; i++) {
         if (i >= 0 && i < StreamInfo.header.chanMax) {
-            slot = (MSM_STREAM_SLOT*) ((u32) StreamInfo.slot + offset);
+            slot = &StreamInfo.slot[i];
             msmSysIrqDisable();
             msmStreamStopSub(i, speed);
             if (slot->slotL != -1) {
