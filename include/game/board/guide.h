@@ -3,7 +3,7 @@
 
 #include "game/board/effect.h"
 #include "game/board/main.h"
-#include "game/board/object.h"
+#include "game/board/object_data.h"
 #include "game/object.h"
 #include "game/hu3d.h"
 #include "game/sprite.h"
@@ -47,6 +47,30 @@ void mbGuideMotionStop(OMOBJ *obj);
 BOOL mbGuideMotionCheck(OMOBJ *obj);
 int mbGuideNoGet(void);
 int mbGuideSpeakerNoGet(void);
+
+// Board object model system (linked from DOL)
+MBMODELID mbObjCreate(int dataNum, int *motData, BOOL link);
+int mbObjMotionNoCreate(int modelId, int dataNum, int motNo);
+int mbObjMotionIDGet(int modelId, int motNo);
+int mbObjMotionShiftIDGet(int modelId);
+BOOL mbObjMotionEndCheck(int modelId);
+void mbObjMotionSet(int modelId, int motNo, u32 attr);
+void mbObjMotionShiftSet(int modelId, int motNo, float start, float end, BOOL loopF);
+void mbObjPosSetV(int modelId, HuVecF *pos);
+void mbObjPosGet(int modelId, HuVecF *pos);
+void mbObjRotSet(MBMODELID modelId, float rotX, float rotY, float rotZ);
+void mbObjRotSetV(int modelId, HuVecF *rot);
+void mbObjScaleSet(int modelId, float x, float y, float z);
+void mbObjScaleGet(int modelId, HuVecF *scale);
+void mbObjMtxSet(int modelId, Mtx *mtx);
+void mbObjMtxGet(int modelId, Mtx *mtx);
+void mbObjCameraSet(int modelId, u16 cameraBit);
+void mbObjLayerSet(int modelId, int layer);
+void mbObjAttrSet(int modelId, u32 attr);
+void mbObjDispSet(int modelId, BOOL dispF);
+void mbObjKill(int modelId);
+void mbObjHookSet(int modelId, char *objName, int hookMdlId);
+MBOBJMODEL *mbObjGet(int modelId);
 
 void mbObjFadeCreate(int modelId, HuVecF *pos);
 void mbObjFadeKill(int modelId);

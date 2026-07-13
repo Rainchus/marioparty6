@@ -13,6 +13,9 @@
 
 extern void *mbMallocNum(s32 size, u32 num);
 extern void *mbMallocFlushModelNum(s32 size, u32 num);
+extern HU3D_MODELID mbObjModelIDGet(MBMODELID modelId);
+extern void mbObjLayerSet(MBMODELID modelId, s16 layer);
+extern void mbObjDispSet(MBMODELID modelId, BOOL dispF);
 extern void mbMtxRot(Mtx mtx, float x, float y, float z);
 extern void mbMtxRotAxisDeg(Mtx mtx, char axis, float angle);
 extern float mbSinDeg(float angle);

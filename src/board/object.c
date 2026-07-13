@@ -31,22 +31,26 @@ static MBOBJMODEL *ObjManLinkSearch(int dataNum);
 
 int mbObjDataNumGet(int dataNum)
 {
-    int result = dataNum;
+    int result;
 
     if (!GwSystem.curTime) {
-        if ((dataNum & 0xFFFF0000) == dataDirNight) {
-            result = dataDirDay | (dataNum & 0xFFFF);
+        if (DIRNUM(dataNum) == dataDirNight) {
+            result = dataDirDay | FILENUM(dataNum);
+            goto done;
         }
-    } else if ((dataNum & 0xFFFF0000) == dataDirDay) {
-        result = dataDirNight | (dataNum & 0xFFFF);
+    } else if (DIRNUM(dataNum) == dataDirDay) {
+        result = dataDirNight | FILENUM(dataNum);
+        goto done;
     }
+    result = dataNum;
+done:
     return result;
 }
 
 void mbObjInit(void)
 {
     objManNum = 0;
-    dataDirDay = dataDirNight = -1;
+    dataDirDay = dataDirNight = DIRNUM(HU_DATANUM_NONE);
     objManData = mbMalloc(sizeof(MBOBJMODEL) * MB_OBJ_MAX);
     objManOMObj = omAddObjEx(mbObjMan, 32259, 0, 0, OM_GRP_NONE, ObjManOMExec);
     omSetStatBit(objManOMObj, OM_STAT_NOPAUSE | OM_STAT_SPRPAUSE);
@@ -656,10 +660,7 @@ void mbObjMotionSet(MBMODELID modelId, int motNo, u32 attr)
 
 HU3D_MOTIONID mbObjMotionIDCurGet(MBMODELID modelId)
 {
-    MBOBJMODEL *modelP = &objManData[modelId];
-    int motNo = modelP->motNo;
-
-    return mbObjMotionIDGet(modelId, motNo);
+    return mbObjMotionIDGet(modelId, mbObjMotionGet(modelId));
 }
 
 HU3D_MOTIONID mbObjMotionIDGet(MBMODELID modelId, int motNo)
@@ -687,7 +688,7 @@ void mbObjMotionShiftSet(MBMODELID modelId, int motNo, float start, float end, u
     modelP->motNo = motNo;
 }
 
-HU3D_MOTIONID mbObjMotionShiftIDGet(MBMODELID modelId)
+int mbObjMotionShiftIDGet(MBMODELID modelId)
 {
     MBOBJMODEL *modelP = &objManData[modelId];
 
@@ -791,8 +792,10 @@ float mbObjMotionMaxTimeGet(MBMODELID modelId)
 
 float mbObjMotionSpeedGet(MBMODELID modelId)
 {
+    HU3D_MODEL *model3DP;
     MBOBJMODEL *modelP = &objManData[modelId];
-    HU3D_MODEL *model3DP = &Hu3DData[modelP->modelId];
+
+    model3DP = &Hu3DData[modelP->modelId];
 
     return model3DP->motWork.speed;
 }
@@ -896,8 +899,10 @@ void mbObjMotionShapeSpeedSet(MBMODELID modelId, float speed)
 
 float mbObjMotionShapeSpeedGet(MBMODELID modelId)
 {
+    HU3D_MODEL *model3DP;
     MBOBJMODEL *modelP = &objManData[modelId];
-    HU3D_MODEL *model3DP = &Hu3DData[modelP->modelId];
+
+    model3DP = &Hu3DData[modelP->modelId];
 
     return model3DP->motShapeWork.speed;
 }

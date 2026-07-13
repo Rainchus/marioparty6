@@ -2,7 +2,6 @@
 #define _MATH_H
 
 #include "game/board/main.h"
-#include "game/board/object.h"
 #include "game/board/pause.h"
 #include "game/hu3d.h"
 #include "game/data.h"
@@ -82,6 +81,8 @@ extern void mbCameraMoveOnSet(BOOL onF);
 extern void mbCameraMoveStop(void);
 extern void mbAudInit(void);
 extern void mbAudClose(void);
+extern void mbObjInit(void);
+extern void mbObjClose(void);
 extern void mbPauseInit(void);
 extern void mbWinInit(void);
 extern void mbWinClose(void);
