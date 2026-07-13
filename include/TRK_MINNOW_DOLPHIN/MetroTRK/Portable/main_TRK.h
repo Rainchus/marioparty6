@@ -1,0 +1,8 @@
+#ifndef METROTRK_PORTABLE_MAIN_TRK_H
+#define METROTRK_PORTABLE_MAIN_TRK_H
+
+#include "PowerPC_EABI_Support/MetroTRK/trk.h"
+
+DSError TRK_main(void);
+
+#endif
