@@ -80,6 +80,7 @@ void PADSetSpec(u32 spec);
 void PADControlAllMotors(const u32* cmdArr);
 void PADSetAnalogMode(u32 mode);
 PADSamplingCallback PADSetSamplingCallback(PADSamplingCallback);
+BOOL __PADDisableRecalibration(BOOL disable);
 
 #ifdef TARGET_PC
 /* New API to facilitate controller interactions */

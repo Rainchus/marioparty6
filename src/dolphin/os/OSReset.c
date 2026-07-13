@@ -3,13 +3,12 @@
 #include <dolphin/os.h>
 #include <dolphin/os/OSBootInfo.h>
 #include <dolphin/os/__os.h>
+#include <dolphin/pad.h>
 #include <string.h>
 
 extern OSThreadQueue __OSActiveThreadQueue;
 extern OSExecParams __OSRebootParams;
 extern void __OSStopAudioSystem(void);
-extern BOOL __PADDisableRecalibration(BOOL disable);
-
 static OSResetFunctionQueue ResetFunctionQueue;
 static u32 bootThisDol;
 
