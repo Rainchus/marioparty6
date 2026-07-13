@@ -103,6 +103,15 @@ typedef struct MCResponseData_s {
     u32 data[0x18];
 } MCResponseData_s;
 
+typedef struct MCContextData_s {
+    char path[0x40];
+    void *ctxData;
+    void *gcdData;
+    void *wrdData;
+    void *binData;
+    void *context;
+} MCContextData_s;
+
 typedef struct MCUnkResponseEntry_s {
     u16 score;
     u16 unk;
@@ -158,15 +167,15 @@ static u8 *MCThreadStack;
 static void *LngData;
 static void *M2SBuffer;
 static void *MicBuffer;
-static u8 *MCResultData;
+static s16 *MCResultData;
 static u16 gap_10_802C054E_sbss;
 static s16 MCResultNum;
 static s32 MCResponseLastNo;
 static s32 MCResponseNo;
-static u8 *MCContext;
+static MCContextData_s *MCContext;
 static u16 gap_10_802C053E_sbss;
 static s16 ContextCur;
-static u8 *MCContextP;
+static MCContextData_s *MCContextP;
 static s32 MCStat;
 static HUPROCESS *MCAnswerProc;
 static s32 MCListenF;
@@ -262,7 +271,7 @@ void HuMCSysInit(void)
 {
   short sVar2;
   
-  MCResponseBuf = MCContext = 0;
+  MCResponseBuf = (u8 *)(MCContext = 0);
   MCInitF = 0;
   MicOpenF = 1;
   MCAnswerProc = 0;
@@ -309,9 +318,9 @@ s32 HuMCInit(s32 mountResult)
   MCResponseNo = MCResponseLastNo = 0;
   MCResultData = HuMemDirectMallocNum(0,0x80,0x30000000);
   MCResultNum = 0;
-  MCContext = HuMemDirectMallocNum(0,0x2a0,0x30000000);
+  MCContext = HuMemDirectMallocNum(0,sizeof(MCContextData_s) * 8,0x30000000);
   for (i = 0; i < 8; i++) {
-    *(u32 *)(MCContext + i * 0x54 + 0x50) = 0;
+    MCContext[i].context = 0;
   }
   MCSprGrpId = -1;
   ContextCur = -1;
@@ -449,7 +458,7 @@ void HuMCClose(void)
     }
     HuMemDirectFreeNum(0,0x30000000);
     HuMemDirectFreeNum(2,0x30000000);
-    MCResponseBuf = MCContext = 0;
+    MCResponseBuf = (u8 *)(MCContext = 0);
     MICUnmount(0);
     MICUnmount(1);
     if (MCMicValue != -1) {
@@ -470,7 +479,7 @@ s16 HuMCContextCreate(char *path)
   char *temp;
   char *scan;
   char *filename;
-  u8 *context;
+  MCContextData_s *context;
   s16 index;
   s32 error;
 
@@ -495,10 +504,10 @@ s16 HuMCContextCreate(char *path)
     }
   }
   for (index = 0; index < 8; index++) {
-    if (*(u32 *)(MCContext + index * 0x54 + 0x50) == 0) {
+    if (MCContext[index].context == 0) {
       break;
     }
-    if (strcmp(path,(char *)(MCContext + index * 0x54)) == 0) {
+    if (strcmp(path,MCContext[index].path) == 0) {
       HuMemDirectFree(temp);
       return index;
     }
@@ -507,36 +516,36 @@ s16 HuMCContextCreate(char *path)
     HuMemDirectFree(temp);
     return -1;
   }
-  context = MCContext + index * 0x54;
-  strcpy((char *)context,temp);
+  context = &MCContext[index];
+  strcpy(context->path,temp);
   filename = MakeMCFilename(temp,lbl_802BF987);
-  *(void **)(context + 0x40) = MCDVDRead(filename);
+  context->ctxData = MCDVDRead(filename);
   filename = MakeMCFilename(temp,lbl_802BF98C);
-  *(void **)(context + 0x44) = MCDVDRead(filename);
+  context->gcdData = MCDVDRead(filename);
   filename = MakeMCFilename(temp,lbl_802BF991);
-  *(void **)(context + 0x48) = MCDVDRead(filename);
+  context->wrdData = MCDVDRead(filename);
   filename = MakeMCFilename(temp,lbl_802BF996);
-  *(void **)(context + 0x4c) = MCDVDRead(filename);
-  error = gsapi_ContextSetCtxData(*(undefined4 *)(context + 0x40),context + 0x50);
+  context->binData = MCDVDRead(filename);
+  error = gsapi_ContextSetCtxData(context->ctxData,&context->context);
   if (error != 0) {
     OSReport(strings + 0x1ae,error);
   }
-  error = gsapi_ContextSetGcdData(*(undefined4 *)(context + 0x50),*(undefined4 *)(context + 0x44));
+  error = gsapi_ContextSetGcdData(context->context,context->gcdData);
   if (error != 0) {
     OSReport(strings + 0x1bc,error);
   }
-  error = gsapi_ContextSetWrdData(*(undefined4 *)(context + 0x50),*(undefined4 *)(context + 0x48));
+  error = gsapi_ContextSetWrdData(context->context,context->wrdData);
   if (error != 0) {
     OSReport(strings + 0x1ca,error);
   }
-  gsapi_ContextSetParam(*(undefined4 *)(context + 0x50),9,MCThreshold);
+  gsapi_ContextSetParam(context->context,9,MCThreshold);
   if ((omcurovl == 0x4a) || (omcurovl == 0x4b) || (omcurovl == 0x46) ||
       (omcurovl == 0x66) || (omcurovl == 0x67) || (omcurovl == 0x69) ||
       (omcurovl == 0x68)) {
-    gsapi_ContextSetParam(*(undefined4 *)(context + 0x50),10,200);
+    gsapi_ContextSetParam(context->context,10,200);
   }
   else {
-    gsapi_ContextSetParam(*(undefined4 *)(context + 0x50),10,100);
+    gsapi_ContextSetParam(context->context,10,100);
   }
   HuMemDirectFree(temp);
   return index;
@@ -548,16 +557,16 @@ s16 HuMCContextCreate(char *path)
 void HuMCContextKill(short param_1)
 
 {
-  u8 *context;
+  MCContextData_s *context;
 
   if (param_1 >= 0) {
-    context = MCContext + (param_1 * 0x54);
-    if (*(void **)(context + 0x50)) {
-      gsapi_ContextDeActivate(*(void **)(context + 0x50));
-      HuMemDirectFree(*(void **)(context + 0x40));
-      HuMemDirectFree(*(void **)(context + 0x44));
-      HuMemDirectFree(*(void **)(context + 0x48));
-      *(void **)(context + 0x50) = NULL;
+    context = &MCContext[param_1];
+    if (context->context) {
+      gsapi_ContextDeActivate(context->context);
+      HuMemDirectFree(context->ctxData);
+      HuMemDirectFree(context->gcdData);
+      HuMemDirectFree(context->wrdData);
+      context->context = NULL;
     }
   }
 }
@@ -596,7 +605,7 @@ s32 HuMCContextSet(s16 param_1)
     OSReport(lbl_8023AB60,result);
     return 0;
   }
-  MCContextP = MCContext + param_1 * 0x54;
+  MCContextP = &MCContext[param_1];
   MCResponseNo = MCResponseLastNo = 0;
   gsapi_EngineSetMode(MC_gsapiEngine,1);
   gsapi_EngineSetParam(MC_gsapiEngine,1,0);
@@ -711,7 +720,7 @@ s32 HuMCContextCallbackSet(s16 param_1,MCResponseCallback param_2)
     return 0;
   }
   ContextCur = param_1;
-  MCContextP = MCContext + param_1 * 0x54;
+  MCContextP = &MCContext[param_1];
   MCResponseLastNo = MCResponseNo = 0;
   gsapi_EngineSetMode(MC_gsapiEngine,2);
   gsapi_EngineSetParam(MC_gsapiEngine,1,1);
@@ -2192,9 +2201,9 @@ static void MicResultExec(undefined4 param_1,undefined4 param_2,MicResultNode_s 
         if ((node->count + (MCResultNum + (-2))) >= 0x40) {
           MCResultNum = 0;
         }
-        resultP = (s16 *)MCResultData + MCResultNum;
+        resultP = &MCResultData[MCResultNum];
         for (j = 1; j < (root->count - 1); j++) {
-          ((s16 *)MCResultData)[MCResultNum++] = MicResultGet(node->result[j]);
+          MCResultData[MCResultNum++] = MicResultGet(node->result[j]);
           gsapi_EngineGetParam(MC_gsapiEngine,node->result[j],&name);
           OSReport(lbl_8023AD88,i,MicResultGet(node->result[j]),node->score,name);
         }
@@ -2226,7 +2235,7 @@ static s32 MicResultGet(s32 param_1)
   s32 i;
   u16 *ptr;
   
-  ptr = *(u16 **)(MCContextP + 0x4c);
+  ptr = MCContextP->binData;
   count = *ptr++;
   i = total = 0;
   for (; i < count; ptr++, i++) {
@@ -2344,11 +2353,11 @@ static s32 ActivateContext(s16 context)
   char *strings;
   
   strings = lbl_8023A988;
-  result = gsapi_ContextSetParam(*(undefined4 *)(MCContext + context * 0x54 + 0x50),5,10);
+  result = gsapi_ContextSetParam(MCContext[context].context,5,10);
   if (result != 0) {
     OSReport(strings + 0x40e,result);
   }
-  result = gsapi_ContextActivate(MC_gsapiEngine,*(undefined4 *)(MCContext + context * 0x54 + 0x50));
+  result = gsapi_ContextActivate(MC_gsapiEngine,MCContext[context].context);
   mic = GwCommon.mic;
   if ((mic == 1) && (MCSessionCur != -1)) {
     if ((MCSessionP == 0) &&
