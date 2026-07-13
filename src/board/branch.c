@@ -156,7 +156,7 @@ static void BranchGuideOMExec(OMOBJ *obj)
 
 static inline void BranchGuideChoiceSet(int playerNo, int choice)
 {
-    if (guideOMObj[playerNo] != NULL) {
+    if (guideOMObj[playerNo]) {
         BRANCHGUIDEWORK *work = omObjGetWork(guideOMObj[playerNo], BRANCHGUIDEWORK);
         work->choice = choice;
     }
@@ -164,7 +164,7 @@ static inline void BranchGuideChoiceSet(int playerNo, int choice)
 
 static inline void BranchGuideKill(int playerNo)
 {
-    if (guideOMObj[playerNo] != NULL) {
+    if (guideOMObj[playerNo]) {
         BRANCHGUIDEWORK *work = omObjGetWork(guideOMObj[playerNo], BRANCHGUIDEWORK);
         work->killF = TRUE;
         HuPrcSleep(10);
@@ -202,7 +202,7 @@ static BOOL ev_Branch(int playerNo, s16 *masuId, BOOL debugF)
         return FALSE;
     }
     choice = 0;
-    if (GWPartyGet()) {
+    if (GWPartyGet() != FALSE) {
         choice = BranchComChoiceGet(playerNo, linkNum, branchLinkTbl, TRUE);
     }
     BranchGuideCreate(playerNo, masuPlayer, branchLinkTbl, linkNum, choice);
@@ -259,7 +259,7 @@ static BOOL ev_Branch(int playerNo, s16 *masuId, BOOL debugF)
             if (choiceTime < 0) {
                 static const s8 chanceTbl[] = { 30, 20, 10, 0 };
 
-                if (GWPartyGet()) {
+                if (GWPartyGet() != FALSE) {
                     choiceAuto = BranchComChoiceGet(playerNo, linkNum, branchLinkTbl, FALSE);
                 } else if (mbRandMod(100) < chanceTbl[GwPlayer[playerNo].comDif]) {
                     choiceAuto = mbRandMod(linkNum);
@@ -295,7 +295,7 @@ static BOOL ev_Branch(int playerNo, s16 *masuId, BOOL debugF)
             mbMoveNumDispSet(playerNo, FALSE);
             BranchGuideKill(playerNo);
             mbPlayerMotIdleSet(playerNo);
-            mbev_Scroll(playerNo, btnDown == PAD_BUTTON_Y);
+            mbev_Scroll(playerNo, (btnDown == PAD_BUTTON_Y) ? TRUE : FALSE);
             mbMoveNumDispSet(playerNo, TRUE);
             BranchGuideCreate(playerNo, masuPlayer, branchLinkTbl, linkNum, choice);
             continue;
@@ -308,7 +308,7 @@ static BOOL ev_Branch(int playerNo, s16 *masuId, BOOL debugF)
         if (dir.x != 0.0f || dir.y != 0.0f) {
             float angle = HuAtan(dir.y, dir.x);
             int branchDir = -1;
-            float bestDiff = 10000.0f;
+            float bestDiff = 9999.0f;
 
             for (i = 0; i < linkNum; i++) {
                 float angleDiff = fmod(anglePath[i] - angle, 360.0);
