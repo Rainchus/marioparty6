@@ -4,6 +4,7 @@
 #include "humath.h"
 
 #define MASU_LINK_MAX 5
+#define MASU_NULL -1
 
 #define MASU_LAYER_DEFAULT 0
 #define MASU_LAYER_MAX 2
@@ -14,7 +15,7 @@ typedef struct Masu_s {
     u8 useMtxF : 1;
     u8 _unk00_1 : 7;
     u8 _unk01;
-    s16 _unk02;
+    s16 id;
     HuVecF pos;
     u16 flag;
     u16 _unk12;
@@ -28,6 +29,9 @@ typedef struct Masu_s {
     u16 linkTbl[MASU_LINK_MAX];
 } MASU;
 
+typedef int (*MASUPATHCHECKHOOK)(s16 id, u32 mAttr, s16 *linkTbl, BOOL endF);
+
+BOOL mbMasuDataRead(int dataNum);
 int mbMasuNumGet(void);
 int mbMasuRawNumGet(void);
 MASU *mbMasuGet(s16 id);
@@ -60,6 +64,11 @@ s16 mbMasuLinkGet(s16 id, int linkNo);
 s16 mbMasuLinkNumGet(s16 id);
 int mbMasuLinkTblGet(s16 id, s16 *linkTbl);
 int mbMasuLinkTblGet2(s16 id, s16 *linkTbl, BOOL hookF);
+s16 mbMasuAttrFindLink(s16 id, u16 attr);
+s16 mbMasuAttrMatchFindLink(s16 id, u16 attr, u16 mask);
+s16 mbMasuMAttrFindLink(s16 id, u32 attr);
+s16 mbMasuMAttrMatchFindLink(s16 id, u32 attr, u32 mask);
+s16 mbMasuTypeFindLink(s16 id, int type);
 s16 mbMasuLinkParentGet(s16 id, s16 *linkTbl);
 int mbMasuFind_IdStepGet(s16 id, s16 targetId);
 int mbMasuFind_TypeStepGet2(s16 id, int type, BOOL arg2, BOOL arg3);
