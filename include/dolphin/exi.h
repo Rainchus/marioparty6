@@ -34,23 +34,6 @@
 
 typedef void (*EXICallback)(s32 chan, OSContext *context);
 
-typedef struct EXIControl {
-  EXICallback exiCallback;
-  EXICallback tcCallback;
-  EXICallback extCallback;
-  volatile u32 state;
-  int immLen;
-  u8* immBuf;
-  u32 dev;
-  u32 id;
-  s32 idTime;
-  int items;
-  struct {
-    u32 dev;
-    EXICallback callback;
-  } queue[3];
-} EXIControl;
-
 extern const char* __EXIVersion;
 
 EXICallback EXISetExiCallback(s32 channel, EXICallback callback);
