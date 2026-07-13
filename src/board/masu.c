@@ -12,7 +12,48 @@ static MASU *masuData[MASU_LAYER_MAX];
 static BOOL masuDispF;
 static u16 masuDispAttrMask[MASU_LAYER_MAX];
 static u32 masuDispMAttrMask[MASU_LAYER_MAX];
+static BOOL masuCapsuleDispF;
+static BOOL masuCapsuleFadeOnF;
+static MASUEVENTHOOK masuev_MasuStart;
+static MASUEVENTHOOK masuev_MasuEnd;
+static MASUEVENTHOOK masuev_HatenaHook;
 static MASUPATHCHECKHOOK masuev_LinkTblHook;
+static s16 masuMdlId;
+static BOOL masuNextDispF;
+
+typedef struct MasuDisp_s {
+    int type;
+    BOOL dispF;
+} MASUDISP;
+
+static MASUDISP masuDispTbl[] = {
+    { 0, FALSE },
+    { 1, TRUE },
+    { 2, TRUE },
+    { 3, TRUE },
+    { 4, TRUE },
+    { 5, TRUE },
+    { 6, TRUE },
+    { 7, FALSE },
+    { 8, FALSE },
+    { 9, FALSE },
+    { 10, FALSE },
+};
+
+static MASUDISP masuSingleDispTbl[] = {
+    { 0, FALSE },
+    { 1, TRUE },
+    { 2, TRUE },
+    { 3, TRUE },
+    { 4, TRUE },
+    { 5, TRUE },
+    { 6, TRUE },
+    { 7, TRUE },
+    { 8, FALSE },
+    { 9, TRUE },
+    { 10, TRUE },
+    { 11, TRUE },
+};
 
 #define DATA_READ16(ptr, dst) do { \
     (dst) = *(u16 *)(ptr); \
@@ -78,6 +119,11 @@ BOOL mbMasuDataRead(int dataNum)
     return TRUE;
 }
 
+void mbMasuNextDispSet(BOOL dispF)
+{
+    masuNextDispF = dispF;
+}
+
 #undef DATA_READ16
 #undef DATA_READLINK
 #undef DATA_READ32
@@ -139,9 +185,59 @@ void mbMasuTypeSet(s16 id, int type)
     masuData[masuLayer][id].type = type;
 }
 
+void mbMasuTypeChange(u16 oldType, u16 newType)
+{
+    int i;
+    MASU *masuP = &masuData[masuLayer][1];
+
+    for (i = 0; i < masuNum[masuLayer]; i++) {
+        if (masuP->type == oldType) {
+            masuP->type = newType;
+            mbMasuCapsuleSet(i + 1, MASU_NULL);
+        }
+    }
+}
+
+BOOL mbMasuDispCheck(s16 id)
+{
+    MASU *masuP = &masuData[masuLayer][id];
+    BOOL partyF = GwSystem.partyF;
+    int i;
+
+    if (partyF) {
+        for (i = 0; i < 12; i++) {
+            if (masuP->type == masuDispTbl[i].type) {
+                break;
+            }
+        }
+        return masuDispTbl[i].dispF;
+    }
+    for (i = 0; i < 12; i++) {
+        if (masuP->type == masuSingleDispTbl[i].type) {
+            break;
+        }
+    }
+    return masuSingleDispTbl[i].dispF;
+}
+
+void mbMasuCapsuleReset(void)
+{
+    int i;
+
+    for (i = 0; i < MASU_MAX; i++) {
+        GwSystem.masuCapsule[i] = MASU_NULL;
+    }
+}
+
 s16 mbMasuCapsuleGet(s16 id)
 {
     return masuData[masuLayer][id].capsuleNo;
+}
+
+void mbMasuCapsuleSet(s16 id, int capsuleNo)
+{
+    GwSystem.masuCapsule[id] = capsuleNo;
+    masuData[masuLayer][id].capsuleNo = capsuleNo;
 }
 
 void mbMasuPosGet(s16 id, HuVecF *pos)
@@ -262,6 +358,15 @@ void mbMasuDispMAttrReset(u32 attr)
 u32 mbMasuDispMAttrGet(void)
 {
     return masuDispMAttrMask[masuLayer];
+}
+
+void mbMasuModelDispSet(BOOL dispF)
+{
+    if (dispF) {
+        Hu3DModelDispOn(masuMdlId);
+    } else {
+        Hu3DModelDispOff(masuMdlId);
+    }
 }
 
 s16 mbMasuLinkGet(s16 id, int linkNo)
@@ -403,4 +508,124 @@ s16 mbMasuLinkParentGet(s16 id, s16 *linkTbl)
         }
     }
     return linkNum;
+}
+
+int mbMasuTypeListGet(s16 type, s16 *list)
+{
+    int i;
+    int num = 0;
+    MASU *masuP = &masuData[masuLayer][1];
+
+    for (i = 0; i < masuNum[masuLayer]; i++, masuP++) {
+        if (masuP->type == type) {
+            if (list != NULL) {
+                list[num] = i + 1;
+            }
+            num++;
+        }
+    }
+    return num;
+}
+
+int mbMasuAttrListGet(u16 attr, s16 *list)
+{
+    int i;
+    int num = 0;
+    MASU *masuP = &masuData[masuLayer][1];
+
+    for (i = 0; i < masuNum[masuLayer]; i++, masuP++) {
+        if ((masuP->flag & attr) != 0) {
+            if (list != NULL) {
+                list[num] = i + 1;
+            }
+            num++;
+        }
+    }
+    return num;
+}
+
+int mbMasuAttrMatchListGet(u16 attr, u16 mask, s16 *list)
+{
+    int i;
+    int num = 0;
+    MASU *masuP = &masuData[masuLayer][1];
+
+    for (i = 0; i < masuNum[masuLayer]; i++, masuP++) {
+        if (attr == (masuP->flag & mask)) {
+            if (list != NULL) {
+                list[num] = i + 1;
+            }
+            num++;
+        }
+    }
+    return num;
+}
+
+int mbMasuMAttrListGet(u32 attr, s16 *list)
+{
+    int i;
+    int num = 0;
+    MASU *masuP = &masuData[masuLayer][1];
+
+    for (i = 0; i < masuNum[masuLayer]; i++, masuP++) {
+        if ((masuP->mAttr & attr) != 0) {
+            if (list != NULL) {
+                list[num] = i + 1;
+            }
+            num++;
+        }
+    }
+    return num;
+}
+
+int mbMasuMAttrMatchTblGet(u32 attr, u32 mask, s16 *list)
+{
+    int i;
+    int num = 0;
+    MASU *masuP = &masuData[masuLayer][1];
+
+    for (i = 0; i < masuNum[masuLayer]; i++, masuP++) {
+        if (attr == (masuP->mAttr & mask)) {
+            if (list != NULL) {
+                list[num] = i + 1;
+            }
+            num++;
+        }
+    }
+    return num;
+}
+
+void mbev_MasuMoveEndSet(MASUEVENTHOOK hook)
+{
+    masuev_MasuEnd = hook;
+}
+
+void mbev_MasuMoveStartSet(MASUEVENTHOOK hook)
+{
+    masuev_MasuStart = hook;
+}
+
+void mbev_MasuHatenaSet(MASUEVENTHOOK hook)
+{
+    masuev_HatenaHook = hook;
+}
+
+void mbev_MasuLinkTblHookSet(MASUPATHCHECKHOOK hook)
+{
+    masuev_LinkTblHook = hook;
+}
+
+void mbMasuPlayerDispSet(BOOL dispF)
+{
+    masuCapsuleDispF = dispF;
+}
+
+void mbMasuPlayerFadeSet(BOOL fadeF)
+{
+    masuCapsuleFadeOnF = fadeF;
+}
+
+int mbMasuStub(void)
+{
+    return 0;
 }
