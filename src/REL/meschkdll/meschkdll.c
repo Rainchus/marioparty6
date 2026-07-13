@@ -5,7 +5,6 @@
 #include "game/process.h"
 #include "game/window.h"
 #include "game/wipe.h"
-#include "stdio.h"
 
 typedef void (*VoidFunc)(void);
 
@@ -170,7 +169,6 @@ static void fn_1_188(void)
     HUWIN *messWinData;
     char messNoText[8];
     char *name;
-    u8 *messPtr;
     u32 messNum;
     s16 dirNo;
     s16 messNo;
@@ -181,7 +179,7 @@ static void fn_1_188(void)
     BOOL previousDir;
     BOOL hasControl;
 
-    for (dirNo = 0; lbl_1_data_494[dirNo] != NULL; dirNo++) {
+    for (dirNo = 0; lbl_1_data_494[dirNo]; dirNo++) {
         name = lbl_1_data_494[dirNo];
         while (*name != '\0') {
             if (*name == '_') {
@@ -212,7 +210,7 @@ static void fn_1_188(void)
     nextMessNo = 0;
     dirNo = nextMessNo;
     previousDir = FALSE;
-    while (lbl_1_data_494[dirNo] != NULL) {
+    while (lbl_1_data_494[dirNo]) {
         HuWinMesSet(dirWin, MESSNUM_PTR(lbl_1_data_494[dirNo]));
         messMax = HuWinMesMaxNumGet((u32)dirNo << 16);
         if (!previousDir) {
@@ -241,12 +239,12 @@ static void fn_1_188(void)
             HuWinMesSpeedSet(messWin, 0);
 
             hasControl = FALSE;
-            messPtr = (u8 *)HuWinMesPtrGet(messNum);
-            while (*messPtr != '\0') {
-                if (*messPtr == 0xFF) {
+            name = HuWinMesPtrGet(messNum);
+            while (*name != '\0') {
+                if (*name == 0xFF) {
                     hasControl = TRUE;
                 }
-                messPtr++;
+                name++;
             }
 
             messWinData = &winData[messWin];
@@ -259,7 +257,9 @@ static void fn_1_188(void)
             }
 
             if (!hasControl) {
-                while (!(HuPadBtnRep[0] & messWinData->pushKey)) {
+                while (!(HuPadBtnRep[0] &
+                    (PAD_BUTTON_START | PAD_BUTTON_X | PAD_BUTTON_Y | PAD_BUTTON_A |
+                        PAD_BUTTON_B | PAD_TRIGGER_L | PAD_TRIGGER_R))) {
                     HuPrcVSleep();
                 }
                 messWinData->activePadKey = HuPadBtnRep[0];
@@ -314,7 +314,7 @@ static void fn_1_188(void)
         }
 
         dirNo++;
-        if (lbl_1_data_494[dirNo] == NULL) {
+        if (!lbl_1_data_494[dirNo]) {
             dirNo = 0;
         }
         HuPrcVSleep();

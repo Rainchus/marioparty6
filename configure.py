@@ -804,7 +804,12 @@ config.libs = [
     Rel(
         "meschkdll",
         objects={
-            Object(NonMatching, "REL/meschkdll/meschkdll.c", mw_version=config.linker_version),
+            Object(
+                NonMatching,
+                "REL/meschkdll/meschkdll.c",
+                mw_version=config.linker_version,
+                extra_cflags=["-pooldata off"],
+            ),
         },
     ),
 
