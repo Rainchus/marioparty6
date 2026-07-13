@@ -7,6 +7,7 @@
 extern "C" {
 #endif
 
+void GXDrawCylinder(u8 numEdges);
 void GXDrawSphere(u8 numMajor, u8 numMinor);
 
 #ifdef __cplusplus
