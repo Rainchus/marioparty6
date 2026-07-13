@@ -174,6 +174,17 @@ BOOL OSRestoreInterrupts(BOOL level);
   ((cond) || (OSPanic(__FILE__, line, "Failed assertion " #cond), 0))
 #endif
 
+#ifndef ASSERTMSGLINE
+#define ASSERTMSGLINE(line, cond, msg) \
+  ((cond) || (OSPanic(__FILE__, line, msg), 0))
+#define ASSERTMSG1LINE(line, cond, msg, arg1) \
+  ((cond) || (OSPanic(__FILE__, line, msg, arg1), 0))
+#define ASSERTMSG2LINE(line, cond, msg, arg1, arg2) \
+  ((cond) || (OSPanic(__FILE__, line, msg, arg1, arg2), 0))
+#define ASSERTMSGLINEV(line, cond, ...) \
+  ((cond) || (OSPanic(__FILE__, line, __VA_ARGS__), 0))
+#endif
+
 #ifndef ASSERT
 #define ASSERT(exp) (void)((exp) || (OSPanic(__FILE__, __LINE__, "Failed assertion " #exp), 0))
 #endif
@@ -211,6 +222,13 @@ BOOL OSRestoreInterrupts(BOOL level);
 
 #ifndef ASSERTLINE
 #define ASSERTLINE(line, cond) (void)0
+#endif
+
+#ifndef ASSERTMSGLINE
+#define ASSERTMSGLINE(line, cond, msg) (void)0
+#define ASSERTMSG1LINE(line, cond, msg, arg1) (void)0
+#define ASSERTMSG2LINE(line, cond, msg, arg1, arg2) (void)0
+#define ASSERTMSGLINEV(line, cond, ...) (void)0
 #endif
 
 #ifndef ASSERT

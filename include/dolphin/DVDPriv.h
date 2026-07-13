@@ -3,6 +3,7 @@
 
 #include <dolphin/dvd.h>
 #include <dolphin/hw_regs.h>
+#include <dolphin/os.h>
 #include <types.h>
 
 #ifdef __cplusplus
@@ -40,7 +41,10 @@ typedef void (*DVDLowCallback)(u32 intType);
 extern DVDDiskID* DVDGetCurrentDiskID();
 DVDLowCallback DVDLowClearCallback();
 BOOL DVDLowSeek(u32 offset, DVDLowCallback callback);
-void __DVDLowSetWAType(u32 type, u32 location);
+void __DVDInitWA(void);
+void __DVDInterruptHandler(__OSInterrupt interrupt, OSContext* context);
+void __DVDLowSetWAType(u32 type, s32 location);
+int __DVDLowTestAlarm(const OSAlarm* alarm);
 DVDCommandBlock* __DVDPopWaitingQueue();
 void __DVDPrepareResetAsync(DVDCBCallback callback);
 
