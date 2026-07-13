@@ -277,9 +277,8 @@ static void mbOMDestroy(void)
 
 static void mbMain(void)
 {
-    s32 interruptF = FALSE;
     s32 i;
-    s32 nightF;
+    s32 interruptF = FALSE;
     mbWipeWait();
     if (GwSystem.turnNo > GwSystem.turnMax && !_CheckFlag(FLAG_BOARD_TUTORIAL)) {
         _ClearFlag(FLAG_BOARD_MOVE_DONE);
@@ -288,13 +287,11 @@ static void mbMain(void)
     }
     mbInit();
     if (!_CheckFlag(FLAG_BOARD_OPENING)) {
-        if (_CheckFlag(FLAG_BOARD_DEBUG)) {
-            BOOL partyF;
-            partyF = GWPartyGet();
-            if (partyF) {
-                i = mbStarNoRandGet();
-                if (i >= 0) {
-                    mbStarNoSet(i);
+        if (_CheckFlag(FLAG_BOARD_DEBUG) && !_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+            if (GWPartyGet()) {
+                s32 starNo = mbStarNoRandGet();
+                if (starNo >= 0) {
+                    mbStarNoSet(starNo);
                 }
             }
         } else {
@@ -326,9 +323,11 @@ static void mbMain(void)
         _SetFlag(FLAG_BOARD_OPENING);
     }
     while (1) {
-    if (GwSystem.nextTime != GwSystem.curTime) {
+    s16 nightF;
+    BOOL dayF;
+    if (GwSystem.curTime != GwSystem.nextTime) {
         GwSystem.timeTurn = 0;
-        GwMgNightF = GwSystem.nextTime;
+        GwMgNightF = GwSystem.curTime;
         if (ev_NextTime != NULL) {
             mbMusBoardPlay();
             _ClearFlag(FLAG_BOARD_STAR_RESET);
@@ -337,12 +336,9 @@ static void mbMain(void)
             mbCameraMoveStop();
         }
     }
-    GwSystem.curTime = GwSystem.nextTime;
-    if (GwSystem.curTime == 0) {
-        nightF = TRUE;
-    } else {
-        nightF = FALSE;
-    }
+    GwSystem.nextTime = GwSystem.curTime;
+    dayF = (GwSystem.curTime == 0);
+    nightF = dayF ? FALSE : TRUE;
     GwMgNightF = nightF;
     if (mbReturnMgCheck()) {
         if (!GWPartyGet()) {
@@ -416,10 +412,11 @@ static void mbMain(void)
             mbStatusColorAllSet(0);
             mbNextTime();
         } else {
+            s32 mgCallF;
             GwSystem.turnPlayerNo = -1;
-            interruptF = mbev_MgCall();
+            mgCallF = mbev_MgCall();
             mbStatusColorAllSet(0);
-            if (!interruptF) {
+            if (!mgCallF) {
                 mbNextTimeSet();
                 HuPrcSleep(-1);
             } else {
