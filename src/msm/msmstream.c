@@ -261,17 +261,15 @@ void msmStreamStopAll(s32 speed)
     for (i = 0; i < StreamInfo.header.chanMax; i++) {
         if (i >= 0 && i < StreamInfo.header.chanMax) {
             slot = &StreamInfo.slot[i];
-            if (msmStreamIsPlay(slot)) {
-                msmSysIrqDisable();
-                msmStreamStopSub(i, speed);
-                if (slot->slotL != -1) {
-                    msmStreamStopSub(slot->slotL, speed);
-                }
-                if (slot->slotR != -1) {
-                    msmStreamStopSub(slot->slotR, speed);
-                }
-                msmSysIrqEnable();
+            msmSysIrqDisable();
+            msmStreamStopSub(i, speed);
+            if (slot->slotL != -1) {
+                msmStreamStopSub(slot->slotL, speed);
             }
+            if (slot->slotR != -1) {
+                msmStreamStopSub(slot->slotR, speed);
+            }
+            msmSysIrqEnable();
         }
     }
     msmSysIrqEnable();
@@ -283,6 +281,11 @@ static inline void msmStreamSetFade(int streamNo, s32 speed) {
     if (slot->pauseF != 0) {
         slot->pauseF = 0;
         speed = 0;
+        slot->pauseTime = 0;
+    }
+    if (slot->updateAramF != 0) {
+        slot->updateAramF = 0;
+        DVDCancelAsync(&slot->file.cb, NULL);
     }
     slot->fadeMaxTime = speed / 15;
     if (slot->fadeMaxTime != 0) {
@@ -295,23 +298,20 @@ static inline void msmStreamSetFade(int streamNo, s32 speed) {
 
 s32 msmStreamStop(int streamNo, s32 speed) {
     MSM_STREAM_SLOT* slot;
-    s32 unused;
 
     if (streamNo < 0 || streamNo >= StreamInfo.header.chanMax) {
         return MSM_ERR_RANGE_STREAM;
     }
     slot = &StreamInfo.slot[streamNo];
-    if (msmStreamIsPlay(slot)) {
-        msmSysIrqDisable();
-        msmStreamSetFade(streamNo, speed);
-        if (slot->slotL != -1) {
-            msmStreamSetFade(slot->slotL, speed);
-        }
-        if (slot->slotR != -1) {
-            msmStreamSetFade(slot->slotR, speed);
-        }
-        msmSysIrqEnable();
+    msmSysIrqDisable();
+    msmStreamSetFade(streamNo, speed);
+    if (slot->slotL != -1) {
+        msmStreamSetFade(slot->slotL, speed);
     }
+    if (slot->slotR != -1) {
+        msmStreamSetFade(slot->slotR, speed);
+    }
+    msmSysIrqEnable();
     return 0;
 }
 
@@ -634,6 +634,11 @@ static void msmStreamStopSub(s32 streamNo, s32 speed) {
     if (slot->pauseF != 0) {
         slot->pauseF = 0;
         time = 0;
+        slot->pauseTime = 0;
+    }
+    if (slot->updateAramF != 0) {
+        slot->updateAramF = 0;
+        DVDCancelAsync(&slot->file.cb, NULL);
     }
     slot->fadeMaxTime = time / 15;
     if (slot->fadeMaxTime != 0) {
