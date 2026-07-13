@@ -257,7 +257,7 @@ void mbStatusInit(void)
             HuSprGrpDrawNoSet(statusWork[i].gid, 32);
         }
     }
-    if(!GWPartyGet()) {
+    if(GWPartyGet() == FALSE) {
         statusMasuWork.offF = TRUE;
         StatusMasuSprCreate(&statusMasuWork);
         HuSprGrpPosSet(statusMasuWork.gid, 472.0f, 72.0f);
@@ -568,7 +568,7 @@ static void StatusDispSet(int playerNo, int statusNo, BOOL dispF)
     HuVec2f posBegin;
     HuVec2f posEnd;
 
-    if(!GWPartyGet() && playerNo > 0) {
+    if(GWPartyGet() == FALSE && playerNo > 0) {
         dispF = FALSE;
     }
     if(!dispF) {
@@ -602,7 +602,7 @@ static void StatusDispSet(int playerNo, int statusNo, BOOL dispF)
 
 void mbStatusDispSet(int playerNo, BOOL dispF)
 {
-    if(!GWPartyGet() && playerNo > 0) {
+    if(GWPartyGet() == FALSE && playerNo > 0) {
         dispF = FALSE;
     }
     if(!GWTeamFGet()) {
@@ -676,7 +676,7 @@ void mbStatusDispSetAll(BOOL dispF)
 void mbStatusDispForceSet(int playerNo, BOOL dispF)
 {
     STATUSWORK *status = StatusPlayerGet(playerNo);
-    if(!GWPartyGet() && playerNo > 0) {
+    if(GWPartyGet() == FALSE && playerNo > 0) {
         dispF = FALSE;
     }
     status->dispF = dispF;
@@ -829,7 +829,7 @@ static void StatusSprCreate(int statusNo, STATUSWORK *status)
     for(i=0; i<STATUS_SPR_INITNUM; i++) {
         int dataNum;
         s16 prio;
-        if(GWPartyGet()) {
+        if(GWPartyGet() != FALSE) {
             dataNum = fileTbl[i];
         } else {
             dataNum = fileTblSingle[i];
