@@ -513,7 +513,7 @@ config.libs = [
     DolphinLib(
         "card",
         [
-            Object(NonMatching, "dolphin/card/CARDBios.c"),
+            Object(Matching, "dolphin/card/CARDBios.c"),
             Object(Matching, "dolphin/card/CARDUnlock.c"),
             Object(Matching, "dolphin/card/CARDRdwr.c"),
             Object(Matching, "dolphin/card/CARDBlock.c"),

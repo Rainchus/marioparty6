@@ -1,7 +1,9 @@
 #ifndef _DOLPHIN_CARD
 #define _DOLPHIN_CARD
 
-#include "types.h"
+#include <dolphin/dsp.h>
+#include <dolphin/dvd.h>
+#include <dolphin/os.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -169,6 +171,14 @@ s32 CARDReadAsync(CARDFileInfo* fileInfo, void* addr, s32 length, s32 offset,
 s32 CARDWrite(CARDFileInfo* fileInfo, const void* addr, s32 length, s32 offset);
 s32 CARDWriteAsync(CARDFileInfo* fileInfo, const void* addr, s32 length, s32 offset,
                    CARDCallback callback);
+
+extern u32 __CARDFreq;
+
+#if DEBUG
+#define CARDFreq __CARDFreq
+#else
+#define CARDFreq EXI_FREQ_16M
+#endif
 
 #ifdef __cplusplus
 }
