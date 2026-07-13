@@ -560,7 +560,7 @@ config.libs = [
     },
     {
         "lib": "sdk_mic",
-        "mw_version": "GC/2.7",
+        "mw_version": config.linker_version,
         "cflags": cflags_sdk_mic,
         "host": False,
         "objects": [
