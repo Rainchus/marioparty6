@@ -466,7 +466,7 @@ config.libs = [
                 "dolphin/pad/Padclamp.c",
                 extra_cflags=["-fp_contract off"],
             ),
-            Object(NonMatching, "dolphin/pad/Pad.c"),
+            Object(Matching, "dolphin/pad/Pad.c"),
         ],
     ),
     DolphinLib(
