@@ -16,7 +16,7 @@ extern HUPROCESS *mbMainProc;
 
 BOOL mbExitCheck(void);
 int mbBoardDataNumGet(int dataNum);
-int mbRandMod(int mod);
+u32 mbRandMod(u32 mod);
 BOOL mbAngleMoveTo(float *dest, float angle, float speed);
 
 #endif

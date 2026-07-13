@@ -400,13 +400,20 @@ BOOL mbBranchAttrCheck(int masuId)
 
 static int BranchComChoiceGet(int playerNo, int linkNum, s16 *linkTbl, BOOL debugF)
 {
-    int choice = -1;
-    int bestLen = 9999;
+    int choice;
+    int len;
+    int bestLen;
     int i;
+    static const s8 chanceTbl[] = { 30, 20, 10, 0 };
+
+    choice = -1;
+    bestLen = 9999;
 
     if (!debugF && mbPlayerWorkGet(playerNo)->_unk0E != 0) {
         for (i = 0; i < linkNum; i++) {
-            int len = mbMasuFind_IdStepGet(linkTbl[i], mbPlayerWorkGet(playerNo)->_unk0E);
+            int unk0E = mbPlayerWorkGet(playerNo)->_unk0E;
+
+            len = mbMasuFind_IdStepGet(linkTbl[i], unk0E);
 
             if (len < bestLen) {
                 choice = i;
@@ -416,32 +423,34 @@ static int BranchComChoiceGet(int playerNo, int linkNum, s16 *linkTbl, BOOL debu
         return choice;
     }
     if (branchComStarHook != NULL) {
-        return branchComStarHook(playerNo, linkNum, linkTbl, debugF);
-    }
-    for (i = 0; i < linkNum; i++) {
-        int len = mbMasuFind_TypeStepGet2(linkTbl[i], 7, TRUE, TRUE);
-
-        if (len < bestLen) {
-            choice = i;
-            bestLen = len;
-        }
-    }
-    if (choice >= 0) {
-        static const s8 chanceTbl[] = { 30, 20, 10, 0 };
-
-        if (bestLen <= 20
-            || mbRandMod(100) >= chanceTbl[GwPlayer[playerNo].comDif]
-            || debugF) {
-            return choice;
-        }
-    }
-    while (TRUE) {
+        choice = branchComStarHook(playerNo, linkNum, linkTbl, debugF);
+    } else {
         for (i = 0; i < linkNum; i++) {
-            if (mbMasuGet(linkTbl[i])->linkNum != 0 && mbRandMod(1000) < 500) {
-                return i;
+            len = mbMasuFind_TypeStepGet2(linkTbl[i], 7, TRUE, TRUE);
+
+            if (len < bestLen) {
+                choice = i;
+                bestLen = len;
             }
         }
+        if (choice < 0
+            || (bestLen > 20
+                && mbRandMod(100) < chanceTbl[GwPlayer[playerNo].comDif]
+                && !debugF)) {
+            i = 0;
+            while (TRUE) {
+                if (mbMasuGet(linkTbl[i])->linkNum != 0 && mbRandMod(1000) < 500) {
+                    break;
+                }
+                i++;
+                if (i >= linkNum) {
+                    i = 0;
+                }
+            }
+            choice = i;
+        }
     }
+    return choice;
 }
 
 void mbBranchComStarHookSet(MBBRANCHCOMSTARHOOK hook)
