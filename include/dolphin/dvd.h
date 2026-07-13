@@ -88,6 +88,12 @@ typedef struct {
 } DVDDirEntry;
 
 void DVDInit();
+int DVDReadAbsAsyncPrio(DVDCommandBlock* block, void* addr, s32 length, s32 offset,
+                        DVDCBCallback callback, s32 prio);
+BOOL DVDSetAutoInvalidation(BOOL autoInvalidation);
+void DVDResume(void);
+DVDDiskID* DVDGetCurrentDiskID(void);
+BOOL DVDCheckDisk(void);
 BOOL DVDClose(DVDFileInfo* f);
 BOOL DVDSetAutoFatalMessaging(BOOL);
 void DVDReset();

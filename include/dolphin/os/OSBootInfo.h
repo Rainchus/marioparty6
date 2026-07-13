@@ -16,17 +16,6 @@ typedef struct OSBootInfo {
   u32 FSTMaxLength;
 } OSBootInfo;
 
-typedef struct {
-  BOOL valid;
-  u32 restartCode;
-  u32 bootDol;
-  void* regionStart;
-  void* regionEnd;
-  BOOL argsUseDefault;
-  void* argsAddr; // valid only when argsUseDefault = FALSE
-
-} OSExecParams;
-
 typedef struct BI2Debug {
   s32 debugMonSize;  // 0x0
   s32 simMemSize;    // 0x4

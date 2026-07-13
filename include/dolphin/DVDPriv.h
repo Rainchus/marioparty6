@@ -42,6 +42,7 @@ DVDLowCallback DVDLowClearCallback();
 BOOL DVDLowSeek(u32 offset, DVDLowCallback callback);
 void __DVDLowSetWAType(u32 type, u32 location);
 DVDCommandBlock* __DVDPopWaitingQueue();
+void __DVDPrepareResetAsync(DVDCBCallback callback);
 
 #ifdef __cplusplus
 }

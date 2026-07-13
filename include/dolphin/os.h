@@ -239,6 +239,8 @@ void OSFatal(GXColor fg, GXColor bg, const char* msg);
 u32 OSGetPhysicalMemSize(void);
 u32 OSGetConsoleSimulatedMemSize(void);
 
+extern BOOL __OSIsGcam;
+
 #ifdef __cplusplus
 }
 #endif
@@ -249,6 +251,7 @@ u32 OSGetConsoleSimulatedMemSize(void);
 #include <dolphin/os/OSCache.h>
 #include <dolphin/os/OSContext.h>
 #include <dolphin/os/OSError.h>
+#include <dolphin/os/OSExec.h>
 #include <dolphin/os/OSException.h>
 #include <dolphin/os/OSExpansion.h>
 #include <dolphin/os/OSFastCast.h>

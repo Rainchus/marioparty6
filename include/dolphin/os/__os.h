@@ -7,8 +7,8 @@
 extern "C" {
 #endif
 
-void __OSBootDol(u32 doloffset, u32 restartCode, const char** argv);
 void __OSInitSram(void);
+void __OSSetExecParams(const OSExecParams* params, OSExecParams* addr);
 OSSram* __OSLockSram(void);
 OSSramEx* __OSLockSramEx(void);
 int __OSUnlockSram(int commit);
