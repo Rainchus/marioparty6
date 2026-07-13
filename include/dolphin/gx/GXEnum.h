@@ -901,7 +901,7 @@ typedef enum _GXAlphaReadMode {
   GX_READ_FF = 1,
   GX_READ_NONE = 2,
 
-} _GXAlphaReadMode;
+} GXAlphaReadMode;
 
 #ifdef __cplusplus
 }

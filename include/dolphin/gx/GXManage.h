@@ -17,7 +17,10 @@ GXDrawSyncCallback GXSetDrawSyncCallback(GXDrawSyncCallback callback);
 
 void GXDrawDone(void);
 void GXSetDrawDone(void);
+void GXWaitDrawDone(void);
 void GXFlush(void);
+void GXResetWriteGatherPipe(void);
+void GXAbortFrame(void);
 void GXPixModeSync(void);
 void GXSetMisc(GXMiscToken token, u32 val);
 
