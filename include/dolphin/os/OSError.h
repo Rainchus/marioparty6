@@ -2,6 +2,7 @@
 #define _DOLPHIN_OSERROR
 
 #include <types.h>
+#include <dolphin/os/OSException.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,6 +32,10 @@ typedef u16 OSError;
 typedef void (*OSErrorHandler)( OSError error, OSContext* context, ... );
 
 OSErrorHandler OSSetErrorHandler(OSError code, OSErrorHandler handler);
+void __OSUnhandledException(__OSException exception, OSContext* context, u32 dsisr, u32 dar);
+
+extern OSErrorHandler __OSErrorTable[OS_ERROR_MAX];
+extern u32 __OSFpscrEnableBits;
 
 #ifdef __cplusplus
 }

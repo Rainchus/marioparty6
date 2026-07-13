@@ -23,7 +23,6 @@ typedef u64 ulonglong;
 typedef s64 longlong;
 typedef void (*MCResponseCallback)(u16 *response);
 
-extern u32 __OSFpscrEnableBits;
 extern s32 currentHeapHandle;
 
 void *memcpy(void *, const void *, u32);
