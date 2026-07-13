@@ -158,6 +158,12 @@ typedef struct OSContext {
 
 } OSContext;
 
+#ifdef __MWERKS__
+extern volatile OSContext* __OSFPUContext : (0x800000D8);
+#else
+extern volatile OSContext* __OSFPUContext;
+#endif
+
 u32 OSSaveContext(OSContext* context);
 void OSLoadContext(OSContext* context);
 void OSClearContext(OSContext* context);

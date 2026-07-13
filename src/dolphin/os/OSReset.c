@@ -6,7 +6,6 @@
 #include <dolphin/pad.h>
 #include <string.h>
 
-extern OSThreadQueue __OSActiveThreadQueue;
 extern OSExecParams __OSRebootParams;
 extern void __OSStopAudioSystem(void);
 static OSResetFunctionQueue ResetFunctionQueue;

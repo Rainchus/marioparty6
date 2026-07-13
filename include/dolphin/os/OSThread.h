@@ -62,6 +62,14 @@ struct OSThread {
   void* specific[OS_THREAD_SPECIFIC_MAX];
 };
 
+#ifdef __MWERKS__
+extern OSThread* __OSCurrentThread : (0x800000E4);
+extern OSThreadQueue __OSActiveThreadQueue : (0x800000DC);
+#else
+extern OSThread* __OSCurrentThread;
+extern OSThreadQueue __OSActiveThreadQueue;
+#endif
+
 enum OS_THREAD_STATE {
   OS_THREAD_STATE_READY = 1,
   OS_THREAD_STATE_RUNNING = 2,
@@ -97,6 +105,9 @@ BOOL OSSetThreadPriority(OSThread* thread, OSPriority priority);
 OSPriority OSGetThreadPriority(OSThread* thread);
 void OSSleepThread(OSThreadQueue* queue);
 void OSWakeupThread(OSThreadQueue* queue);
+OSSwitchThreadCallback OSSetSwitchThreadCallback(OSSwitchThreadCallback callback);
+void OSSetThreadSpecific(s32 index, void* ptr);
+void* OSGetThreadSpecific(s32 index);
 
 OSThread* OSSetIdleFunction(OSIdleFunction idleFunction, void* param, void* stack, u32 stackSize);
 OSThread* OSGetIdleFunction(void);
