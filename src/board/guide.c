@@ -623,7 +623,7 @@ static void GuideFadeInEffectHook(HU3D_MODEL *modelP, MBPARTICLE *effP, Mtx matr
             data->vel.y = 80.0f * (0.3f + 0.7f * frandf());
             data->vel.z = 130.0f * (0.7f + 0.3f * frandf());
             data->scale = effSize[type] * (35.0f * (0.5f + 0.5f * frandf()));
-            data->scaleBase = data->scale;
+            data->guideScaleBase = data->scale;
             colorIdx = mbRandMod(8);
             f = 0.3f * frandf();
             data->color.r = f * (255.0f - effColor[colorIdx].r) + effColor[colorIdx].r;
@@ -734,12 +734,12 @@ static void GuideFadeOutEffectHook(HU3D_MODEL *modelP, MBPARTICLE *effP, Mtx mat
             vec.x = g * mbCosDeg(f);
             vec.y = 0.2f + g * mbSinDeg(f);
             vec.z = -0.8f;
-            PSMTXMultVec(mtx, &vec, &data->accel);
-            PSVECScale(&data->accel, &data->accel, 0.55555564f);
+            PSMTXMultVec(mtx, &vec, &data->guideAccel);
+            PSVECScale(&data->guideAccel, &data->guideAccel, 0.55555564f);
             PSVECScale(&data->vel, &data->pos, 1.0f);
             data->pos.y += 5.0f;
             data->scale = effSize[type] * (30.0f * (0.5f + 0.5f * frandf()));
-            data->scaleBase = data->scale;
+            data->guideScaleBase = data->scale;
             colorIdx = mbRandMod(8);
             data->no = colorIdx;
             f = 0.8f + 0.2f * frandf();
@@ -761,7 +761,7 @@ static void GuideFadeOutEffectHook(HU3D_MODEL *modelP, MBPARTICLE *effP, Mtx mat
     for (i = 0; i < effP->num; i++, data++) {
         if (data->time != 0) {
             PSVECAdd(&data->pos, &data->vel, &data->pos);
-            PSVECAdd(&data->vel, &data->accel, &data->vel);
+            PSVECAdd(&data->vel, &data->guideAccel, &data->vel);
         }
     }
     data = effP->data;

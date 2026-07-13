@@ -1,6 +1,7 @@
 #ifndef _BOARD_GUIDE_H
 #define _BOARD_GUIDE_H
 
+#include "game/board/effect.h"
 #include "game/board/main.h"
 #include "game/object.h"
 #include "game/hu3d.h"
@@ -14,39 +15,6 @@ typedef struct MbObjModel_s {
     u16 cameraBit; // 0x02
     u8 layer;      // 0x04
 } MBOBJMODEL;
-
-// Board particle element (stride 0x5C)
-typedef struct MbParticleData_s {
-    /* 0x00 */ s16 time;
-    /* 0x02 */ s16 no;
-    /* 0x04 */ u8 pad04[4];
-    /* 0x08 */ HuVecF vel;
-    /* 0x14 */ float scaleBase;
-    /* 0x18 */ float alphaF;
-    /* 0x1C */ u8 pad1C[4];
-    /* 0x20 */ HuVecF accel;
-    /* 0x2C */ float scale;
-    /* 0x30 */ u8 pad30[8];
-    /* 0x38 */ float weight;
-    /* 0x3C */ HuVecF pos;
-    /* 0x48 */ GXColor color;
-    /* 0x4C */ s16 rndNo;
-    /* 0x4E */ u8 pad4E[0x5C - 0x4E];
-} MBPARTICLEDATA;
-
-// Board particle system control block
-typedef struct MbParticle_s {
-    /* 0x00 */ s16 stopF;
-    /* 0x02 */ u8 pad02[0x14 - 0x02];
-    /* 0x14 */ float unk14;
-    /* 0x18 */ u8 pad18[0x26 - 0x18];
-    /* 0x26 */ s16 num;
-    /* 0x28 */ u32 initF;
-    /* 0x2C */ u8 pad2C[0x68 - 0x2C];
-    /* 0x68 */ MBPARTICLEDATA *data;
-} MBPARTICLE;
-
-typedef void (*MBPARTICLEHOOK)(HU3D_MODEL *modelP, MBPARTICLE *effP, Mtx matrix);
 
 #define MB_GUIDE_ATTR_NONE 0
 #define MB_GUIDE_ATTR_SCREEN (1 << 0)
@@ -116,10 +84,6 @@ void mbObjFadeCreate(int modelId, HuVecF *pos);
 void mbObjFadeKill(int modelId);
 void mbObjFadeTexColorSet(int modelId, int r, int g, int b, float a);
 void mbObjFadeTexRotSet(int modelId, HuVecF *pos, HuVecF *rot);
-
-MBMODELID mbParticleCreate(ANIMDATA *anim, int maxCnt);
-void mbParticleKill(int particleId);
-void mbParticleHookSet(int particleId, MBPARTICLEHOOK hook);
 
 float mbSinDeg(float deg);
 float mbCosDeg(float deg);

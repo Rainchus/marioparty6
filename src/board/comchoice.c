@@ -1,25 +1,9 @@
-#include "types.h"
-
-typedef struct ComChoicePlayer_s {
-    s8 pad[4];
-    s8 padNo;
-    s8 rest[0x103];
-} COM_CHOICE_PLAYER;
-
-typedef struct ComChoiceSystem_s {
-    s8 rest[0xA];
-    s8 turnPlayerNo;
-} COM_CHOICE_SYSTEM;
-
-extern COM_CHOICE_PLAYER GwPlayer[];
-extern COM_CHOICE_SYSTEM GwSystem;
-extern s32 GWComKeyDelayGet(void);
-extern void HuWinComKeyWait(s32 keyP1, s32 keyP2, s32 keyP3, s32 keyP4, s16 time);
+#include "game/board/comchoice.h"
+#include "game/board/window.h"
+#include "game/gamework.h"
 
 static s32 listDownNum;
 static s32 listRightNum;
-
-extern void mbWinTopComKeyHookSet(void (*hook)(void));
 
 static void ComChoiceKeySet(s32 playerNo, s32 leftRight, s32 upDown);
 static void ComChoiceListKeySet(s32 playerNo, s32 rightNum, s32 downNum);

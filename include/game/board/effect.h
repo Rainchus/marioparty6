@@ -21,19 +21,44 @@ typedef struct MbParticle_s MBPARTICLE;
 
 typedef struct MbParticleData_s {
     s16 time;
-    s16 activeF;
+    union {
+        s16 activeF;
+        s16 no;
+    };
     s16 unk04;
     s16 cameraBit;
     HuVecF vel;
-    HuVecF accel;
-    float speedDecay;
-    float colorIdx;
-    float scaleBase;
+    union {
+        HuVecF accel;
+        struct {
+            float guideScaleBase;
+            float alphaF;
+            float guideUnused1C;
+        };
+    };
+    union {
+        struct {
+            float speedDecay;
+            float colorIdx;
+            float scaleBase;
+        };
+        HuVecF guideAccel;
+    };
     float scale;
-    HuVecF rot;
+    union {
+        HuVecF rot;
+        struct {
+            float guideUnused30;
+            float guideUnused34;
+            float weight;
+        };
+    };
     HuVecF pos;
     GXColor color;
-    s16 animBank;
+    union {
+        s16 animBank;
+        s16 rndNo;
+    };
     s16 animNo;
     float animSpeed;
     float animTime;
@@ -44,16 +69,29 @@ typedef struct MbParticleData_s {
 typedef void (*MBPARTICLEHOOK)(HU3D_MODEL *modelP, MBPARTICLE *particleP, Mtx mtx);
 
 struct MbParticle_s {
-    s16 mode;
+    union {
+        s16 mode;
+        s16 stopF;
+    };
     s16 time;
     HuVecF vel;
-    s16 work[8];
+    union {
+        s16 work[8];
+        struct {
+            u8 guideUnused10[4];
+            float unk14;
+            u8 guideUnused18[8];
+        };
+    };
     u8 blendMode;
     u8 attr;
     s16 colorF;
     HU3D_MODELID modelId;
     s16 num;
-    u32 count;
+    union {
+        u32 count;
+        u32 initF;
+    };
     u32 prevCounter;
     u32 prevCount;
     GXTevColorArg colorIn[4];

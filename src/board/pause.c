@@ -6,7 +6,10 @@ double cos(double);
 #include "game/board/pause.h"
 #include "game/board/main.h"
 #include "game/board/audio.h"
+#include "game/board/effect.h"
+#include "game/board/guide.h"
 #include "game/board/player.h"
+#include "game/board/window.h"
 
 #include "game/esprite.h"
 #include "game/sprite.h"
@@ -14,6 +17,7 @@ double cos(double);
 #include "game/process.h"
 #include "game/object.h"
 #include "game/gamework.h"
+#include "game/mgdata.h"
 #include "game/pad.h"
 #include "game/flag.h"
 #include "game/memory.h"
@@ -37,10 +41,6 @@ static inline s32 GWMgPackGet(void)
 extern HUPROCESS *mbMainProc;
 extern s32 mbBGRead(int dataNum);
 extern void mbBGReadWait(s32 handle);
-extern BOOL mbEffFadeCheck(void);
-extern void mbEffFadeCreate(s16 maxTime, u8 alpha);
-extern BOOL mbEffFadeDoneCheck(void);
-extern void mbEffFadeOutSet(s16 maxTime);
 extern BOOL mbWipeSpecialCheck(void);
 extern int mbWipeSpecialStatGet(void);
 extern void mbExitReq(void);
@@ -51,50 +51,20 @@ extern void mbPauseDispCopyCreate(void);
 extern void mbPauseDispCopyKill(void);
 extern void mbPauseEnableSet(void);
 extern void mbPauseEnableReset(void);
-extern void mbMusPauseSet(BOOL pauseF);
 extern s16 mbTelopTimeSprCreate(void);
 extern void mbTelopTimeSprRotSet(s16 id, float rot);
 extern void mbTelopTimeDispSet(s16 id, BOOL disp);
 extern void mbTelopTimeSprKill(s16 id);
-extern void *mbGuideCreateFlag(HuVecF *pos, void *motTbl, int a, int b, int c);
-extern void *mbGuideModelGet(void *guide);
-extern void mbGuideKill(void *guide);
-extern void mbObjDispSet(void *obj, BOOL disp);
 extern void mbNormPosto3D(HuVecF *src, int camId, HuVecF *dst);
-extern BOOL mbConfigExec(int playerNo, void *model);
+extern BOOL mbConfigExec(int playerNo, int modelId);
 extern s16 mbPausePanelCreate(int dataNum, int type);
 extern void mbPausePanelPosSet(s16 id, float x, float y);
 extern void mbPausePanelBankSet(s16 id, int bank);
 extern void mbPausePanelGrowSet(s16 id, int a, int b, float scale);
 extern void mbPausePanelKill(s16 id);
-extern int mbWinCreateHelp(u32 mess);
-extern int mbWinCreateBlank(void);
-extern void mbWinKill(s16 winNo);
-extern void mbWinCenterGet(s16 winNo, HuVec2f *pos);
-extern void mbWinPosSet(s16 winNo, s16 x, s16 y);
-extern void mbWinSizeSet(s16 winNo, s16 x, s16 y);
-extern void mbWinScaleSet(s16 winNo, float x, float y);
-extern void mbWinMesMaxSizeGet(s16 winNo, HuVec2f *size);
-extern void mbWinInsertMesSet(s16 winNo, u32 insertMes, int insertMesNo);
-extern void mbWinCenterInsertGet(s16 winNo, u32 mess);
 extern int mbSingleStepGet(void);
 extern int mbMasuNumGet(void);
 extern BOOL mbSingleMgUnlockGet(int mgNo);
-extern float mbCosDeg(float deg);
-extern float mbSinDeg(float deg);
-extern s32 MgNoGet(s16 ovlNo);
-
-typedef struct MgData_s {
-    u16 ovl;        /* 0x00 */
-    u8 type;        /* 0x02 */
-    u8 pad3;
-    u16 flag;       /* 0x04 */
-    u16 pad6;
-    char *name;     /* 0x08 */
-    u8 pad[0x7C - 0x0C];
-} MGDATA;
-
-extern MGDATA MgDataTbl[];
 
 typedef struct MgList_s {
     s16 type;       /* 0x00 */
@@ -127,12 +97,12 @@ static MGLIST pauseMGList[6];
 static PAUSESINGLEWORK pauseSingleWork;
 
 static int pausePlayer = -1;
-static u8 guideMotTbl[] = { 3, 12, 11, 23, 0xFF };
-static u8 guideMotSingleTbl[] = { 3, 12, 11, 23, 0xFF };
+static s8 guideMotTbl[] = { 3, 12, 11, 23, -1 };
+static s8 guideMotSingleTbl[] = { 3, 12, 11, 23, -1 };
 
 static HUPROCESS *pauseProc;
 static int pauseHookNum;
-static void *pauseGuideObj;
+static OMOBJ *pauseGuideObj;
 
 static const u32 HelpWinMesTbl[2] = { 0x00260008, 0x00280018 };
 
@@ -814,7 +784,7 @@ static void PauseSingleMGTypeSet(MGLIST *list, PAUSESINGLEWORK *work, int page, 
         mesB = 0x0028001D;
         if(slot < entry->num) {
             if(entry->mg[slot].flag != 0) {
-                mesA = (u32)MgDataTbl[entry->mg[slot].mgNo].name;
+                mesA = MgDataTbl[entry->mg[slot].mgNo].nameMes;
                 if(entry->mg[slot].flag >= 2) {
                     mesB = 0x0028001E;
                 }
