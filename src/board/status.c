@@ -1,3 +1,6 @@
+#define _MATH_H
+#include "dolphin/math.h"
+
 #include "game/board/status.h"
 #include "game/board/player.h"
 #include "game/board/main.h"
@@ -7,7 +10,6 @@
 #include "game/flag.h"
 #include "game/process.h"
 
-#include <math.h>
 #include <string.h>
 
 extern int mbPlayerRankGet(int playerNo);
@@ -912,7 +914,7 @@ static void StatusTeamSprCreate(int statusNo, STATUSWORK *status)
     HuSprBankSet(status->gid, 17, statusNo);
     kaoNo = 0;
     for(i=0; i<GW_PLAYER_MAX; i++) {
-        if(statusNo == GwPlayer[i].team) {
+        if(statusNo == mbPlayerGrpGet(i)) {
             mbSprCreate(mbBoardDataNumGet(statusKaoFileTbl[GwPlayerConf[i].charNo]), 1500, NULL, &sprId);
             HuSprGrpMemberSet(status->gid, STATUS_SPRNO_KAO+kaoNo, sprId);
             HuSprAttrSet(status->gid, STATUS_SPRNO_KAO+kaoNo, HUSPR_ATTR_LINEAR);
