@@ -72,6 +72,10 @@ typedef struct _GXTlutRegion {
   u32 dummy[4];
 } GXTlutRegion;
 
+typedef struct _GXFogAdjTable {
+    u16 r[10];
+} GXFogAdjTable;
+
 typedef struct _GXVtxAttrFmtList {
   // total size: 0x10
   GXAttr attr;     // offset 0x0, size 0x4
