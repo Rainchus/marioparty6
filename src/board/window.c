@@ -1,3 +1,5 @@
+#define _MATH_H
+
 #include "game/board/window.h"
 #include "game/board/main.h"
 #include "game/board/pause.h"
@@ -440,8 +442,6 @@ void mbWinSizeSet(s16 winNo, s16 sizeX, s16 sizeY)
     MBWIN *winP = &mbWinData[winNo];
     HUWIN *huWinP;
     HUSPRITE *sprP;
-    s16 winW;
-    s16 winH;
     float bgTPLvl0;
     float bgTPLvl1;
 
@@ -450,20 +450,20 @@ void mbWinSizeSet(s16 winNo, s16 sizeX, s16 sizeY)
     if (winP->winId >= 0) {
         huWinP = &winData[winP->winId];
         mbWinCenterSet(winNo);
-        winW = ((s16)winP->size.x + 15) & ~15;
-        winH = ((s16)winP->size.y + 15) & ~15;
-        huWinP->winW = winW;
-        huWinP->winH = winH;
+        sizeX = ((s16)winP->size.x + 15) & 0xFFF0;
+        sizeY = ((s16)winP->size.y + 15) & 0xFFF0;
+        huWinP->winW = sizeX;
+        huWinP->winH = sizeY;
         huWinP->mesRectX = 8;
         huWinP->mesRectY = 8;
-        huWinP->mesRectW = winW - 8;
-        huWinP->mesRectH = winH - 8;
+        huWinP->mesRectW = sizeX - 8;
+        huWinP->mesRectH = sizeY - 8;
         sprP = &HuSprData[HuSprGrpData[huWinP->grpId].sprId[0]];
         bgTPLvl0 = sprP->a;
         sprP = &HuSprData[HuSprGrpData[huWinP->grpId].sprId[1]];
         bgTPLvl1 = sprP->a;
-        HuSprGrpCenterSet(huWinP->grpId, winW / 2, winH / 2);
-        huWinP->charEntryMax = (winW / 8) * (winH / 24) * 5;
+        HuSprGrpCenterSet(huWinP->grpId, sizeX / 2, sizeY / 2);
+        huWinP->charEntryMax = (sizeX / 8) * (sizeY / 24) * 5;
         if (huWinP->charEntry) {
             HuMemDirectFree(huWinP->charEntry);
             huWinP->charEntry = HuMemDirectMalloc(HEAP_HEAP,
