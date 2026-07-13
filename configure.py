@@ -315,8 +315,8 @@ config.libs = [
             Object(Matching, "game/decode.c"),
             Object(Matching, "game/font.c"),
             Object(Matching, "game/init.c"),
-            Object(Matching, "game/jmp.c"),
-            Object(Matching, "game/malloc.c"),
+            Object(NonMatching, "game/jmp.c"),
+            Object(NonMatching, "game/malloc.c"),
             Object(Matching, "game/memory.c"),
             Object(Matching, "game/printfunc.c"),
             Object(Matching, "game/process.c"),
@@ -364,7 +364,7 @@ config.libs = [
             Object(Matching, "game/mggamemes.c"),
             Object(Matching, "game/mic.c"),
             Object(Matching, "game/code_80146BA0.c"),
-            Object(Matching, "game/kerent.c"),
+            Object(NonMatching, "game/kerent.c"),
             Object(Matching, "board/malloc.c"),
             Object(Matching, "board/comchoice.c"),
             Object(NonMatching, "board/board.c"),
@@ -374,7 +374,7 @@ config.libs = [
     DolphinLib(
         "base",
         [
-            Object(Matching, "dolphin/base/PPCArch.c"),
+            Object(NonMatching, "dolphin/base/PPCArch.c"),
         ],
     ),
     DolphinLib(
@@ -422,12 +422,12 @@ config.libs = [
         "mtx",
         [
             Object(Matching, "dolphin/mtx/mtx.c"),
-            Object(Matching, "dolphin/mtx/mtxvec.c"),
+            Object(NonMatching, "dolphin/mtx/mtxvec.c"),
             Object(Matching, "dolphin/mtx/mtx44.c"),
             Object(NonMatching, "dolphin/mtx/mtx44vec.c"),
             Object(Matching, "dolphin/mtx/vec.c"),
             Object(Matching, "dolphin/mtx/quat.c"),
-            Object(Matching, "dolphin/mtx/psmtx.c"),
+            Object(NonMatching, "dolphin/mtx/psmtx.c"),
         ],
     ),
     DolphinLib(
