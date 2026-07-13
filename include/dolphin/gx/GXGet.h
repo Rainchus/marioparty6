@@ -16,6 +16,7 @@ GXTexWrapMode GXGetTexObjWrapS(const GXTexObj* obj);
 GXTexWrapMode GXGetTexObjWrapT(const GXTexObj* obj);
 void* GXGetTexObjData(const GXTexObj* obj);
 void GXGetProjectionv(f32* p);
+void GXGetViewportv(f32* vp);
 void GXGetLightPos(const GXLightObj* lt_obj, f32* x, f32* y, f32* z);
 void GXGetLightColor(const GXLightObj* lt_obj, GXColor* color);
 void GXGetVtxDesc(GXAttr attr, GXAttrType* type);

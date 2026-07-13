@@ -13,9 +13,6 @@ extern "C" {
 void GXProject(f32 x, f32 y, f32 z, const f32 mtx[3][4], const f32* pm,
                const f32* vp, f32* sx, f32* sy, f32* sz);
 void GXSetProjectionv(const f32* ptr);
-void GXGetProjectionv(f32* ptr);
-void GXGetViewportv(f32* vp);
-void GXSetScissor(u32 left, u32 top, u32 wd, u32 ht);
 
 #ifdef TARGET_PC
 void GXSetProjection(const void* mtx, GXProjectionType type);

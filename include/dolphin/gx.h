@@ -17,6 +17,7 @@
 #include <dolphin/gx/GXLighting.h>
 #include <dolphin/gx/GXManage.h>
 #include <dolphin/gx/GXPerf.h>
+#include <dolphin/gx/GXCpu2Efb.h>
 #include <dolphin/gx/GXPixel.h>
 #include <dolphin/gx/GXTev.h>
 #include <dolphin/gx/GXTexture.h>

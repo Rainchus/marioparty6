@@ -72,20 +72,6 @@ typedef struct _GXTlutRegion {
   u32 dummy[4];
 } GXTlutRegion;
 
-typedef enum _GXTlutSize {
-  GX_TLUT_16 = 1,
-  GX_TLUT_32 = 2,
-  GX_TLUT_64 = 4,
-  GX_TLUT_128 = 8,
-  GX_TLUT_256 = 16,
-  GX_TLUT_512 = 32,
-  GX_TLUT_1K = 64,
-  GX_TLUT_2K = 128,
-  GX_TLUT_4K = 256,
-  GX_TLUT_8K = 512,
-  GX_TLUT_16K = 1024
-} GXTlutSize;
-
 typedef struct _GXFogAdjTable {
     u16 r[10];
 } GXFogAdjTable;
