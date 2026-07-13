@@ -502,7 +502,7 @@ config.libs = [
             Object(NonMatching, "dolphin/gx/GXLight.c", extra_cflags=["-fp_contract off"]),
             Object(NonMatching, "dolphin/gx/GXTexture.c"),
             Object(Matching, "dolphin/gx/GXBump.c"),
-            Object(NonMatching, "dolphin/gx/GXTev.c"),
+            Object(Matching, "dolphin/gx/GXTev.c"),
             Object(Matching, "dolphin/gx/GXPixel.c"),
             Object(NonMatching, "dolphin/gx/GXDraw.c"),
             Object(Matching, "dolphin/gx/GXDisplayList.c"),

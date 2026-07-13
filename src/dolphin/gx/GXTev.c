@@ -271,12 +271,12 @@ void GXSetTevSwapMode(GXTevStageID stage, GXTevSwapSel ras_sel, GXTevSwapSel tex
 void GXSetTevSwapModeTable(GXTevSwapSel table, GXTevColorChan red, GXTevColorChan green,
                            GXTevColorChan blue, GXTevColorChan alpha)
 {
-    u32* Kreg = &gx->tevKsel[table * 2];
+    u32* Kreg = &gx->tevKsel[table << 1];
 
     SET_REG_FIELD(982, *Kreg, 2, 0, red);
     SET_REG_FIELD(983, *Kreg, 2, 2, green);
     GX_WRITE_RAS_REG(*Kreg);
-    Kreg = &gx->tevKsel[table * 2 + 1];
+    Kreg = &gx->tevKsel[(table << 1) + 1];
     SET_REG_FIELD(987, *Kreg, 2, 0, blue);
     SET_REG_FIELD(988, *Kreg, 2, 2, alpha);
     GX_WRITE_RAS_REG(*Kreg);
