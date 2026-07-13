@@ -13,10 +13,10 @@ static GXFifoObj FifoObj;
 static GXData gxData;
 GXData* const __GXData = &gxData;
 
-u16* __memReg;
-u16* __peReg;
-u16* __cpReg;
-u32* __piReg;
+u32* __piReg = NULL;
+u16* __cpReg = NULL;
+u16* __peReg = NULL;
+u16* __memReg = NULL;
 
 static u16 DefaultTexData[] __attribute__((aligned(32))) = {
     0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF,

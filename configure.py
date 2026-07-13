@@ -494,7 +494,7 @@ config.libs = [
         "gx",
         [
             Object(
-                NonMatching,
+                Matching,
                 "dolphin/gx/GXInit.c",
                 extra_cflags=["-opt nopeephole"],
             ),
