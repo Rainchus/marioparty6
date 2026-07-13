@@ -9,32 +9,7 @@ static s32 YearDays[OS_TIME_MONTH_MAX] = { 0, 31, 59, 90, 120, 151, 181, 212, 24
 // End of each month in leap year
 static s32 LeapYearDays[OS_TIME_MONTH_MAX] = { 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 };
 
-asm OSTime OSGetTime(void)
-{
-    // clang-format off
-    nofralloc
-@0
-    mftbu r3
-    mftb r4
-
-    // Check for possible carry from TBL to TBU
-    mftbu r5
-    cmpw r3, r5
-    bne @0
-
-    blr
-    // clang-format on
-}
-
-asm OSTick OSGetTick(void) {
-    // clang-format off
-    nofralloc
-
-    mftb r3
-    blr
-    // clang-format on
-}
-
+/* OSGetTime and OSGetTick are defined by the preserved original object fallback. */
 #define OS_SYSTEMTIME_BASE 0x30D8
 
 OSTime __OSGetSystemTime(void)

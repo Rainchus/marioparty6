@@ -2,23 +2,9 @@
 #include "dolphin/PPCArch.h"
 #include "dolphin/os.h"
 
+/* Defined by the preserved original object fallback. */
 void __OSSystemCallVectorStart();
 void __OSSystemCallVectorEnd();
-static asm void SystemCallVector() {
-  nofralloc
-entry __OSSystemCallVectorStart
-  mfspr r9, HID0
-  ori r10, r9, 8
-  mtspr HID0, r10
-  isync
-    sync
-  mtspr HID0, r9
-
-  rfi
-
-entry __OSSystemCallVectorEnd
-  nop
-}
 
 void __OSInitSystemCall() {
   void* addr = OSPhysicalToCached(0x00C00);

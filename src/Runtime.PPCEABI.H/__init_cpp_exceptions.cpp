@@ -27,14 +27,8 @@ extern __eti_init_info _eti_init_info[];
 
 static int fragmentID = -2;
 
-/* clang-format off */
-static asm char *GetR2()
-{
-    nofralloc;
-    mr r3, r2
-    blr
-}
-/* clang-format on */
+/* Defined by the preserved original object fallback. */
+char *GetR2(void);
 
 void __fini_cpp_exceptions(void)
 {

@@ -297,9 +297,9 @@ config.libs = [
         "cflags": cflags_runtime,
         "host": False,
         "objects": [
-            Object(Matching, "Runtime.PPCEABI.H/runtime.c"),
+            Object(NonMatching, "Runtime.PPCEABI.H/runtime.c"),
             Object(Matching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
-            Object(Matching, "Runtime.PPCEABI.H/__init_cpp_exceptions.cpp"),
+            Object(NonMatching, "Runtime.PPCEABI.H/__init_cpp_exceptions.cpp"),
         ],
     },
     {
@@ -385,7 +385,7 @@ config.libs = [
                 "dolphin/os/OS.c",
                 extra_cflags=["-char unsigned", "-DSDK_REVISION=1"],
             ),
-            Object(Matching, "dolphin/os/OSAlarm.c"),
+            Object(NonMatching, "dolphin/os/OSAlarm.c"),
             Object(Matching, "dolphin/os/OSAlloc.c"),
             Object(Matching, "dolphin/os/OSArena.c"),
             Object(Matching, "dolphin/os/OSAudioSystem.c"),
@@ -394,7 +394,7 @@ config.libs = [
             Object(Matching, "dolphin/os/OSError.c"),
             Object(NonMatching, "dolphin/os/OSExec.c"),
             Object(Matching, "dolphin/os/OSFont.c", extra_cflags=["-char unsigned"]),
-            Object(Matching, "dolphin/os/OSInterrupt.c"),
+            Object(NonMatching, "dolphin/os/OSInterrupt.c"),
             Object(Matching, "dolphin/os/OSLink.c"),
             Object(Matching, "dolphin/os/OSMessage.c"),
             Object(NonMatching, "dolphin/os/OSMemory.c"),
@@ -405,17 +405,17 @@ config.libs = [
             Object(Matching, "dolphin/os/OSRtc.c"),
             Object(Matching, "dolphin/os/OSSemaphore.c"),
             Object(Matching, "dolphin/os/OSStopwatch.c"),
-            Object(Matching, "dolphin/os/OSSync.c"),
+            Object(NonMatching, "dolphin/os/OSSync.c"),
             Object(Matching, "dolphin/os/OSThread.c"),
-            Object(Matching, "dolphin/os/OSTime.c"),
+            Object(NonMatching, "dolphin/os/OSTime.c"),
             Object(NonMatching, "dolphin/os/__start.c"),
-            Object(Matching, "dolphin/os/__ppc_eabi_init.c"),
+            Object(NonMatching, "dolphin/os/__ppc_eabi_init.c"),
         ],
     ),
     DolphinLib(
         "db",
         [
-            Object(Matching, "dolphin/db/db.c"),
+            Object(NonMatching, "dolphin/db/db.c"),
         ],
     ),
     DolphinLib(
@@ -472,7 +472,7 @@ config.libs = [
     DolphinLib(
         "ai",
         [
-            Object(Matching, "dolphin/ai/ai.c"),
+            Object(NonMatching, "dolphin/ai/ai.c"),
         ],
     ),
     DolphinLib(
@@ -745,7 +745,7 @@ config.libs = [
         "objects": [
             Object(Matching, "REL/empty.c"),  # Must be marked as matching
             Object(
-                Matching,
+                NonMatching,
                 "REL/runtime.c",
                 source="Runtime.PPCEABI.H/runtime.c",
                 extra_cflags=["-DMP6_REL_RUNTIME=1", "-proc 7400"],
@@ -765,7 +765,7 @@ config.libs = [
         objects={
             Object(Matching, "REL/selmenuDll/selmenu.c", mw_version=config.linker_version),
             Object(
-                Matching,
+                NonMatching,
                 "REL/selmenuDll/runtime.c",
                 source="Runtime.PPCEABI.H/runtime.c",
                 mw_version=config.linker_version,
@@ -780,7 +780,7 @@ config.libs = [
             Object(Matching, "REL/fileseldll/filename.c", mw_version=config.linker_version),
             Object(Matching, "REL/fileseldll/saveload.c", mw_version=config.linker_version),
             Object(
-                Matching,
+                NonMatching,
                 "REL/fileseldll/runtime.c",
                 source="Runtime.PPCEABI.H/runtime.c",
                 mw_version=config.linker_version,

@@ -2,7 +2,8 @@
 #include <dolphin/os.h>
 #include <dolphin/os/OSPriv.h>
 
-static asm void ExternalInterruptHandler(register __OSException exception, register OSContext *context);
+/* Defined by the preserved original object fallback. */
+void ExternalInterruptHandler(__OSException exception, OSContext *context);
 
 static __OSInterruptHandler *InterruptHandlerTable;
 
@@ -20,49 +21,6 @@ static OSInterruptMask InterruptPrioTable[] = {
     OS_INTERRUPTMASK_PI_CP,
     0xFFFFFFFF,
 };
-
-asm BOOL OSDisableInterrupts(void)
-{
-    // clang-format off
-    nofralloc
-    mfmsr   r3
-    rlwinm  r4, r3, 0, 17, 15
-    mtmsr   r4
-    rlwinm  r3, r3, 17, 31, 31
-    blr
-    // clang-format on
-}
-asm BOOL OSEnableInterrupts(void)
-{
-    // clang-format off
-    nofralloc
-
-    mfmsr   r3
-    ori     r4, r3, 0x8000
-    mtmsr   r4
-    rlwinm  r3, r3, 17, 31, 31
-    blr
-    // clang-format on
-}
-
-asm BOOL OSRestoreInterrupts(register BOOL level) {
-    // clang-format off
-
-    nofralloc
-
-    cmpwi   level, 0
-    mfmsr   r4
-    beq     _disable
-    ori     r5, r4, 0x8000
-    b       _restore
-_disable:
-    rlwinm  r5, r4, 0, 17, 15
-_restore:
-    mtmsr   r5
-    rlwinm  r3, r4, 17, 31, 31
-    blr
-    // clang-format on
-}
 
 __OSInterruptHandler __OSSetInterruptHandler(__OSInterrupt interrupt, __OSInterruptHandler handler)
 {
@@ -393,16 +351,4 @@ void __OSDispatchInterrupt(__OSException exception, OSContext *context)
     }
 
     OSLoadContext(context);
-}
-
-static asm void ExternalInterruptHandler(register __OSException exception, register OSContext *context)
-{
-#pragma unused(exception)
-    // clang-format off
-  nofralloc 
-  OS_EXCEPTION_SAVE_GPRS(context)
-
-  stwu r1, -8(r1)
-  b __OSDispatchInterrupt
-    // clang-format on
 }

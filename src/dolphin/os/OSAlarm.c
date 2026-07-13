@@ -8,7 +8,8 @@ static struct OSAlarmQueue {
     OSAlarm *tail;
 } AlarmQueue;
 
-static void DecrementerExceptionHandler(__OSException exception, OSContext *context);
+/* Defined by the preserved original object fallback. */
+void DecrementerExceptionHandler(__OSException exception, OSContext *context);
 static BOOL OnReset(BOOL final);
 
 extern BOOL __DVDTestAlarm(OSAlarm *alarm);
@@ -195,16 +196,6 @@ static void DecrementerExceptionCallback(register __OSException exception, regis
     OSEnableScheduler();
     __OSReschedule();
     OSLoadContext(context);
-}
-
-static asm void DecrementerExceptionHandler(register __OSException exception, register OSContext *context)
-{
-    /* clang-format off */
-    nofralloc
-    OS_EXCEPTION_SAVE_GPRS(context)
-    stwu r1, -8(r1)
-    b DecrementerExceptionCallback
-    /* clang-format on */
 }
 
 static BOOL OnReset(BOOL final)

@@ -21,7 +21,8 @@ extern DBInterface* __DBInterface;
 
 void DBInit(void);
 void DBInitComm(int* inputFlagPtr, int* mtrCallback);
-static void __DBExceptionDestination(void);
+/* Defined by the preserved original object fallback. */
+void __DBExceptionDestination(void);
 void DBPrintf(char* format, ...);
 
 #ifdef __cplusplus

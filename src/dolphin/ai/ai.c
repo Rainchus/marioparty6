@@ -19,6 +19,7 @@ static OSTime buffer;
 
 void __AISHandler(s16 interrupt, OSContext *context);
 void __AIDHandler(s16 interrupt, OSContext *context);
+/* Defined by the preserved original object fallback. */
 void __AICallbackStackSwitch(register AIDCallback cb);
 void __AI_SRC_INIT(void);
 
@@ -268,39 +269,6 @@ void __AIDHandler(s16 interrupt, OSContext *context)
     OSClearContext(&tempContext);
     OSSetCurrentContext(context);
 }
-
-// clang-format off
-asm void __AICallbackStackSwitch(register AIDCallback cb) {
-  // Allocate stack frame
-  fralloc
-
-  // Store current stack
-  lis r5, __OldStack@ha
-  addi r5, r5, __OldStack@l
-  stw r1, 0(r5)
-
-  // Load stack for callback
-  lis r5, __CallbackStack@ha 
-  addi r5, r5, __CallbackStack@l 
-  lwz r1,0(r5)
-
-  // Move stack down 8 bytes
-  subi r1, r1, 8
-  // Call callback
-  mtlr cb 
-  blrl
-
-  // Restore old stack
-  lis r5, __OldStack @ha 
-  addi r5, r5, __OldStack@l 
-  lwz r1,0(r5)
-
-  // Free stack frame
-  frfree
-
-  blr
-}
-// clang-format on
 
 void __AI_SRC_INIT(void)
 {
