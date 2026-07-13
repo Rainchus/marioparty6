@@ -158,9 +158,9 @@ void __GetImageTileCount(GXTexFmt fmt, u16 wd, u16 ht, u32 *rowTiles, u32 *colTi
     *cmpTiles = (fmt == GX_TF_RGBA8 || fmt == GX_TF_Z24X8) ? 2 : 1;
 }
 
-#define SOME_SET_REG_MACRO(reg, val)                                                                                                                 \
+#define SOME_SET_REG_MACRO(reg, size, shift, val)                                                                                                   \
     do {                                                                                                                                             \
-        (reg) = (u32)__rlwinm((u32)(reg), 0, 27, 23) | val;                                                                                          \
+        (reg) = (u32)__rlwimi((u32)(reg), (val), (shift), (32 - (shift) - (size)), (31 - (shift)));                                                 \
     } while (0);
 
 void GXInitTexObj(GXTexObj *obj, void *image_ptr, u16 width, u16 height, GXTexFmt format, GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, u8 mipmap)
@@ -187,10 +187,10 @@ void GXInitTexObj(GXTexObj *obj, void *image_ptr, u16 width, u16 height, GXTexFm
         t->flags |= 1;
 
         if (format == 8 || format == 9 || format == 10) {
-            SOME_SET_REG_MACRO(t->mode0, 0xa0);
+            SOME_SET_REG_MACRO(t->mode0, 3, 5, 5);
         }
         else {
-            SOME_SET_REG_MACRO(t->mode0, 0xc0);
+            SOME_SET_REG_MACRO(t->mode0, 3, 5, 6);
         }
 
         if (width > height) {
@@ -203,7 +203,7 @@ void GXInitTexObj(GXTexObj *obj, void *image_ptr, u16 width, u16 height, GXTexFm
         SET_REG_FIELD(0x278, t->mode1, 8, 8, lmax);
     }
     else {
-        SOME_SET_REG_MACRO(t->mode0, 0x80);
+        SOME_SET_REG_MACRO(t->mode0, 3, 5, 4);
     }
     t->fmt = format;
     SET_REG_FIELD(0x286, t->image0, 10, 0, width - 1);
@@ -608,6 +608,32 @@ void __GXSetSUTexRegs(void)
 void __GXSetTmemConfig(u32 config)
 {
     switch (config) {
+        case 2:
+            GX_WRITE_RAS_REG(0x8c0d8000);
+            GX_WRITE_RAS_REG(0x900dc000);
+
+            GX_WRITE_RAS_REG(0x8d0d8800);
+            GX_WRITE_RAS_REG(0x910dc800);
+
+            GX_WRITE_RAS_REG(0x8e0d9000);
+            GX_WRITE_RAS_REG(0x920dd000);
+
+            GX_WRITE_RAS_REG(0x8f0d9800);
+            GX_WRITE_RAS_REG(0x930dd800);
+
+            GX_WRITE_RAS_REG(0xac0da000);
+            GX_WRITE_RAS_REG(0xb00dc400);
+
+            GX_WRITE_RAS_REG(0xad0da800);
+            GX_WRITE_RAS_REG(0xb10dcc00);
+
+            GX_WRITE_RAS_REG(0xae0db000);
+            GX_WRITE_RAS_REG(0xb20dd400);
+
+            GX_WRITE_RAS_REG(0xaf0db800);
+            GX_WRITE_RAS_REG(0xb30ddc00);
+
+            break;
         case 1:
             GX_WRITE_RAS_REG(0x8c0d8000);
             GX_WRITE_RAS_REG(0x900dc000);
