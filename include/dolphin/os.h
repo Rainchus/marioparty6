@@ -1,8 +1,8 @@
 #ifndef _DOLPHIN_OS
 #define _DOLPHIN_OS
 
-#include <dolphin/gx.h>
 #include <dolphin/types.h>
+#include <dolphin/gx/GXStruct.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -169,6 +169,11 @@ BOOL OSRestoreInterrupts(BOOL level);
 
 #ifdef _DEBUG
 
+#ifndef ASSERTLINE
+#define ASSERTLINE(line, cond) \
+  ((cond) || (OSPanic(__FILE__, line, "Failed assertion " #cond), 0))
+#endif
+
 #ifndef ASSERT
 #define ASSERT(exp) (void)((exp) || (OSPanic(__FILE__, __LINE__, "Failed assertion " #exp), 0))
 #endif
@@ -203,6 +208,10 @@ BOOL OSRestoreInterrupts(BOOL level);
 #endif
 
 #else // _DEBUG
+
+#ifndef ASSERTLINE
+#define ASSERTLINE(line, cond) (void)0
+#endif
 
 #ifndef ASSERT
 #define ASSERT(exp) ((void)0)

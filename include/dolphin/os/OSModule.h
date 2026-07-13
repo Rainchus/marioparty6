@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#define OS_MODULE_VERSION 2
+#define OS_MODULE_VERSION 3
 typedef struct OSModuleHeader OSModuleHeader;
 
 typedef u32 OSModuleID;
@@ -95,7 +95,7 @@ struct OSRel {
 #define R_DOLPHIN_END 203     //  CBh
 #define R_DOLPHIN_MRKREF 204  //  CCh
 
-void OSSetStringTable(const void* stringTable);
+void OSSetStringTable(void* stringTable);
 BOOL OSLink(OSModuleInfo* newModule, void* bss);
 #if (3 <= OS_MODULE_VERSION)
 BOOL OSLinkFixed(OSModuleInfo* newModule, void* bss);
