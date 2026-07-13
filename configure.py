@@ -569,7 +569,11 @@ config.libs = [
                 "dolphin/mic/mic.c",
                 extra_cflags=["-use_lmw_stmw on"],
             ),
-            Object(NonMatching, "dolphin/mic/m2s.c"),
+            Object(
+                NonMatching,
+                "dolphin/mic/m2s.c",
+                extra_cflags=["-use_lmw_stmw on"],
+            ),
         ],
     },
     {
