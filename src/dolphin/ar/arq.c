@@ -18,7 +18,7 @@ static volatile BOOL __ARQ_init_flag = FALSE;
 void __ARQPopTaskQueueHi(void);
 void __ARQServiceQueueLo(void);
 void __ARQCallbackHack(void);
-void __ARQInterruptServiceRoutine(void);
+void __ARQInterruptServiceRoutine();
 void __ARQInitTempQueue(void);
 void __ARQPushTempQueue(ARQRequest* task);
 
@@ -75,7 +75,7 @@ void __ARQServiceQueueLo(void) {
 }
 void __ARQCallbackHack(void) { return; }
 
-void __ARQInterruptServiceRoutine(void) {
+void __ARQInterruptServiceRoutine() {
 
 	if (__ARQCallbackHi) {
 		(*__ARQCallbackHi)((u32)__ARQRequestPendingHi);
