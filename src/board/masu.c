@@ -555,6 +555,245 @@ static BOOL MasuIdCheck(int id, u32 targetId, u32 unused)
     return id == targetId;
 }
 
+static void MasuFind(s16 id, MASUFINDCHECK check, u32 value, u32 mask,
+    BOOL hookF, BOOL dispF)
+{
+    s16 linkTbl[MASU_LINK_MAX];
+    s16 workNo = 0;
+    s16 startId = id;
+    int linkNo;
+    int linkNum;
+    int i;
+
+    masuFindNo = 0;
+    masuFindStep = 9999;
+    masuFindId = MASU_NULL;
+    memset(masuFindVisit, 0, sizeof(masuFindVisit));
+    masuFindResultNum = 0;
+    linkNo = 0;
+
+    while (TRUE) {
+        masuFindVisit[id] = TRUE;
+        if (check(id, value, mask)) {
+            if (dispF && id != startId && !mbMasuDispCheck(id)) {
+                masuFindNo++;
+            }
+            if (masuFindNo < masuFindStep) {
+                masuFindStep = masuFindNo;
+                masuFindId = id;
+                for (i = 0; i < workNo; i++) {
+                    masuFindResult[i] = masuFindWork[i].id;
+                }
+                masuFindResult[i] = id;
+                masuFindResultNum = workNo + 1;
+            }
+        } else {
+            linkNum = mbMasuLinkTblGet2(id, linkTbl, hookF);
+            while (linkNo < linkNum) {
+                if (!masuFindVisit[linkTbl[linkNo]]) {
+                    break;
+                }
+                linkNo++;
+            }
+            if (linkNo < linkNum) {
+                masuFindWork[workNo].id = id;
+                masuFindWork[workNo].linkNo = linkNo + 1;
+                workNo++;
+                id = linkTbl[linkNo];
+                linkNo = 0;
+                if (!dispF) {
+                    masuFindNo++;
+                } else if (mbMasuDispCheck(id)) {
+                    masuFindNo++;
+                }
+                continue;
+            }
+        }
+
+        masuFindVisit[id] = FALSE;
+        workNo--;
+        if (workNo < 0) {
+            break;
+        }
+        if (!dispF) {
+            masuFindNo--;
+        } else if (mbMasuDispCheck(id)) {
+            masuFindNo--;
+        }
+        id = masuFindWork[workNo].id;
+        linkNo = masuFindWork[workNo].linkNo;
+    }
+}
+
+int mbMasuFind_TypeStepGet(s16 id, s16 type)
+{
+    MasuFind(id, MasuTypeCheck, type, 0, FALSE, TRUE);
+    return masuFindStep;
+}
+
+int mbMasuFind_TypeStepGet2(s16 id, s16 type, BOOL hookF, BOOL dispF)
+{
+    MasuFind(id, MasuTypeCheck, type, 0, hookF, dispF);
+    return masuFindStep;
+}
+
+int mbMasuFind_AttrStepGet(s16 id, u16 attr)
+{
+    MasuFind(id, MasuAttrCheck, attr, 0, FALSE, TRUE);
+    return masuFindStep;
+}
+
+int mbMasuFind_AttrMatchStepGet(s16 id, u16 arg1, u16 arg2)
+{
+    MasuFind(id, MasuAttrMatchCheck, arg1, arg2, FALSE, TRUE);
+    return masuFindStep;
+}
+
+int mbMasuFind_AttrStepGet2(s16 id, u16 arg1, u16 arg2, BOOL hookF,
+    BOOL dispF)
+{
+    MasuFind(id, MasuAttrMatchCheck, arg1, arg2, hookF, dispF);
+    return masuFindStep;
+}
+
+int mbMasuFind_MAttrStepGet(s16 id, u32 attr)
+{
+    MasuFind(id, MasuMAttrCheck, attr, 0, FALSE, TRUE);
+    return masuFindStep;
+}
+
+int mbMasuFind_MAttrMatchStepGet(s16 id, u32 arg1, u32 arg2)
+{
+    MasuFind(id, MasuMAttrMatchCheck, arg1, arg2, FALSE, TRUE);
+    return masuFindStep;
+}
+
+int mbMasuFind_MAttrStepGet2(s16 id, u32 arg1, u32 arg2, BOOL hookF,
+    BOOL dispF)
+{
+    MasuFind(id, MasuMAttrMatchCheck, arg1, arg2, hookF, dispF);
+    return masuFindStep;
+}
+
+int mbMasuFind_IdStepGet(s16 id, s16 targetId)
+{
+    MasuFind(id, MasuIdCheck, targetId, 0, FALSE, TRUE);
+    return masuFindStep;
+}
+
+int mbMasuFind_IdStepGet2(s16 id, s16 targetId, BOOL hookF, BOOL dispF)
+{
+    MasuFind(id, MasuIdCheck, targetId, 0, hookF, dispF);
+    return masuFindStep;
+}
+
+s16 mbMasuFind_TypeSearch(s16 id, s16 type)
+{
+    return mbMasuFind_TypeIdGet(id, type, FALSE, TRUE);
+}
+
+s16 mbMasuFind_TypeIdGet(s16 id, s16 type, BOOL hookF, BOOL dispF)
+{
+    int i;
+    MASU *masuP;
+
+    if (id >= 0) {
+        MasuFind(id, MasuTypeCheck, type, 0, hookF, dispF);
+        return masuFindId;
+    }
+    masuP = &masuData[masuLayer][1];
+    for (i = 0; i < masuNum[masuLayer]; i++, masuP++) {
+        if (masuP->type == type) {
+            return i + 1;
+        }
+    }
+    return MASU_NULL;
+}
+
+s16 mbMasuFind_AttrIdGet(s16 id, u16 attr)
+{
+    int i;
+    MASU *masuP;
+
+    if (id >= 0) {
+        MasuFind(id, MasuAttrCheck, attr, 0, FALSE, TRUE);
+        return masuFindId;
+    }
+    masuP = &masuData[masuLayer][1];
+    for (i = 0; i < masuNum[masuLayer]; i++, masuP++) {
+        if (masuP->flag & attr) {
+            return i + 1;
+        }
+    }
+    return MASU_NULL;
+}
+
+s16 mbMasuFind_AttrMatchIdGet(s16 id, u16 arg1, u16 arg2)
+{
+    return mbMasuFind_AttrMatchIdGet2(id, arg1, arg2, FALSE, TRUE);
+}
+
+s16 mbMasuFind_AttrMatchIdGet2(s16 id, u16 arg1, u16 arg2, BOOL hookF,
+    BOOL dispF)
+{
+    int i;
+    MASU *masuP;
+
+    if (id >= 0) {
+        MasuFind(id, MasuAttrMatchCheck, arg1, arg2, hookF, dispF);
+        return masuFindId;
+    }
+    masuP = &masuData[masuLayer][1];
+    for (i = 0; i < masuNum[masuLayer]; i++, masuP++) {
+        if (arg1 == (masuP->flag & arg2)) {
+            return i + 1;
+        }
+    }
+    return MASU_NULL;
+}
+
+s16 mbMasuFind_MAttrIdGet(s16 id, u32 attr)
+{
+    int i;
+    MASU *masuP;
+
+    if (id >= 0) {
+        MasuFind(id, MasuMAttrCheck, attr, 0, FALSE, TRUE);
+        return masuFindId;
+    }
+    masuP = &masuData[masuLayer][1];
+    for (i = 0; i < masuNum[masuLayer]; i++, masuP++) {
+        if (masuP->mAttr & attr) {
+            return i + 1;
+        }
+    }
+    return MASU_NULL;
+}
+
+s16 mbMasuFind_MAttrMatchIdGet(s16 id, u32 arg1, u32 arg2)
+{
+    return mbMasuFind_MAttrMatchIdGet2(id, arg1, arg2, FALSE, TRUE);
+}
+
+s16 mbMasuFind_MAttrMatchIdGet2(s16 id, u32 arg1, u32 arg2, BOOL hookF,
+    BOOL dispF)
+{
+    int i;
+    MASU *masuP;
+
+    if (id >= 0) {
+        MasuFind(id, MasuMAttrMatchCheck, arg1, arg2, hookF, dispF);
+        return masuFindId;
+    }
+    masuP = &masuData[masuLayer][1];
+    for (i = 0; i < masuNum[masuLayer]; i++, masuP++) {
+        if (arg1 == (masuP->mAttr & arg2)) {
+            return i + 1;
+        }
+    }
+    return MASU_NULL;
+}
+
 int mbMasuTypeListGet(s16 type, s16 *list)
 {
     int i;
