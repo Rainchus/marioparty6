@@ -672,7 +672,7 @@ dolphin/gx/GXTexture.c:
 
 dolphin/gx/GXBump.c:
 	.text       start:0x800B5054 end:0x800B573C
-	.sdata2     start:0x802C2030 end:0x802C2040
+	.sdata2     start:0x802C2030 end:0x802C2048
 
 dolphin/gx/GXTev.c:
 	.text       start:0x800B573C end:0x800B5E5C
@@ -681,12 +681,12 @@ dolphin/gx/GXTev.c:
 dolphin/gx/GXPixel.c:
 	.text       start:0x800B5E5C end:0x800B6494
 	.data       start:0x8023F100 end:0x8023F120
-	.sdata2     start:0x802C2040 end:0x802C2070
+	.sdata2     start:0x802C2048 end:0x802C2080
 
 dolphin/gx/GXDraw.c:
 	.text       start:0x800B6494 end:0x800B6EDC
 	.bss        start:0x80288B50 end:0x80288DD8
-	.sdata2     start:0x802C2070 end:0x802C20B0
+	.sdata2     start:0x802C2080 end:0x802C20B0
 
 dolphin/gx/GXDisplayList.c:
 	.text       start:0x800B6EDC end:0x800B70DC
