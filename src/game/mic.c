@@ -93,6 +93,10 @@ typedef struct MCLanguageData_s {
     char *file[6];
 } MCLanguageData_s;
 
+typedef struct MCLngFileTbl_s {
+    char *file[6];
+} MCLngFileTbl_s;
+
 typedef struct MCResponseEntry_s {
     u32 value0;
     u32 value1;
@@ -156,9 +160,10 @@ static OSAlarm MCThreadAlarm;
 static u8 MCUnkResponseData[0x60];
 static MCSelWinWork_s MCSelWinWork;
 static u8 MCCurResponse[0x60];
-static u32 ATTRIBUTE_ALIGN(32) PlayerSession[4];
+static u32 PlayerSession[4];
 static OSMessageQueue MCMessageQueue;
 static OSThread MCThread;
+static u8 pad_08_802870A8_bss[0x18];
 
 static u32 gap_10_802C0564_sbss;
 static u8 *MCThreadStack;
@@ -224,20 +229,6 @@ static char *LngFileTbl[] = {
     lbl_8023A9AF, lbl_8023A9AF, lbl_8023A9AF
 };
 
-static char lbl_8023A9F0[] =
-    "Mic Error: Not enough Memory\n\0"
-    "Mic Error: M2SSetBuffer()\n\0"
-    "Mic Error: gsapi_Init() %x\n\0"
-    "Mic Error: Read Language Failue\n\0"
-    "Mic Error: gsapi_LanguageLoadBuffer().%x\n\0"
-    "Mic Error: gsapi_EngineOpen().%x\n\0"
-    "Mic Error: gsapi_NotifySetCallback().%x\n\0"
-    "Mic Error: gsapi_EngineSetMode().%x\n\0"
-    "HEAP HEAP Malloc Size %x\n\0"
-    "OSAlloc Size Left %dkb(%x)\n\0"
-    "Error CTX %x\n\0"
-    "Error GCD %x\n\0"
-    "Error WRD %x\n";
 
 static const f32 lbl_802C1E48 = 0.0f;
 static const f32 lbl_802C1E4C = -100.0f;
@@ -296,18 +287,21 @@ void HuMCSysInit(void)
 
 /* 80091918 HuMCInit */
 
-s32 HuMCInit(s32 mountResult)
+s32 HuMCInit(s16 mountResult)
 {
   s32 apiResult;
-  char *strings;
   s16 i;
+  s32 result;
   s32 rawLanguage;
-  s16 language;
   s32 heapCheck;
 
-  strings = lbl_8023A988;
-  mountResult = 0;
-  if (MCResponseBuf == 0) {
+  mountResult;
+  (void)mountResult;
+  (void)rawLanguage;
+  result = 0;
+  if (MCResponseBuf != 0) {
+    return;
+  }
   MCWrongDeviceF = 0;
   if (MCMicValue != -1) {
     HuMCMicSet(MCMicValue);
@@ -336,60 +330,60 @@ s32 HuMCInit(s32 mountResult)
   MICInit();
   M2SInit();
   if ((M2SBuffer = HuMemDirectMallocNum(0,0x100,0x30000000)) == 0) {
-    OSReport(strings + 0x68);
+    OSReport("Mic Error: Not enough Memory\n");
     HuMemDirectFreeNum(0,0x30000000);
     return -128;
   }
   if (M2SSetBuffer(M2SBuffer) == 0) {
-    OSReport(strings + 0x86);
+    OSReport("Mic Error: M2SSetBuffer()\n");
     HuMemDirectFreeNum(0,0x30000000);
     return -128;
   }
   if ((MicBuffer = HuMemDirectMallocNum(0,0x3000,0x30000000)) == 0) {
-    OSReport(strings + 0x68);
+    OSReport("Mic Error: Not enough Memory\n");
     HuMemDirectFreeNum(0,0x30000000);
     return -128;
   }
 
-  mountResult = HuMCMount(1);
+  result = HuMCMount(1);
   M2SSetPrerecordSamples(100);
   M2SSetMode(3);
   MICStart(1);
   if ((apiResult = gsapi_Init(MicResultCallBack,0)) != 0) {
-    OSReport(strings + 0xa1,apiResult);
+    OSReport("Mic Error: gsapi_Init() %x\n",apiResult);
     HuMemDirectFreeNum(0,0x30000000);
     return -128;
   }
   rawLanguage = GwCommon.languageNo;
-  language = rawLanguage;
-  LanguageNo = language;
-  if ((LngData = MCDVDRead(((MCLanguageData_s *)strings)->file[LanguageNo])) == 0) {
-    OSReport(strings + 0xbd);
+  mountResult = rawLanguage;
+  LanguageNo = mountResult;
+  if ((LngData = MCDVDRead(LngFileTbl[LanguageNo])) == 0) {
+    OSReport("Mic Error: Read Language Failue\n");
     gsapi_Close();
     HuMemDirectFreeNum(0,0x30000000);
     return -128;
   }
   if ((apiResult = gsapi_LanguageLoadBuffer(LngData,0)) != 0) {
-    OSReport(strings + 0xde,apiResult);
+    OSReport("Mic Error: gsapi_LanguageLoadBuffer().%x\n",apiResult);
     gsapi_Close();
     HuMemDirectFreeNum(0,0x30000000);
     return -128;
   }
   if ((apiResult = gsapi_EngineOpen(0,&MC_gsapiEngine)) != 0) {
-    OSReport(strings + 0x108,apiResult);
+    OSReport("Mic Error: gsapi_EngineOpen().%x\n",apiResult);
     gsapi_Close();
     HuMemDirectFreeNum(0,0x30000000);
     return -128;
   }
   MCSessionP = 0;
   if ((apiResult = gsapi_NotifySetCallback(MicNotifyCallBack)) != 0) {
-    OSReport(strings + 0x12a,apiResult);
+    OSReport("Mic Error: gsapi_NotifySetCallback().%x\n",apiResult);
     gsapi_Close();
     HuMemDirectFreeNum(0,0x30000000);
     return -128;
   }
   if ((apiResult = gsapi_EngineSetMode(MC_gsapiEngine,1)) != 0) {
-    OSReport(strings + 0x153,apiResult);
+    OSReport("Mic Error: gsapi_EngineSetMode().%x\n",apiResult);
     gsapi_Close();
     HuMemDirectFreeNum(0,0x30000000);
     return -128;
@@ -406,14 +400,13 @@ s32 HuMCInit(s32 mountResult)
   OSResumeThread(&MCThread);
   OSInitThreadQueue(&MCThreadQueue);
   MCInitF = 1;
-  OSReport(strings + 0x178,HuMemUsedMallocSizeGet(0));
+  OSReport("HEAP HEAP Malloc Size %x\n",HuMemUsedMallocSizeGet(0));
   heapCheck = OSCheckHeap(currentHeapHandle);
-  OSReport(strings + 0x192,OSCheckHeap(currentHeapHandle) / 1024,heapCheck);
+  OSReport("OSAlloc Size Left %dkb(%x)\n",OSCheckHeap(currentHeapHandle) / 1024,heapCheck);
   MCAnswerProc = HuPrcCreate(MCAnswerMain,65000,0x4000,0);
   HuPrcSetStat(MCAnswerProc,0xc);
   MCMicValue = -1;
-  }
-  return mountResult;
+  return result;
 }
 
 
@@ -473,7 +466,6 @@ void HuMCClose(void)
 s16 HuMCContextCreate(char *path)
 
 {
-  char *strings;
   char *temp;
   char *scan;
   char *filename;
@@ -481,7 +473,6 @@ s16 HuMCContextCreate(char *path)
   s16 index;
   s32 error;
 
-  strings = lbl_8023A988;
   if (HuMCMicSaveGet() != 1) {
     return -1;
   }
@@ -526,15 +517,15 @@ s16 HuMCContextCreate(char *path)
   context->binData = MCDVDRead(filename);
   error = gsapi_ContextSetCtxData(context->ctxData,&context->context);
   if (error != 0) {
-    OSReport(strings + 0x1ae,error);
+    OSReport("Error CTX %x\n",error);
   }
   error = gsapi_ContextSetGcdData(context->context,context->gcdData);
   if (error != 0) {
-    OSReport(strings + 0x1bc,error);
+    OSReport("Error GCD %x\n",error);
   }
   error = gsapi_ContextSetWrdData(context->context,context->wrdData);
   if (error != 0) {
-    OSReport(strings + 0x1ca,error);
+    OSReport("Error WRD %x\n",error);
   }
   gsapi_ContextSetParam(context->context,9,MCThreshold);
   if ((omcurovl == 0x4a) || (omcurovl == 0x4b) || (omcurovl == 0x46) ||
@@ -866,12 +857,10 @@ inline s32 HuMCMount(s32 chan)
     }
   }
   probeResult2 = probeResult;
-  result = probeResult2;
-  if (result != 0) {
+  if ((result = probeResult2) != 0) {
     return result;
   }
-  result = MICMount(chan, MicBuffer, 0x3000, MCExtHandler);
-  if (result != 0) {
+  if ((result = MICMount(chan, MicBuffer, 0x3000, MCExtHandler)) != 0) {
     if (result != -4) {
       return result;
     }
@@ -899,6 +888,59 @@ inline s32 HuMCMount(s32 chan)
   M2SOpen();
   return result;
 }
+
+
+static inline s32 MCMountSub(s32 chan)
+{
+  volatile s32 probeResult;
+  volatile OSTick start;
+  volatile s32 probeResult2;
+  s32 result;
+  s32 idResult;
+  s32 deviceId;
+  s32 activeResult;
+
+  M2SClose();
+  MicOpenF = 1;
+  MCWrongDeviceF = 0;
+  start = OSGetTick();
+  while (OSTicksToMilliseconds(OSGetTick() - start) < 500) {
+    if (((s32)(probeResult = MICProbeEx(chan))) != -1) {
+      break;
+    }
+  }
+  probeResult2 = probeResult;
+  if ((result = (s32)probeResult2) != 0) {
+    return result;
+  }
+  if ((result = MICMount(chan, MicBuffer, 0x3000, MCExtHandler)) != 0) {
+    if (result != -4) {
+      return result;
+    }
+    result = 0;
+  }
+  idResult = MICGetDeviceID(chan, &deviceId);
+  if (idResult != 0) {
+    return idResult;
+  }
+  if (deviceId != 0) {
+    MCWrongDeviceF = 1;
+    return -2;
+  }
+  if ((activeResult = M2SSetActiveChannel(chan)) == 0) {
+    OSReport(lbl_8023ABA0, activeResult);
+    return -0x80;
+  }
+  MICSetGain(chan, 0);
+  if (M2SSetShifts(M2SShift) == 0) {
+    OSReport(lbl_8023ABC5);
+  }
+  MicOpenF = 0;
+  MICStart(1);
+  M2SOpen();
+  return result;
+}
+
 
 
 /* 80092c34 MCExtHandler */
@@ -1513,7 +1555,7 @@ void HuMCListenerKill(void)
   s32 mic;
 
   MicWriteResponse(-1,0,0,0,-1);
-  if (HuMCSelWinCheck()) {
+  if (MCSelWinWork.winId == -1 ? FALSE : TRUE) {
     HuMCSelModeSet(2);
     (void)(MCResponseBuf + MCResponseLastNo * 0x60 + 4);
   }
@@ -1605,6 +1647,7 @@ static void MCAnswerMain(void)
   s16 oldResponseNo;
   MCResponseCallback callback;
 
+  (void)oldResponseNo;
   ValidResultF = 0;
   for (;;) {
     do {
@@ -1618,19 +1661,20 @@ static void MCAnswerMain(void)
 
         mountResult = -3;
         while ((WipeCheckIn() != 0) || (Hu3DPauseF != 0)) {
-          mountResult = HuMCMount(1);
-          if (mountResult != 0) {
-            HuPrcVSleep();
+          mountResult = MCMountSub(1);
+          if (mountResult == 0) {
+            break;
           }
+          HuPrcVSleep();
         }
         if (mountResult != 0) {
           MCDeviceMesExec();
         }
         OSReport(s_Mount_OK__8023ac18);
       } else {
-        do {
+        while (MCMountSub(1) != 0) {
           HuPrcVSleep();
-        } while (HuMCMount(1) != 0);
+        }
       }
     }
 
@@ -1907,11 +1951,11 @@ void HuMCSessionExportReset(void)
 
 static void MCDeviceMesExec(void)
 {
+  char paused;
   u8 pauseEnable;
   s32 pad;
   ANIMDATA *anim;
   void *fileData;
-  char paused;
   HUSPR_GROUPID group;
   HUSPRID sprite;
   HUWINID window;
@@ -1968,7 +2012,7 @@ static void MCDeviceMesExec(void)
       }
       HuPrcVSleep();
     }
-    result = HuMCMount(1);
+    result = MCMountSub(1);
   }
 
   HuWinWarningClose(window);
@@ -2196,7 +2240,7 @@ static void MicResultExec(undefined4 param_1,undefined4 param_2,MicResultNode_s 
         entry[i].count = 0;
         }
         else {
-        if ((node->count + (MCResultNum + (-2))) >= 0x40) {
+        if (((node->count + (-2)) + MCResultNum) >= 0x40) {
           MCResultNum = 0;
         }
         resultP = &MCResultData[MCResultNum];
