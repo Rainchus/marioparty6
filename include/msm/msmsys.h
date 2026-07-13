@@ -13,6 +13,11 @@
 #define MSM_AUXNO_NULL -2
 #define MSM_AUXNO_UNSET -1
 
+#ifndef MSM_GROUP_LOAD_MANUAL
+#define MSM_GROUP_LOAD_MANUAL 0
+#define MSM_GROUP_LOAD_AUTO 1
+#endif
+
 typedef union {
     SND_AUX_REVERBHI revHi;
     SND_AUX_REVERBSTD revStd;
@@ -40,6 +45,8 @@ typedef struct MSMSys_s {
     s8 auxParamNo[2];
     MSM_AUX aux[2]; // 0: userA, 1: userB
     s8 grpMax;
+    u8 unk3DD[2];
+    s8 grpLoadMode;
     s32 grpNum;
     u32 sampSize;
     u32 sampSizeBase;
@@ -57,6 +64,8 @@ typedef struct MSMSys_s {
     s8 grpStackBOfs;
     void *grpBufB;
     MSM_GRP_STACK grpStackB[10];
+    s8 grpLoadNum;
+    s8 grpLoadId[15];
     s32 irqDepth;
     BOOL irqState;
     AIDCallback oldAIDCallback;
@@ -77,7 +86,7 @@ s32 msmSysGetSampSize(BOOL baseGrp);
 s32 msmSysDelGroupAll(void);
 s32 msmSysDelGroupBase(s32 grpNum);
 s32 msmSysLoadGroupBase(s32 arg0, void *arg1);
-s32 msmSysLoadGroupSet(s32 arg0, void *arg1);
+void msmSysSetGroupLoadMode(s32 mode);
 void msmSysCheckInit(void);
 s32 msmSysInit(MSM_INIT *init, MSM_ARAM *aram);
 
