@@ -284,7 +284,6 @@ extern int __OSInIPL;
 #include <dolphin/os/OSExec.h>
 #include <dolphin/os/OSException.h>
 #include <dolphin/os/OSExpansion.h>
-#include <dolphin/os/OSFastCast.h>
 #include <dolphin/os/OSFont.h>
 #include <dolphin/os/OSInterrupt.h>
 #include <dolphin/os/OSMemory.h>

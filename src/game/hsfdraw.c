@@ -3,6 +3,7 @@
  * provides the auto-const variant whose literals pool in expansion order. */
 #define _MATH_H
 #include "dolphin/math.h"
+#include "dolphin/os/OSFastCast.h"
 
 static inline float acosf(float x) { return (float)acos((double)x); }
 

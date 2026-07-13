@@ -5,6 +5,9 @@
 #define ROUND(n, a) (((u32)(n) + (a)-1) & ~((a)-1))
 
 static BOOL OnReset(BOOL final);
+void Config24MB(void);
+void Config48MB(void);
+void RealMode(u32 addr);
 
 static OSResetFunctionInfo ResetFunctionInfo = {
     OnReset,
@@ -45,111 +48,6 @@ static void MEMIntrruptHandler(__OSInterrupt interrupt, OSContext *context)
     }
 
     __OSUnhandledException(OS_ERROR_PROTECTION, context, cause, addr);
-}
-
-asm void Config24MB()
-{
-    nofralloc
-
-    addi    r7,r0,0
-
-    addis   r4,r0,0x00000002@ha
-    addi    r4,r4,0x00000002@l
-    addis   r3,r0,0x800001ff@ha
-    addi    r3,r3,0x800001ff@l
-
-    addis   r6,r0,0x01000002@ha
-    addi    r6,r6,0x01000002@l
-    addis   r5,r0,0x810000ff@ha
-    addi    r5,r5,0x810000ff@l
-
-    isync
-
-    mtspr   dbat0u,r7
-    mtspr   dbat0l,r4
-    mtspr   dbat0u,r3
-    isync
-
-    mtspr   ibat0u,r7
-    mtspr   ibat0l,r4
-    mtspr   ibat0u,r3
-    isync
-
-    mtspr   dbat2u,r7
-    mtspr   dbat2l,r6
-    mtspr   dbat2u,r5
-    isync
-
-    mtspr   ibat2u,r7
-    mtspr   ibat2l,r6
-    mtspr   ibat2u,r5
-    isync
-
-    mfmsr   r3
-    ori     r3, r3, 0x30
-    mtsrr1  r3
-
-    mflr    r3
-    mtsrr0  r3
-    rfi
-}
-
-asm void Config48MB()
-{
-    nofralloc
-
-    addi    r7,r0,0x0000
-
-    addis   r4,r0,0x00000002@ha
-    addi    r4,r4,0x00000002@l
-    addis   r3,r0,0x800003ff@ha
-    addi    r3,r3,0x800003ff@l
-
-    addis   r6,r0,0x02000002@ha
-    addi    r6,r6,0x02000002@l
-    addis   r5,r0,0x820001ff@ha
-    addi    r5,r5,0x820001ff@l
-
-    isync
-
-    mtspr   dbat0u,r7
-    mtspr   dbat0l,r4
-    mtspr   dbat0u,r3
-    isync
-
-    mtspr   ibat0u,r7
-    mtspr   ibat0l,r4
-    mtspr   ibat0u,r3
-    isync
-
-    mtspr   dbat2u,r7
-    mtspr   dbat2l,r6
-    mtspr   dbat2u,r5
-    isync
-
-    mtspr   ibat2u,r7
-    mtspr   ibat2l,r6
-    mtspr   ibat2u,r5
-    isync
-
-    mfmsr   r3
-    ori     r3, r3, 0x30
-    mtsrr1  r3
-
-    mflr    r3
-    mtsrr0  r3
-    rfi
-}
-
-asm void RealMode(register u32 addr)
-{
-    nofralloc
-    clrlwi r3, r3, 2
-    mtsrr0 r3
-    mfmsr r3
-    rlwinm r3, r3, 0, 28, 25
-    mtsrr1 r3
-    rfi
 }
 
 void __OSInitMemoryProtection()

@@ -1,273 +1,59 @@
 #include "dolphin/PPCArch.h"
 #include "dolphin/os.h"
-
-// Can't use this due to weird condition register issues
-// #include "asm_types.h"
-#define HID2 920
-
 #include "dolphin/db.h"
 
-/* clang-format off */
-asm void DCEnable() {
-  nofralloc
-  sync
-  mfspr r3, HID0
-  ori   r3, r3, 0x4000
-  mtspr HID0, r3
-  blr
+void __LCEnable(void);
+
+void DCFlushRangeNoSync(void* addr, u32 nBytes)
+{
+    if (nBytes == 0) {
+        return;
+    }
+
+    nBytes += (u32)addr & 31;
+    nBytes = (nBytes + 31) >> 5;
+    do {
+        __dcbf(addr, 0);
+        addr = (u8*)addr + 32;
+    } while (--nBytes != 0);
 }
 
-asm void DCInvalidateRange(register void* addr, register u32 nBytes) {
-  nofralloc
-  cmplwi nBytes, 0
-  blelr
-  clrlwi r5, addr, 27
-  add   nBytes, nBytes, r5
-  addi   nBytes, nBytes, 31
-  srwi   nBytes, nBytes, 5
-  mtctr  nBytes
+void DCStoreRangeNoSync(void* addr, u32 nBytes)
+{
+    if (nBytes == 0) {
+        return;
+    }
 
-@1
-  dcbi r0, addr
-  addi addr, addr, 32
-  bdnz @1
-  blr
+    nBytes += (u32)addr & 31;
+    nBytes = (nBytes + 31) >> 5;
+    do {
+        __dcbst(addr, 0);
+        addr = (u8*)addr + 32;
+    } while (--nBytes != 0);
 }
 
+void DCZeroRange(void* addr, u32 nBytes)
+{
+    if (nBytes == 0) {
+        return;
+    }
 
-asm void DCFlushRange(register void* addr, register u32 nBytes) {
-  nofralloc
-  cmplwi nBytes, 0
-  blelr
-  clrlwi r5, addr, 27
-  add nBytes, nBytes, r5
-  addi nBytes, nBytes, 31
-  srwi nBytes, nBytes, 5
-  mtctr nBytes
-
-@1
-  dcbf r0, addr
-  addi addr, addr, 32
-  bdnz @1
-  sc
-  blr
+    nBytes += (u32)addr & 31;
+    nBytes = (nBytes + 31) >> 5;
+    do {
+        __dcbz(addr, 0);
+        addr = (u8*)addr + 32;
+    } while (--nBytes != 0);
 }
 
-asm void DCStoreRange(register void* addr, register u32 nBytes) {
-  nofralloc
-  cmplwi nBytes, 0
-  blelr
-  clrlwi r5, addr, 27
-  add nBytes, nBytes, r5
-  addi nBytes, nBytes, 31
-  srwi nBytes, nBytes, 5
-  mtctr nBytes
+void LCEnable()
+{
+    BOOL enabled;
 
-@1
-  dcbst r0, addr
-  addi addr, addr, 32
-  bdnz @1
-  sc
-
-  blr
+    enabled = OSDisableInterrupts();
+    __LCEnable();
+    OSRestoreInterrupts(enabled);
 }
-
-asm void DCFlushRangeNoSync(register void* addr, register u32 nBytes) {
-  nofralloc
-  cmplwi nBytes, 0
-  blelr
-  clrlwi r5, addr, 27
-  add nBytes, nBytes, r5
-  addi nBytes, nBytes, 31
-  srwi nBytes, nBytes, 5
-  mtctr nBytes
-
-@1
-  dcbf r0, addr
-  addi addr, addr, 32
-  bdnz @1
-  blr
-}
-
-asm void DCStoreRangeNoSync(register void* addr, register u32 nBytes) {
-  nofralloc
-  cmplwi nBytes, 0
-  blelr
-  clrlwi r5, addr, 27
-  add nBytes, nBytes, r5
-  addi nBytes, nBytes, 31
-  srwi nBytes, nBytes, 5
-  mtctr nBytes
-
-@1
-  dcbst r0, addr
-  addi addr, addr, 32
-  bdnz @1
-
-  blr
-}
-
-asm void DCZeroRange(register void* addr, register u32 nBytes) {
-  nofralloc
-  cmplwi nBytes, 0
-  blelr
-  clrlwi r5, addr, 27
-  add nBytes, nBytes, r5
-  addi nBytes, nBytes, 31
-  srwi nBytes, nBytes, 5
-  mtctr nBytes
-
-@1
-  dcbz r0, addr
-  addi addr, addr, 32
-  bdnz @1
-
-  blr
-}
-
-
-asm void ICInvalidateRange(register void* addr, register u32 nBytes) {
-  nofralloc
-  cmplwi nBytes, 0
-  blelr
-  clrlwi r5, addr, 27
-  add nBytes, nBytes, r5
-  addi nBytes, nBytes, 31
-  srwi nBytes, nBytes, 5
-  mtctr nBytes
-
-@1
-  icbi r0, addr
-  addi addr, addr, 32
-  bdnz @1
-  sync
-  isync
-
-  blr
-}
-
-
-asm void ICFlashInvalidate() {
-  nofralloc
-  mfspr r3, HID0
-  ori r3, r3, 0x800
-  mtspr HID0, r3
-  blr
-}
-
-asm void ICEnable() {
-  nofralloc
-  isync
-  mfspr r3, HID0
-  ori r3, r3, 0x8000
-  mtspr HID0, r3
-  blr
-}
-
-#define LC_LINES    512
-#define CACHE_LINES 1024
-
-static asm void __LCEnable() {
-  nofralloc
-  mfmsr   r5
-  ori     r5, r5, 0x1000
-  mtmsr   r5
-
-  lis     r3, OS_CACHED_REGION_PREFIX
-  li      r4, CACHE_LINES
-  mtctr   r4
-_touchloop:
-  dcbt    0,r3
-  dcbst   0,r3
-  addi    r3,r3,32
-  bdnz    _touchloop
-  mfspr   r4, HID2
-  oris    r4, r4, 0x100F
-  mtspr   HID2, r4
-
-  nop 
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-  lis     r3, LC_BASE_PREFIX
-  ori     r3, r3, 0x0002
-  mtspr   DBAT3L, r3
-  ori     r3, r3, 0x01fe
-  mtspr   DBAT3U, r3
-  isync
-  lis     r3, LC_BASE_PREFIX
-  li      r6, LC_LINES
-  mtctr   r6
-  li      r6, 0
-
-_lockloop:
-  dcbz_l  r6, r3
-  addi    r3, r3, 32
-  bdnz+    _lockloop
-
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-  nop
-
-  blr
-}
-
-void LCEnable() {
-  BOOL enabled;
-
-  enabled = OSDisableInterrupts();
-  __LCEnable();
-  OSRestoreInterrupts(enabled);
-}
-
-
-asm void LCDisable() {
-  nofralloc
-  lis     r3, LC_BASE_PREFIX
-  li      r4, LC_LINES
-  mtctr r4
-@1
-  dcbi r0, r3
-  addi r3, r3, 32
-  bdnz @1
-  mfspr r4, HID2
-  rlwinm r4, r4, 0, 4, 2
-  mtspr HID2, r4
-  blr
-}
-
-
-asm void LCStoreBlocks(register void* destAddr, register void* srcTag, register u32 numBlocks) {
-  nofralloc
-  rlwinm  r6, numBlocks, 30, 27, 31
-  rlwinm  destAddr, destAddr, 0, 4, 31
-  or      r6, r6, destAddr
-  mtspr   DMA_U, r6
-  rlwinm  r6, numBlocks, 2, 28, 29
-  or      r6, r6, srcTag
-  ori     r6, r6, 0x2
-  mtspr   DMA_L, r6
-  blr
-}
-
-/* clang-format on */
 
 u32 LCStoreData(void *destAddr, void *srcAddr, u32 nBytes)
 {
@@ -290,17 +76,6 @@ u32 LCStoreData(void *destAddr, void *srcAddr, u32 nBytes)
     return numTransactions;
 }
 
-/* clang-format off */
-asm void LCQueueWait(register u32 len) {
-  nofralloc
-  mfspr r4, HID2
-  rlwinm r4, r4, 8, 28, 31
-  cmpw r4, len
-  bgt LCQueueWait
-  blr
-}
-
-/* clang-format on */
 static inline void L2Disable(void)
 {
     __sync();
@@ -368,7 +143,6 @@ void DMAErrorHandler(OSError error, OSContext *context, ...)
         OSReport("\t- DMA queue overflowed\n");
     }
 
-    // write hid2 back to clear the error bits
     PPCMthid2(hid2);
 }
 

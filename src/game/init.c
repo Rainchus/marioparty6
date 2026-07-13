@@ -1,4 +1,5 @@
 #include "game/init.h"
+#include "dolphin/os/OSFastCast.h"
 #include "game/fault.h"
 #include "dolphin/os.h"
 #include "dolphin/gx.h"

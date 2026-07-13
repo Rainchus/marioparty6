@@ -3,6 +3,7 @@
 double sin(double x);
 double cos(double x);
 #include "game/hu3d.h"
+#include "dolphin/os/OSFastCast.h"
 #include "game/sprite.h"
 #include "game/init.h"
 #include "game/main.h"

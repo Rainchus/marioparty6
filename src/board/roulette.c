@@ -1,4 +1,5 @@
 #include "game/board/roulette.h"
+#include "dolphin/os/OSFastCast.h"
 #include "game/board/audio.h"
 #include "game/board/player.h"
 #include "game/board/status.h"

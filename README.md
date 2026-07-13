@@ -1,6 +1,9 @@
 decomp-toolkit Project Template
 ===============================
 
+See [STATUS.md](STATUS.md) for the current Mario Party 6 recovery and fallback
+ownership snapshot.
+
 If starting a new GameCube / Wii decompilation project, this repository can be used as a scaffold.
 
 See [decomp-toolkit](https://github.com/encounter/decomp-toolkit) for background on the concept and more information on the tooling used.

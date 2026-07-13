@@ -1,4 +1,5 @@
 #include "game/board/effect.h"
+#include "dolphin/os/OSFastCast.h"
 #include "game/board/main.h"
 #include "game/board/model.h"
 #include "game/frand.h"
