@@ -1399,23 +1399,16 @@ static void OpeningCameraSet(HuVecF *rotDeg, HuVecF *target, float distance)
         tgt.y,
         tgt.z);
 }
-/* The split target carves each 4-byte filter color into a 1-byte + 3-byte
- * .rodata object (only the base address is relocated; the +1..+3 byte loads
- * are plain displacements the analyzer couldn't attribute). Mirror that shape
- * with adjacent named consts and copy-init the locals from the base address
- * so every (symbol, addend) pair matches the split objects. */
-const u8 lbl_1_rodata_280 = 0x9a;
-const u8 lbl_1_rodata_281[3] = { 0x70, 0x56, 0xff };
-const u8 lbl_1_rodata_284 = 0xa6;
-const u8 lbl_1_rodata_285[3] = { 0xa6, 0xa6, 0xff };
+const GXColor lbl_1_rodata_280 = { 0x9a, 0x70, 0x56, 0xff };
+const GXColor lbl_1_rodata_284 = { 0xa6, 0xa6, 0xa6, 0xff };
 
 static void FilterDraw(float alpha)
 {
     Mtx44 proj;
     Mtx modelview;
     GXTexObj texObj;
-    GXColor color1 = *(const GXColor *)&lbl_1_rodata_280;
-    GXColor color2 = *(const GXColor *)&lbl_1_rodata_284;
+    GXColor color1 = lbl_1_rodata_280;
+    GXColor color2 = lbl_1_rodata_284;
 
     C_MTXOrtho(proj, 0.0f, 480.f, 0.0f, 640.f, 0.0f, 8000.f);
     GXSetProjection(proj, GX_ORTHOGRAPHIC);
@@ -1545,4 +1538,3 @@ HuVecF BookDefRot = { -20.0f, -30.0f, 30.0f };
 char lbl_1_data_8988[0xE] = "op_book_dummy";
 char lbl_1_data_8996[0xF] = "op_book_dummy2";
 char lbl_1_data_89A5[0x14] = "op_stage004-bg_root";
-
