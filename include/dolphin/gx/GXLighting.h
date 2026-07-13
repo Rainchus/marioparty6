@@ -19,11 +19,11 @@ void GXInitLightDistAttn(GXLightObj* lt_obj, f32 ref_distance, f32 ref_brightnes
                          GXDistAttnFn dist_func);
 void GXInitLightPos(GXLightObj* lt_obj, f32 x, f32 y, f32 z);
 void GXInitLightDir(GXLightObj* lt_obj, f32 nx, f32 ny, f32 nz);
+void GXInitSpecularDir(GXLightObj* lt_obj, f32 nx, f32 ny, f32 nz);
 void GXInitLightColor(GXLightObj* lt_obj, GXColor color);
 void GXInitLightAttn(GXLightObj* lt_obj, f32 a0, f32 a1, f32 a2, f32 k0, f32 k1, f32 k2);
 void GXInitLightAttnA(GXLightObj* lt_obj, f32 a0, f32 a1, f32 a2);
-void GXInitLightAttnK(GXLightObj* lt_obj, f32 k0, f32 k1, f32 k2);
-void GXLoadLightObjImm(GXLightObj* lt_obj, GXLightID light);
+void GXLoadLightObjImm(const GXLightObj* lt_obj, GXLightID light);
 
 #ifdef __cplusplus
 }

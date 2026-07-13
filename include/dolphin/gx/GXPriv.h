@@ -29,20 +29,12 @@
 #endif
 
 typedef struct GXLightObjInt {
-  u32 padding[3];
+  u32 reserved[3];
   u32 color;
-  float a0;
-  float a1;
-  float a2;
-  float k0;
-  float k1;
-  float k2;
-  float px;
-  float py;
-  float pz;
-  float nx;
-  float ny;
-  float nz;
+  f32 a[3];
+  f32 k[3];
+  f32 lpos[3];
+  f32 ldir[3];
 } GXLightObjInt;
 
 #define XF_LIGHT_BASE 0x0600

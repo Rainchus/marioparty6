@@ -2028,7 +2028,7 @@ static void lightSet(HU3D_LIGHT *lightP, s16 lightBit, Mtx cameraMtx, Mtx camera
             break;
             
         case HU3D_LIGHT_TYPE_INFINITYT:
-            GXInitLightAttnK(&lightObj, 1, 0, 0);
+            GXInitLightAttnA(&lightObj, 1, 0, 0);
             GXInitLightDistAttn(&lightObj, 0, 1, GX_DA_OFF);
             HuScaleVecF(&lightP->dir, &lightP->pos, -1000000.0f);
             break;

@@ -495,7 +495,7 @@ config.libs = [
             Object(NonMatching, "dolphin/gx/GXMisc.c"),
             Object(Matching, "dolphin/gx/GXGeometry.c"),
             Object(Matching, "dolphin/gx/GXFrameBuf.c"),
-            Object(NonMatching, "dolphin/gx/GXLight.c"),
+            Object(NonMatching, "dolphin/gx/GXLight.c", extra_cflags=["-fp_contract off"]),
             Object(NonMatching, "dolphin/gx/GXTexture.c"),
             Object(NonMatching, "dolphin/gx/GXBump.c"),
             Object(NonMatching, "dolphin/gx/GXTev.c"),
