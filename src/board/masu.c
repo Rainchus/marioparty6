@@ -879,6 +879,62 @@ int mbMasuMAttrMatchTblGet(u32 attr, u32 mask, s16 *list)
     return num;
 }
 
+int mbMasuFind_TypeListGet(s16 id, s16 type, s16 *list)
+{
+    return mbMasuFind_TypeListGet2(id, type, FALSE, TRUE, list);
+}
+
+int mbMasuFind_TypeListGet2(s16 id, s16 type, BOOL hookF, BOOL dispF,
+    s16 *list)
+{
+    MasuFind(id, MasuTypeCheck, type, 0, hookF, dispF);
+    memcpy(list, masuFindResult, masuFindResultNum * sizeof(s16));
+    return masuFindResultNum;
+}
+
+int mbMasuFind_AttrNumGet(s16 id, u16 attr, u32 unused)
+{
+    return mbMasuFind_AttrMatchNumGet2(id, attr, attr, FALSE, TRUE, unused);
+}
+
+int mbMasuFind_AttrMatchNumGet(s16 id, u16 arg1, u16 arg2, u32 unused)
+{
+    return mbMasuFind_AttrMatchNumGet2(id, arg1, arg2, FALSE, TRUE, unused);
+}
+
+int mbMasuFind_AttrMatchNumGet2(s16 id, u16 arg1, u16 arg2, BOOL hookF,
+    BOOL dispF, u32 unused)
+{
+    MasuFind(id, MasuAttrMatchCheck, arg1, arg2, hookF, dispF);
+    return masuFindResultNum;
+}
+
+int mbMasuFind_MAttrMatchListGet(s16 id, u32 arg1, u32 arg2, s16 *list)
+{
+    return mbMasuFind_MAttrMatchListGet2(id, arg1, arg2, FALSE, TRUE, list);
+}
+
+int mbMasuFind_MAttrMatchListGet2(s16 id, u32 arg1, u32 arg2, BOOL hookF,
+    BOOL dispF, s16 *list)
+{
+    MasuFind(id, MasuMAttrMatchCheck, arg1, arg2, hookF, dispF);
+    memcpy(list, masuFindResult, masuFindResultNum * sizeof(s16));
+    return masuFindResultNum;
+}
+
+int mbMasuFind_IdListGet(s16 id, s16 targetId, s16 *list)
+{
+    return mbMasuFind_IdListGet2(id, targetId, FALSE, TRUE, list);
+}
+
+int mbMasuFind_IdListGet2(s16 id, s16 targetId, BOOL hookF, BOOL dispF,
+    s16 *list)
+{
+    MasuFind(id, MasuIdCheck, targetId, 0, hookF, dispF);
+    memcpy(list, masuFindResult, masuFindResultNum * sizeof(s16));
+    return masuFindResultNum;
+}
+
 void mbev_MasuMoveEndSet(MASUEVENTHOOK hook)
 {
     masuev_MasuEnd = hook;

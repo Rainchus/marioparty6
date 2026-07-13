@@ -105,6 +105,19 @@ s16 mbMasuFind_MAttrIdGet(s16 id, u32 attr);
 s16 mbMasuFind_MAttrMatchIdGet(s16 id, u32 arg1, u32 arg2);
 s16 mbMasuFind_MAttrMatchIdGet2(s16 id, u32 arg1, u32 arg2, BOOL hookF,
     BOOL dispF);
+int mbMasuFind_TypeListGet(s16 id, s16 type, s16 *list);
+int mbMasuFind_TypeListGet2(s16 id, s16 type, BOOL hookF, BOOL dispF,
+    s16 *list);
+int mbMasuFind_AttrNumGet(s16 id, u16 attr, u32 unused);
+int mbMasuFind_AttrMatchNumGet(s16 id, u16 arg1, u16 arg2, u32 unused);
+int mbMasuFind_AttrMatchNumGet2(s16 id, u16 arg1, u16 arg2, BOOL hookF,
+    BOOL dispF, u32 unused);
+int mbMasuFind_MAttrMatchListGet(s16 id, u32 arg1, u32 arg2, s16 *list);
+int mbMasuFind_MAttrMatchListGet2(s16 id, u32 arg1, u32 arg2, BOOL hookF,
+    BOOL dispF, s16 *list);
+int mbMasuFind_IdListGet(s16 id, s16 targetId, s16 *list);
+int mbMasuFind_IdListGet2(s16 id, s16 targetId, BOOL hookF, BOOL dispF,
+    s16 *list);
 void mbev_MasuMoveEndSet(MASUEVENTHOOK hook);
 void mbev_MasuMoveStartSet(MASUEVENTHOOK hook);
 void mbev_MasuHatenaSet(MASUEVENTHOOK hook);
