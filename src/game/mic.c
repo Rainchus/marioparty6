@@ -93,10 +93,6 @@ typedef struct MCLanguageData_s {
     char *file[6];
 } MCLanguageData_s;
 
-typedef struct MCLngFileTbl_s {
-    char *file[6];
-} MCLngFileTbl_s;
-
 typedef struct MCResponseEntry_s {
     u32 value0;
     u32 value1;
@@ -160,10 +156,9 @@ static OSAlarm MCThreadAlarm;
 static u8 MCUnkResponseData[0x60];
 static MCSelWinWork_s MCSelWinWork;
 static u8 MCCurResponse[0x60];
-static u32 PlayerSession[4];
+static u32 ATTRIBUTE_ALIGN(32) PlayerSession[4];
 static OSMessageQueue MCMessageQueue;
 static OSThread MCThread;
-static u8 pad_08_802870A8_bss[0x18];
 
 static u32 gap_10_802C0564_sbss;
 static u8 *MCThreadStack;
@@ -287,20 +282,17 @@ void HuMCSysInit(void)
 
 /* 80091918 HuMCInit */
 
-s32 HuMCInit(s16 mountResult)
+s32 HuMCInit(s32 mountResult)
 {
   s32 apiResult;
   s16 i;
-  s32 result;
   s32 rawLanguage;
+  s16 language;
   s32 heapCheck;
 
-  mountResult;
-  (void)mountResult;
-  (void)rawLanguage;
-  result = 0;
+  mountResult = 0;
   if (MCResponseBuf != 0) {
-    return;
+    return mountResult;
   }
   MCWrongDeviceF = 0;
   if (MCMicValue != -1) {
@@ -345,7 +337,7 @@ s32 HuMCInit(s16 mountResult)
     return -128;
   }
 
-  result = HuMCMount(1);
+  mountResult = HuMCMount(1);
   M2SSetPrerecordSamples(100);
   M2SSetMode(3);
   MICStart(1);
@@ -355,8 +347,8 @@ s32 HuMCInit(s16 mountResult)
     return -128;
   }
   rawLanguage = GwCommon.languageNo;
-  mountResult = rawLanguage;
-  LanguageNo = mountResult;
+  language = rawLanguage;
+  LanguageNo = language;
   if ((LngData = MCDVDRead(LngFileTbl[LanguageNo])) == 0) {
     OSReport("Mic Error: Read Language Failue\n");
     gsapi_Close();
@@ -406,7 +398,7 @@ s32 HuMCInit(s16 mountResult)
   MCAnswerProc = HuPrcCreate(MCAnswerMain,65000,0x4000,0);
   HuPrcSetStat(MCAnswerProc,0xc);
   MCMicValue = -1;
-  return result;
+  return mountResult;
 }
 
 
@@ -890,59 +882,6 @@ inline s32 HuMCMount(s32 chan)
 }
 
 
-static inline s32 MCMountSub(s32 chan)
-{
-  volatile s32 probeResult;
-  volatile OSTick start;
-  volatile s32 probeResult2;
-  s32 result;
-  s32 idResult;
-  s32 deviceId;
-  s32 activeResult;
-
-  M2SClose();
-  MicOpenF = 1;
-  MCWrongDeviceF = 0;
-  start = OSGetTick();
-  while (OSTicksToMilliseconds(OSGetTick() - start) < 500) {
-    if (((s32)(probeResult = MICProbeEx(chan))) != -1) {
-      break;
-    }
-  }
-  probeResult2 = probeResult;
-  if ((result = (s32)probeResult2) != 0) {
-    return result;
-  }
-  if ((result = MICMount(chan, MicBuffer, 0x3000, MCExtHandler)) != 0) {
-    if (result != -4) {
-      return result;
-    }
-    result = 0;
-  }
-  idResult = MICGetDeviceID(chan, &deviceId);
-  if (idResult != 0) {
-    return idResult;
-  }
-  if (deviceId != 0) {
-    MCWrongDeviceF = 1;
-    return -2;
-  }
-  if ((activeResult = M2SSetActiveChannel(chan)) == 0) {
-    OSReport(lbl_8023ABA0, activeResult);
-    return -0x80;
-  }
-  MICSetGain(chan, 0);
-  if (M2SSetShifts(M2SShift) == 0) {
-    OSReport(lbl_8023ABC5);
-  }
-  MicOpenF = 0;
-  MICStart(1);
-  M2SOpen();
-  return result;
-}
-
-
-
 /* 80092c34 MCExtHandler */
 
 void MCExtHandler(void)
@@ -1348,24 +1287,15 @@ void HuMCSelWinContextSet(s16 param_1,MCResponseCallback param_2,u8 param_3)
 
 void HuMCSelWinContextKill(void)
 {
-  s16 response;
-
   MicWriteResponse(-1,0,NULL,0,-1);
   if (HuMCSelWinCheck()) {
     HuMCSelModeSet(2);
-    (void)(MCResponseBuf + MCResponseLastNo * 0x60 + 4);
   }
   else {
     if ((HuMCMicSaveGet() == 1) && (MCStat == 1) && (MicOpenF == 0)) {
       OSSendMessage(&MCMessageQueue,(OSMessage)2,1);
       OSSleepThread(&MCThreadQueue);
       MCStat = 0;
-      if (MCResponseNo != 0) {
-        response = *(s16 *)(MCResponseBuf + MCResponseLastNo * 0x60);
-        if ((response == 0) && (MCResponseNo != MCResponseLastNo)) {
-          (void)(MCResponseBuf + MCResponseLastNo * 0x60 + 4);
-        }
-      }
     }
   }
   if (MCListenerProc) {
@@ -1551,13 +1481,11 @@ void HuMCListenerCreate(s16 param_1,MCResponseCallback param_2,u8 param_3)
 void HuMCListenerKill(void)
 
 {
-  s16 response;
   s32 mic;
 
   MicWriteResponse(-1,0,0,0,-1);
-  if (MCSelWinWork.winId == -1 ? FALSE : TRUE) {
+  if (HuMCSelWinCheck()) {
     HuMCSelModeSet(2);
-    (void)(MCResponseBuf + MCResponseLastNo * 0x60 + 4);
   }
   else {
     mic = GwCommon.mic;
@@ -1565,11 +1493,7 @@ void HuMCListenerKill(void)
       MCContextCallback = 0;
       OSSendMessage(&MCMessageQueue,(OSMessage)2,1);
       OSSleepThread(&MCThreadQueue);
-      response = *(s16 *)(MCResponseBuf + MCResponseLastNo * 0x60);
       MCStat = 0;
-      if (response == 0) {
-        (void)(MCResponseNo == MCResponseLastNo);
-      }
     }
   }
   if (HuMCSelWinCheck()) {
@@ -1647,7 +1571,6 @@ static void MCAnswerMain(void)
   s16 oldResponseNo;
   MCResponseCallback callback;
 
-  (void)oldResponseNo;
   ValidResultF = 0;
   for (;;) {
     do {
@@ -1661,7 +1584,7 @@ static void MCAnswerMain(void)
 
         mountResult = -3;
         while ((WipeCheckIn() != 0) || (Hu3DPauseF != 0)) {
-          mountResult = MCMountSub(1);
+          mountResult = HuMCMount(1);
           if (mountResult == 0) {
             break;
           }
@@ -1672,7 +1595,7 @@ static void MCAnswerMain(void)
         }
         OSReport(s_Mount_OK__8023ac18);
       } else {
-        while (MCMountSub(1) != 0) {
+        while (HuMCMount(1) != 0) {
           HuPrcVSleep();
         }
       }
@@ -1951,11 +1874,11 @@ void HuMCSessionExportReset(void)
 
 static void MCDeviceMesExec(void)
 {
-  char paused;
   u8 pauseEnable;
   s32 pad;
   ANIMDATA *anim;
   void *fileData;
+  char paused;
   HUSPR_GROUPID group;
   HUSPRID sprite;
   HUWINID window;
@@ -2012,7 +1935,7 @@ static void MCDeviceMesExec(void)
       }
       HuPrcVSleep();
     }
-    result = MCMountSub(1);
+    result = HuMCMount(1);
   }
 
   HuWinWarningClose(window);
