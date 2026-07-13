@@ -49,7 +49,7 @@ static MBWINSIZEDATA winSizeTbl[MBWIN_TYPE_MAX] = {
 
 static void KeyWaitInit(MBWIN *winP);
 static void KeyWaitSet(MBWIN *winP, int keyWaitNum);
-static void mbWinCenterSet(s16 winNo);
+static void mbWinCenterSet(int winNo);
 
 void mbWinInit(void)
 {
@@ -90,14 +90,14 @@ static void mbWinProc(void)
     pos.x = winP->pos.x + winP->centerOfs.x;
     pos.y = winP->pos.y + winP->centerOfs.y;
     switch (winP->type) {
-        case MBWIN_TYPE_CAPSULE:
-            winP->winId = HuWinCreate(pos.x, pos.y, winP->size.x, winP->size.y, winP->frame);
-            HuWinMesSpeedSet(winP->winId, 0);
-            break;
-
         case MBWIN_TYPE_HELP:
             winP->winId = HuWinCreate(pos.x, pos.y, winP->size.x, winP->size.y, 0);
             HuWinBGTPLvlSet(winP->winId, 0.0f);
+            HuWinMesSpeedSet(winP->winId, 0);
+            break;
+
+        case MBWIN_TYPE_CAPSULE:
+            winP->winId = HuWinCreate(pos.x, pos.y, winP->size.x, winP->size.y, winP->frame);
             HuWinMesSpeedSet(winP->winId, 0);
             break;
 
@@ -213,7 +213,7 @@ static void mbWinDestroy(void)
     mbWinNum--;
 }
 
-static void mbWinCenterSet(s16 winNo)
+static void mbWinCenterSet(int winNo)
 {
     MBWIN *winP = &mbWinData[winNo];
     HuVec2f size;
@@ -266,7 +266,7 @@ int mbWinCreate(int type, u32 mess, int speakerNo)
     winP->prio = -1;
     winP->type = type;
     winP->speakerNo = speakerNo;
-    winP->choiceF = winP->pauseF = FALSE;
+    winP->pauseF = winP->choiceF = FALSE;
     winP->choiceNo = HUWIN_CHOICE_NONE;
     winP->scale.x = winP->scale.y = 1.0f;
     winP->comKeyHook = NULL;
@@ -286,7 +286,7 @@ int mbWinCreate(int type, u32 mess, int speakerNo)
         winP->size.x = winSizeTbl[winP->type].sizeX * 24;
         winP->size.y = winSizeTbl[winP->type].sizeY * 32;
     } else {
-        winP->pos.x = HU_DISP_CENTERX - ((size.x * 0.5f) - 16.0f);
+        winP->pos.x = HU_DISP_CENTERX - ((size.x / 2) - 16.0f);
         winP->pos.y = 304.0f;
         winP->size = size;
     }
@@ -839,8 +839,8 @@ void mbWinCenterGet(s16 winNo, HuVec2f *pos)
     if (winP->size.y > size.y) {
         size.y = winP->size.y;
     }
-    pos->x = HU_DISP_CENTERX - (size.x * 0.5f);
-    pos->y = HU_DISP_CENTERY - (size.y * 0.5f);
+    pos->x = HU_DISP_CENTERX - (size.x / 2);
+    pos->y = HU_DISP_CENTERY - (size.y / 2);
 }
 
 void mbWinCenterInsertGet(s16 winNo, u32 mess)
