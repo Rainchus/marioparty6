@@ -16,156 +16,89 @@ void C_QUATAdd(const Quaternion *p, const Quaternion *q, Qtrn *r)
     r->w = p->w + q->w;
 }
 
-void PSQUATAdd(register const Quaternion *p, register const Quaternion *q, register Quaternion *r)
+void PSQUATAdd(const Quaternion *p, const Quaternion *q, Quaternion *r)
 {
-    asm {
-      psq_l f0, 0x0(r3), 0, 0
-      psq_l f1, 0x0(r4), 0, 0
-      ps_add f0, f0, f1
-      psq_st f0, 0x0(r5), 0, 0
-      psq_l f0, 0x8(r3), 0, 0
-      psq_l f1, 0x8(r4), 0, 0
-      ps_add f0, f0, f1
-      psq_st f0, 0x8(r5), 0, 0
+    r->x = p->x + q->x;
+    r->y = p->y + q->y;
+    r->z = p->z + q->z;
+    r->w = p->w + q->w;
+}
+
+void PSQUATSubtract(const Quaternion *p, const Quaternion *q, Quaternion *r)
+{
+    r->x = p->x - q->x;
+    r->y = p->y - q->y;
+    r->z = p->z - q->z;
+    r->w = p->w - q->w;
+}
+
+void PSQUATMultiply(const Quaternion *p, const Quaternion *q, Quaternion *pq)
+{
+    Quaternion *r;
+    Quaternion pqTmp;
+
+    if (p == pq || q == pq) {
+        r = &pqTmp;
+    }
+    else {
+        r = pq;
+    }
+
+    r->w = (p->w * q->w) - (p->x * q->x) - (p->y * q->y) - (p->z * q->z);
+    r->x = (p->w * q->x) + (p->x * q->w) + (p->y * q->z) - (p->z * q->y);
+    r->y = (p->w * q->y) + (p->y * q->w) + (p->z * q->x) - (p->x * q->z);
+    r->z = (p->w * q->z) + (p->z * q->w) + (p->x * q->y) - (p->y * q->x);
+
+    if (r == &pqTmp) {
+        *pq = pqTmp;
     }
 }
 
-void PSQUATSubtract(register const Quaternion *p, register const Quaternion *q, register Quaternion *r)
+void PSQUATScale(const Quaternion *src, Quaternion *dst, f32 scale)
 {
-    asm {
-      psq_l f0, 0x0(r3), 0, 0
-      psq_l f1, 0x0(r4), 0, 0
-      ps_sub f0, f0, f1
-      psq_st f0, 0x0(r5), 0, 0
-      psq_l f0, 0x8(r3), 0, 0
-      psq_l f1, 0x8(r4), 0, 0
-      ps_sub f0, f0, f1
-      psq_st f0, 0x8(r5), 0, 0
+    dst->x = src->x * scale;
+    dst->y = src->y * scale;
+    dst->z = src->z * scale;
+    dst->w = src->w * scale;
+}
+
+f32 PSQUATDotProduct(const Quaternion *p, const Quaternion *q)
+{
+    return (q->x * p->x) + (q->y * p->y) + (q->z * p->z) + (q->w * p->w);
+}
+
+void PSQUATNormalize(const Quaternion *src, Quaternion *unit)
+{
+    f32 mag;
+
+    mag = (src->x * src->x) + (src->y * src->y) + (src->z * src->z) + (src->w * src->w);
+    if (mag >= 0.00001f) {
+        mag = 1.0f / sqrtf(mag);
+        unit->x = src->x * mag;
+        unit->y = src->y * mag;
+        unit->z = src->z * mag;
+        unit->w = src->w * mag;
+    }
+    else {
+        unit->x = unit->y = unit->z = unit->w = 0.0f;
     }
 }
 
-void PSQUATMultiply(register const Quaternion *a, register const Quaternion *b, register Quaternion *ab)
+void PSQUATInverse(const Quaternion *src, Quaternion *inv)
 {
-    asm {
-        psq_l f0, 0(a), 0, 0
-        psq_l f1, 8(a), 0, 0
-        psq_l f2, 0(b), 0, 0
-        ps_neg f5, f0
-        psq_l f3, 8(b), 0, 0
-        ps_neg f6, f1
-        ps_merge01 f4, f5, f0
-        ps_muls0 f7, f1, f2
-        ps_muls0 f5, f5, f2
-        ps_merge01 f1, f6, f1
-        ps_muls1 f8, f4, f2
-        ps_madds0 f7, f4, f3, f7
-        ps_muls1 f2, f1, f2
-        ps_madds0 f5, f1, f3, f5
-        ps_madds1 f8, f6, f3, f8
-        ps_merge10 f7, f7, f7
-        ps_madds1 f2, f0, f3, f2
-        ps_merge10 f5, f5, f5
-        ps_add f7, f7, f2
-        psq_st f7, 0(ab), 0, 0
-        ps_sub f5, f5, f8
-        psq_st f5, 8(ab), 0, 0
-    }
-}
+    f32 mag;
+    f32 norminv;
 
-void PSQUATScale(register const Quaternion *src, register Quaternion *dst, register f32 scale)
-{
-    asm {
-        psq_l f0, 0(r3), 0, 0
-        psq_l f2, 8(r3), 0, 0
-        ps_muls0 f0, f0, f1
-        psq_st f0, 0(r4), 0, 0
-        ps_muls0 f2, f2, f1
-        psq_st f2, 8(r4), 0, 0
+    mag = (src->x * src->x) + (src->y * src->y) + (src->z * src->z) + (src->w * src->w);
+    if (mag == 0.0f) {
+        mag = 1.0f;
     }
-}
 
-f32 PSQUATDotProduct(register const Quaternion *p, register const Quaternion *q)
-{
-    asm {
-        psq_l f0, 0(r3), 0, 0
-        psq_l f1, 0(r4), 0, 0
-        ps_mul f1, f0, f1
-        psq_l f0, 8(r3), 0, 0
-        psq_l f2, 8(r4), 0, 0
-        ps_madd f1, f0, f2, f1
-        ps_sum0 f1, f1, f1, f1
-    }
-}
-
-void PSQUATNormalize(const register Quaternion *src, register Quaternion *unit)
-{
-    // sdata2
-    (void)0.00001f;
-    (void)0.0f;
-    (void)0.5;
-    (void)3.0;
-    (void)1.0f;
-    (void)0.5f;
-    (void)3.0f;
-    {
-        register f32 vv1, vv2, vv3;
-        register f32 vv4, vv5, vv6;
-        register f32 vv7, vv8;
-        register f32 vv9 = 0.00001f;
-        register f32 vvA = 0.5F;
-        register f32 vvB = 3.0F;
-        asm
-        {
-            psq_l    vv1, 0(src), 0, 0;
-            ps_mul   vv3, vv1, vv1;
-            psq_l    vv2, 8(src), 0, 0;
-            ps_sub   vv6, vv9, vv9;
-            ps_madd  vv3, vv2, vv2, vv3;
-            ps_sum0  vv3, vv3, vv3, vv3;
-            frsqrte  vv4, vv3;
-            ps_sub   vv5, vv3, vv9;
-            fmul     vv7, vv4, vv4;
-            fmul     vv8, vv4, vvA;
-            fnmsub   vv7, vv7, vv3, vvB;
-            fmul     vv4, vv7, vv8;
-            ps_sel   vv4, vv5, vv4, vv6;
-            ps_muls0 vv1, vv1, vv4;
-            ps_muls0 vv2, vv2, vv4;
-            psq_st   vv1, 0(unit), 0, 0;
-            psq_st   vv2, 8(unit), 0, 0;
-        }
-    }
-}
-
-void PSQUATInverse(const register Quaternion *src, register Quaternion *inv)
-{
-    register f32 vv1, vv2, vv3, vv4;
-    register f32 vv5, vv6, vv8;
-    register f32 vvC = 1.0F;
-    register f32 vvA;
-    asm {
-        psq_l       vv1, 0(src), 0, 0;
-        ps_mul      vv5, vv1, vv1;
-        ps_sub      vv6, vvC, vvC;
-        psq_l       vv2, 8(src), 0, 0;
-        ps_madd     vv5, vv2, vv2, vv5;
-        ps_add      vvA, vvC, vvC;
-        ps_sum0     vv5, vv5, vv5, vv5;
-        fcmpu       cr0, vv5, vv6;
-        beq         loc1;
-        fres        vvC, vv5;
-        ps_neg      vv6, vv5;
-        ps_nmsub    vv5, vv5, vvC, vvA;
-        ps_mul      vvC, vvC, vv5;
-    loc1:
-        ps_neg      vv8, vvC;
-        ps_muls1    vv4, vvC, vv2;
-        ps_muls0    vv1, vv1, vv8;
-        psq_st      vv4, 12(inv), 1, 0;
-        ps_muls0    vv3, vv2, vv8;
-        psq_st      vv1, 0(inv), 0, 0;
-        psq_st      vv3, 8(inv), 1, 0;
-    }
+    norminv = 1.0f / mag;
+    inv->x = -src->x * norminv;
+    inv->y = -src->y * norminv;
+    inv->z = -src->z * norminv;
+    inv->w = src->w * norminv;
 }
 
 void C_QUATRotAxisRad(Quaternion *q, const Vec *axis, f32 rad)

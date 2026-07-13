@@ -83,15 +83,6 @@ extern inline float fabsf(float x)
    return fabs(x);
 }
 
-_MATH_INLINE float fabsf2(register float x)
-{
-    register float outF;
-	// clang-format off
-    asm {
-        fabs outF, x
-    }
-    return outF;
-}
 _MATH_INLINE float sinf(float x) { return (float)sin((double)x); }
 _MATH_INLINE float cosf(float x) { return (float)cos((double)x); }
 _MATH_INLINE float atan2f(float y, float x) { return (float)atan2((double)y, (double)x); }
