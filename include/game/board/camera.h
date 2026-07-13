@@ -1,6 +1,7 @@
 #ifndef _BOARD_CAMERA_H
 #define _BOARD_CAMERA_H
 
+#include "game/board/object.h"
 #include "game/hu3d.h"
 
 #define MB_CAMERA_FOCUS_MAX 8
@@ -17,8 +18,6 @@
 #define MB_CAMERA_FOCUS_POS 0
 #define MB_CAMERA_FOCUS_OBJ 1
 #define MB_CAMERA_FOCUS_MASU 2
-
-typedef s16 MBMODELID;
 
 typedef struct mbCamera_s MBCAMERA;
 

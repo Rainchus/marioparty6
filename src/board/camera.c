@@ -41,7 +41,6 @@ typedef struct listenerParamEntry_s {
 } LISTENERPARAMENTRY;
 
 BOOL mbPauseEnableCheck(void);
-void mbObjPosGet(MBMODELID modelId, HuVecF *pos);
 void mbMasuPosGet(s16 masuId, HuVecF *pos);
 void mbPlayerPosGet(s16 playerNo, HuVecF *pos);
 MBMODELID mbPlayerObjIDGet(int playerNo);
