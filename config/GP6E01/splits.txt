@@ -787,6 +787,11 @@ dolphin/thp/THPDec.c:
 dolphin/thp/THPAudio.c:
 	.text       start:0x800CA334 end:0x800CA864
 
+Runtime.PPCEABI.H/global_destructor_chain.c:
+	.text       start:0x800ED910 end:0x800ED970
+	.dtors      start:0x80216040 end:0x80216044
+	.sbss       start:0x802C0C50 end:0x802C0C58
+
 Runtime.PPCEABI.H/runtime.c:
 	.text       start:0x800EE178 end:0x800EE854
 	.rodata     start:0x802166E8 end:0x80216700
