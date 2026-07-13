@@ -43,6 +43,8 @@ typedef struct DVDDiskID {
   u8 padding[22];      // 0's are stored
 } DVDDiskID;
 
+BOOL DVDCompareDiskID(DVDDiskID* id1, DVDDiskID* id2);
+
 typedef struct DVDCommandBlock DVDCommandBlock;
 
 typedef void (*DVDCBCallback)(s32 result, DVDCommandBlock* block);
