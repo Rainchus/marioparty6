@@ -4,6 +4,11 @@
 #include "game/gamework.h"
 #include "humath.h"
 
+static inline int mbPlayerGrpGet(int playerNo)
+{
+    return GwPlayer[playerNo].team;
+}
+
 int mbPlayerBestPathGet(void);
 void mbPlayerPosGet(int playerNo, HuVecF *pos);
 void mbPlayerRotateStart(int playerNo, s16 endAngle, s16 maxTime);

@@ -12,6 +12,7 @@
 #endif
 
 extern OMOBJMAN *mbObjMan;
+extern HUPROCESS *mbMainProc;
 
 BOOL mbExitCheck(void);
 int mbBoardDataNumGet(int dataNum);

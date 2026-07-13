@@ -286,6 +286,11 @@ static inline void GWPartySet(BOOL flag)
     GwSystem.partyF = flag;
 }
 
+static inline BOOL GWTeamFGet(void)
+{
+    return GwSystem.tagF;
+}
+
 static inline GW_PLAYER_COM_DIF GWStoryComDifGet(void)
 {
     return GwSystem.storyComDif;
