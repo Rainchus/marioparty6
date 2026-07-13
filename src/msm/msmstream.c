@@ -255,12 +255,13 @@ static inline BOOL msmStreamIsPlay(MSM_STREAM_SLOT* slot) {
 void msmStreamStopAll(s32 speed)
 {
     MSM_STREAM_SLOT* slot;
+    u32 offset;
     s32 i;
 
     msmSysIrqDisable();
-    for (i = 0; i < StreamInfo.header.chanMax; i++) {
+    for (i = 0, offset = 0; i < StreamInfo.header.chanMax; offset += sizeof(*slot), i++) {
         if (i >= 0 && i < StreamInfo.header.chanMax) {
-            slot = &StreamInfo.slot[i];
+            slot = (MSM_STREAM_SLOT*) ((u32) StreamInfo.slot + offset);
             msmSysIrqDisable();
             msmStreamStopSub(i, speed);
             if (slot->slotL != -1) {
@@ -316,17 +317,25 @@ s32 msmStreamStop(int streamNo, s32 speed) {
 }
 
 int msmStreamPlay(int streamId, MSM_STREAMPARAM* streamParam) {
+    MSM_STREAM_PACK* pack;
+    s32 result;
+
     if (streamId < 0 || streamId >= StreamInfo.header.streamMax) {
         return MSM_ERR_INVALIDID;
     }
     if (StreamInfo.streamPackList[streamId] == 0) {
         return MSM_ERR_REMOVEDID;
     }
-    if (StreamInfo.streamPackFlag[StreamInfo.streamPackList[streamId] - StreamInfo.header.streamPackOfs] & MSM_STREAM_FLAG_STEREO) {
-        return msmStreamPackStartStereo(streamId, streamParam, 0);
+    pack = (MSM_STREAM_PACK*) (StreamInfo.streamPackFlag
+        + (StreamInfo.streamPackList[streamId] - StreamInfo.header.streamPackOfs));
+    msmSysIrqDisable();
+    if (pack->flag & MSM_STREAM_FLAG_STEREO) {
+        result = msmStreamPackStartStereo(streamId, streamParam, 0);
     } else {
-        return msmStreamPackStartMono(streamId, streamParam, 0);
+        result = msmStreamPackStartMono(streamId, streamParam, 0);
     }
+    msmSysIrqEnable();
+    return result;
 }
 
 void msmStreamPeriodicProc(void) {
