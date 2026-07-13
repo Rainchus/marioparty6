@@ -142,7 +142,7 @@ static inline void AudFXObjPauseSet(int seNo, BOOL pauseF)
     }
 }
 
-static inline int AudFXPlay(int seId, int type, s8 pan, Vec *pos)
+static inline int AudFXPlay(int seId, int type, int pan, Vec *pos)
 {
     int seNo = MSM_SENO_NONE;
 
@@ -385,7 +385,7 @@ void mbMusPauseFadeOut(int chan, BOOL pauseF, int speed)
     musData[chan].pauseF = pauseF;
     if (speed > 0) {
         HuAudSStreamPauseFadeOut(musP->streamNo, pauseF, speed);
-        musData[chan].fadeTime = (int)(2.0f + ((speed * 60) / 1000.0f));
+        musData[chan].fadeTime = 2.0f + ((speed * 60) / 1000.0f);
     } else {
         HuAudSStreamPauseFadeOut(musP->streamNo, pauseF, 1000);
         musData[chan].fadeTime = 62;
@@ -553,8 +553,8 @@ static void MusPlay(void)
                     }
                     break;
             }
+            HuPrcVSleep();
         }
-        HuPrcVSleep();
         if (musP == NULL) {
             break;
         }
@@ -1024,7 +1024,7 @@ void mbAudFXStopAll(int speed)
 
 int mbAudFXPosPlay(s16 seId, Vec *pos)
 {
-    u8 pan = mbAudFXPosPanGet(pos);
+    int pan = mbAudFXPosPanGet(pos);
 
     return AudFXPlay(seId, MB_AUD_FX_TYPE_PAN, pan, NULL);
 }
@@ -1061,7 +1061,7 @@ void mbAudFXPanning(int seNo, s16 pan)
 
 void mbAudFXPosPanning(int seNo, Vec *pos)
 {
-    int pan = mbAudFXPosPanGet(pos);
+    s16 pan = mbAudFXPosPanGet(pos);
 
     mbAudFXPanning(seNo, pan);
 }
@@ -1079,14 +1079,15 @@ int mbAudGuidePlay(s16 seId)
     if (GwSystem.curTime) {
         BOOL partyF = GwSystem.partyF;
 
-        if (partyF == FALSE) {
-            timeNo = 0;
-        } else {
-            timeNo = 1;
+        if (partyF != FALSE) {
+            goto time_one;
         }
-    } else {
-        timeNo = 1;
     }
+    timeNo = 0;
+    goto time_set;
+time_one:
+    timeNo = 1;
+time_set:
 
     for (i = 0; guideFxTbl[i][0] != -1; i++) {
         if (seId == guideFxTbl[i][0] || seId == guideFxTbl[i][1]) {
