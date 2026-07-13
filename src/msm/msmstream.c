@@ -79,6 +79,7 @@ typedef struct {
 
 static void msmStreamPauseFade(s32 streamNo);
 static void msmStreamFade(s32 streamNo);
+static void msmStreamDvdCallbackErr(s32 streamNo, BOOL flag);
 static void msmStreamDvdCallback(s32 result, DVDFileInfo* fileInfo);
 static void msmStreamStopSub(s32 streamNo, s32 speed);
 static void msmStreamDvdCallback2(s32 result, DVDFileInfo* fileInfo);
@@ -929,6 +930,29 @@ static void msmStreamData(s32 streamNo) {
     slot->bufNo ^= 1;
 }
 
+static void msmStreamDvdCallbackErr(s32 streamNo, BOOL flag) {
+    MSM_STREAM_SLOT* slot;
+    s32 linkedStreamNo;
+
+    slot = &StreamInfo.slot[streamNo];
+    sndStreamDeactivate(slot->stid);
+    slot->streamOffF = slot->shutdownF = slot->pauseF = FALSE;
+    msmStreamClose(streamNo);
+    if (flag != FALSE) {
+        return;
+    }
+    if (slot->slotL != -1) {
+        linkedStreamNo = slot->slotL;
+    } else if (slot->slotR != -1) {
+        linkedStreamNo = slot->slotR;
+    } else {
+        linkedStreamNo = -1;
+    }
+    if (linkedStreamNo >= 0) {
+        msmStreamDvdCallbackErr(linkedStreamNo, TRUE);
+    }
+}
+
 static BOOL msmStreamActivateStream(s32 streamNo) {
     MSM_STREAM_SLOT* slot;
 
@@ -1020,16 +1044,7 @@ static void msmStreamDvdCallback(s32 result, DVDFileInfo* fileInfo) {
                 break;
         }
     } else {
-        if (slot->status == 4) {
-            sndStreamDeactivate(slot->stid);
-        }
-        msmStreamClose(readSize);
-        if (slot->slotL != -1) {
-            StreamInfo.slot[slot->slotL].slotR = -1;
-        }
-        if (slot->slotR != -1) {
-            StreamInfo.slot[slot->slotR].slotL = -1;
-        }
+        msmStreamDvdCallbackErr(readSize, FALSE);
     }
 }
 
@@ -1053,16 +1068,7 @@ static void msmStreamDvdCallback2(s32 result, DVDFileInfo* fileInfo) {
     } else if (DVDGetCommandBlockStatus(&fileInfo->cb) == 0) {
         sndStreamARAMUpdate(slot->stid, (slot->bufNo != 0) ? 0 : slot->streamFrq / 2, slot->streamFrq / 2, 0, 0);
     } else {
-        if (slot->status == 4) {
-            sndStreamDeactivate(slot->stid);
-        }
-        msmStreamClose(readSize);
-        if (slot->slotL != -1) {
-            StreamInfo.slot[slot->slotL].slotR = -1;
-        }
-        if (slot->slotR != -1) {
-            StreamInfo.slot[slot->slotR].slotL = -1;
-        }
+        msmStreamDvdCallbackErr(readSize, FALSE);
     }
 }
 
