@@ -29,6 +29,11 @@ extern "C" {
 typedef BOOL (*OSResetFunction)(BOOL final);
 typedef struct OSResetFunctionInfo OSResetFunctionInfo;
 
+typedef struct OSResetFunctionQueue {
+  OSResetFunctionInfo* head;
+  OSResetFunctionInfo* tail;
+} OSResetFunctionQueue;
+
 struct OSResetFunctionInfo {
   // public
   OSResetFunction func;
@@ -40,6 +45,9 @@ struct OSResetFunctionInfo {
 };
 
 void OSRegisterResetFunction(OSResetFunctionInfo* info);
+BOOL __OSCallResetFunctions(BOOL final);
+void __OSDoHotReset(u32 resetCode);
+void OSResetSystem(s32 reset, u32 resetCode, BOOL forceMenu);
 u32 OSGetResetCode(void);
 
 #ifdef __cplusplus
