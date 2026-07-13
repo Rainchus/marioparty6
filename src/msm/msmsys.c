@@ -22,7 +22,9 @@ static void msmSysServer(void)
 
 static s32 msmSysSetAuxParam(s32 auxA, s32 auxB)
 {
+    s32 unused_1[2];
     SND_AUX_CALLBACK auxcb[2];
+    s32 unused_2[2];
     MSM_AUXPARAM *auxParam;
     MSM_AUX *aux;
     u32 result;
