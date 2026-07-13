@@ -18,7 +18,7 @@ static int PackArgs(void* addr, s32 argc, char** argv) {
   char** list;
   u32 i;
 
-  bootInfo2 = addr;
+  bootInfo2 = (char*)addr;
   memset(bootInfo2, 0, 0x2000);
 
   if (argc == 0) {

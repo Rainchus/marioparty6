@@ -171,14 +171,23 @@ void GXLoadTexMtxImm(const f32 mtx[][4], u32 id, GXTexMtxType type)
 
 void __GXSetViewport(void)
 {
-    f32 sx = gx->vpWd / 2.0f;
-    f32 sy = -gx->vpHt / 2.0f;
-    f32 ox = 342.0f + (gx->vpLeft + (gx->vpWd / 2.0f));
-    f32 oy = 342.0f + (gx->vpTop + (gx->vpHt / 2.0f));
-    f32 zmin = gx->vpNearz * gx->zScale;
-    f32 zmax = gx->vpFarz * gx->zScale;
-    f32 sz = zmax - zmin;
-    f32 oz = zmax + gx->zOffset;
+    f32 sx;
+    f32 sy;
+    f32 sz;
+    f32 ox;
+    f32 oy;
+    f32 oz;
+    f32 zmin;
+    f32 zmax;
+
+    sx = gx->vpWd / 2.0f;
+    sy = -gx->vpHt / 2.0f;
+    ox = 342.0f + (gx->vpLeft + (gx->vpWd / 2.0f));
+    oy = 342.0f + (gx->vpTop + (gx->vpHt / 2.0f));
+    zmin = gx->vpNearz * gx->zScale;
+    zmax = gx->vpFarz * gx->zScale;
+    sz = zmax - zmin;
+    oz = zmax + gx->zOffset;
 
     GX_WRITE_U8(GX_LOAD_XF_REG);
     GX_WRITE_U32(0x5101A);
