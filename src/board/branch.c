@@ -1,3 +1,8 @@
+/* Block math.h's extern inline sqrtf: its weak _half/_three statics would
+ * prepend 16 bytes to .sdata2 that the original branch.o does not have. */
+#define _MATH_H
+#include "dolphin/math.h"
+
 #include "game/board/branch.h"
 #include "game/board/audio.h"
 #include "game/board/guide.h"
@@ -98,8 +103,10 @@ static void BranchGuideCreate(int playerNo, int masuId, s16 *linkTbl, int linkNu
     work->playerNo = playerNo;
     work->angle = 0;
     work->choice = choiceStart;
-    if (!CheckFlag(FLAG_BOARD_TUTORIAL) && GWPartyGet()) {
-        mbWinCreateHelp(0x00260007);
+    if (!CheckFlag(FLAG_BOARD_TUTORIAL)) {
+        if (GWPartyGet() != FALSE) {
+            mbWinCreateHelp(0x00260007);
+        }
     }
     mbMasuPosGet(masuId, &pos);
     pos.y += 350.0f;
@@ -129,8 +136,10 @@ static void BranchGuideOMExec(OMOBJ *obj)
         for (i = 0; i < work->linkNum; i++) {
             mbObjKill(work->modelId[i]);
         }
-        if (!CheckFlag(FLAG_BOARD_TUTORIAL) && GWPartyGet()) {
-            mbWinTopKill();
+        if (!CheckFlag(FLAG_BOARD_TUTORIAL)) {
+            if (GWPartyGet() != FALSE) {
+                mbWinTopKill();
+            }
         }
         guideOMObj[work->playerNo] = NULL;
         omDelObjEx(HuPrcCurrentGet(), obj);
