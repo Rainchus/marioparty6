@@ -335,6 +335,12 @@ GXBool GXGetTexObjMipMap(const GXTexObj *to)
 void GXLoadTexObjPreLoaded(GXTexObj *obj, GXTexRegion *region, GXTexMapID id)
 {
     __GXTlutRegionInt *tlr;
+    u32 m0;
+    u32 m1;
+    u32 img0;
+    u32 img1;
+    u32 img2;
+    u32 img3;
     __GXTexObjInt *t = (__GXTexObjInt *)obj;
     __GXTexRegionInt *r = (__GXTexRegionInt *)region;
 
@@ -342,6 +348,13 @@ void GXLoadTexObjPreLoaded(GXTexObj *obj, GXTexRegion *region, GXTexMapID id)
     ASSERTMSGLINE(0x4E9, region, "TexRegion Object Pointer is null");
     CHECK_GXBEGIN(0x4EB, "GXLoadTexObjPreLoaded");
     ASSERTMSGLINEV(0x4EC, id < 8, "%s: invalid texture map ID", "GXLoadTexObj");
+
+    m0 = t->mode0;
+    m1 = t->mode1;
+    img0 = t->image0;
+    img1 = r->image1;
+    img2 = r->image2;
+    img3 = t->image3;
 
     SET_REG_FIELD(0x4F7, t->mode0, 8, 24, GXTexMode0Ids[id]);
     SET_REG_FIELD(0x4F8, t->mode1, 8, 24, GXTexMode1Ids[id]);
