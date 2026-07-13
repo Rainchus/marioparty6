@@ -10,18 +10,9 @@
 #define RTC_DEV 1
 #define RTC_FREQ 3
 
-typedef struct SramControlBlock {
-    u8 sram[RTC_SRAM_SIZE];
-    u32 offset;
-    BOOL enabled;
-    BOOL locked;
-    BOOL sync;
-    void (*callback)(void);
-} SramControlBlock;
+static SramControl Scb ATTRIBUTE_ALIGN(32);
 
-static SramControlBlock Scb ATTRIBUTE_ALIGN(32);
-
-static inline BOOL ReadSram(void *buffer)
+static BOOL ReadSram(void *buffer)
 {
     BOOL err;
     u32 cmd;
@@ -46,7 +37,7 @@ static inline BOOL ReadSram(void *buffer)
     return !err;
 }
 
-BOOL WriteSram(void *buffer, u32 offset, u32 size);
+static BOOL WriteSram(void *buffer, u32 offset, u32 size);
 
 static void WriteSramCallback(s32 chan, OSContext *context)
 {
@@ -56,7 +47,7 @@ static void WriteSramCallback(s32 chan, OSContext *context)
     }
 }
 
-BOOL WriteSram(void *buffer, u32 offset, u32 size)
+static BOOL WriteSram(void *buffer, u32 offset, u32 size)
 {
     BOOL err;
     u32 cmd;
@@ -88,7 +79,7 @@ void __OSInitSram(void)
     OSSetGbsMode(OSGetGbsMode());
 }
 
-static inline void *LockSram(u32 offset)
+static void *LockSram(u32 offset)
 {
     BOOL enabled;
 
