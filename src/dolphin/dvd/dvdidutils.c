@@ -3,7 +3,7 @@
 
 #include <string.h>
 
-BOOL DVDCompareDiskID(DVDDiskID* id1, DVDDiskID* id2)
+BOOL DVDCompareDiskID(const DVDDiskID* id1, const DVDDiskID* id2)
 {
     if (id1->gameName[0] && id2->gameName[0] && strncmp(&id1->gameName[0], &id2->gameName[0], 4)) {
         return FALSE;
