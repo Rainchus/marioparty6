@@ -805,6 +805,12 @@ config.libs = [
             Object(Matching, "REL/actmanDLL/actman.c", mw_version=config.linker_version),
         },
     ),
+    Rel(
+        "meschkdll",
+        objects={
+            Object(NonMatching, "REL/meschkdll/meschkdll.c", mw_version=config.linker_version),
+        },
+    ),
 
 ]
 
