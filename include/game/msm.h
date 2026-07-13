@@ -196,6 +196,7 @@ void msmMusSetMasterVolume(s32 vol);
 
 int msmStreamPlay(int streamId, MSM_STREAMPARAM *streamParam);
 s32 msmStreamStop(int streamNo, s32 speed);
+s32 msmStreamSetParam(int streamNo, MSM_STREAMPARAM *param);
 s32 msmStreamPauseAll(BOOL pause, s32 speed);
 s32 msmStreamPause(int streamNo, BOOL pause, s32 speed);
 
