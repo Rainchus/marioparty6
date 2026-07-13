@@ -380,7 +380,11 @@ config.libs = [
     DolphinLib(
         "os",
         [
-            Object(NonMatching, "dolphin/os/OS.c"),
+            Object(
+                NonMatching,
+                "dolphin/os/OS.c",
+                extra_cflags=["-char unsigned", "-DSDK_REVISION=1"],
+            ),
             Object(Matching, "dolphin/os/OSAlarm.c"),
             Object(Matching, "dolphin/os/OSAlloc.c"),
             Object(Matching, "dolphin/os/OSArena.c"),
@@ -389,7 +393,7 @@ config.libs = [
             Object(Matching, "dolphin/os/OSContext.c"),
             Object(Matching, "dolphin/os/OSError.c"),
             Object(NonMatching, "dolphin/os/OSExec.c"),
-            Object(NonMatching, "dolphin/os/OSFont.c"),
+            Object(Matching, "dolphin/os/OSFont.c", extra_cflags=["-char unsigned"]),
             Object(Matching, "dolphin/os/OSInterrupt.c"),
             Object(Matching, "dolphin/os/OSLink.c"),
             Object(Matching, "dolphin/os/OSMessage.c"),
