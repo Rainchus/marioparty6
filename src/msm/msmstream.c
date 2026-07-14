@@ -990,7 +990,7 @@ static void msmStreamDvdCallback(s32 result, DVDFileInfo* fileInfo) {
         msmStreamClose(readSize);
         return;
     }
-    if (DVDGetCommandBlockStatus(&fileInfo->cb) == 0) {
+    if (result > 0) {
         switch (slot->status) {
             case 2:
                 if (slot->slotL != -1) {
@@ -1039,7 +1039,8 @@ static void msmStreamDvdCallback(s32 result, DVDFileInfo* fileInfo) {
                 sndStreamARAMUpdate(slot->stid, (slot->bufNo != 0) ? 0 : slot->streamFrq / 2, slot->streamFrq / 2, 0, 0);
                 break;
             case 5:
-                slot->shutdownF = 0;
+                sndStreamDeactivate(slot->stid);
+                slot->streamOffF = slot->shutdownF = FALSE;
                 msmStreamClose(readSize);
                 break;
         }
@@ -1049,8 +1050,8 @@ static void msmStreamDvdCallback(s32 result, DVDFileInfo* fileInfo) {
 }
 
 static void msmStreamDvdCallback2(s32 result, DVDFileInfo* fileInfo) {
-    MSM_STREAM_SLOT* slot;
     s32 readSize;
+    MSM_STREAM_SLOT* slot;
 
     for (readSize = 0; readSize < StreamInfo.header.chanMax; readSize++) {
         slot = &StreamInfo.slot[readSize];
@@ -1065,7 +1066,7 @@ static void msmStreamDvdCallback2(s32 result, DVDFileInfo* fileInfo) {
     if (slot->shutdownF != 0) {
         slot->shutdownF = FALSE;
         msmStreamClose(readSize);
-    } else if (DVDGetCommandBlockStatus(&fileInfo->cb) == 0) {
+    } else if (result > 0) {
         sndStreamARAMUpdate(slot->stid, (slot->bufNo != 0) ? 0 : slot->streamFrq / 2, slot->streamFrq / 2, 0, 0);
     } else {
         msmStreamDvdCallbackErr(readSize, FALSE);

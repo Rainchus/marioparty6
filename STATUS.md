@@ -111,7 +111,7 @@ otherwise noted.
 | `dolphin/mic/mic.c` | 56.653%; 0/41 functions exact. |
 | `dolphin/mic/m2s.c` | 78.721%; 1/14 functions exact. |
 | `msm/msmsys.c` | 99.734%; 18/23 functions exact. |
-| `msm/msmstream.c` | 96.710%; 21/28 functions exact. |
+| `msm/msmstream.c` | 97.29357%; 23/28 functions exact. `msmStreamDvdCallback` and `msmStreamDvdCallback2` are now exact; the owner remains fallback-linked because five functions still diverge. |
 | `board/player.c` | Raw section pairing is 1.155%; mapped-function weighted score is 99.965%, but only 10/165 functions are currently exact. |
 | `board/object.c` | 99.754%; 77/80 functions exact. |
 | `board/audio.c` | 99.98862%; 46/49 functions exact. The remaining code differences are one compare-operand reversal in each of `mbMusBoardPlay` and `MusBoardFade`, plus twelve stack-slot offsets in `mbMusBoardFadeOut`; target/source `.text` are both `0x2BF0` and all 444 text relocations match. |
@@ -218,6 +218,16 @@ all four instruction streams and their relocations exact. This function-level
 recovery is not counted as a matching owner. The object and rejected-probe
 evidence is retained in
 [`docs/native_matching_wave18.md`](docs/native_matching_wave18.md).
+
+`msm/msmstream.c` now has exact source for both asynchronous DVD callbacks.
+The target tests the callback `result` argument directly rather than issuing a
+second DVD status query, and its status-5 path deactivates and clears the
+stream before closing it. Together `msmStreamDvdCallback` and
+`msmStreamDvdCallback2` account for `0x550` bytes of newly exact source. The
+owner remains NonMatching at 23/28 exact functions, so none of its fallback-
+linked bytes are counted as decompiled source. Proof and rejected-probe details
+are retained in
+[`docs/native_matching_wave19.md`](docs/native_matching_wave19.md).
 
 ## Named DOL ownership
 
