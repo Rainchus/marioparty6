@@ -11,12 +11,12 @@ This is an evidence snapshot, not a completion claim. It was last verified on
 - `cmp orig/GP6E01/sys/main.dol build/GP6E01/main.dol`: byte-identical
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 8.59% code and 26.81% data overall; 43.73% code
-  and 62.82% data in the DOL
-- Matching owners at that build: 258 of 895 overall, 249 of 396 in the DOL,
+- DTK progress at that build: 8.65% code and 26.85% data overall; 44.04% code
+  and 62.94% data in the DOL
+- Matching owners at that build: 263 of 895 overall, 254 of 396 in the DOL,
   and 9 of 499 in the REL modules
-- DOL policy split: 222 matching owners without the assembly exception, 27
-  matching owners admitted under the sibling-authentication exception, 146
+- DOL policy split: 227 matching owners without the assembly exception, 27
+  matching owners admitted under the sibling-authentication exception, 141
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
   awaiting target proof. These four numbers total all 396 DOL owners.
 
@@ -91,7 +91,7 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/__exception.s` (`ASM-GATE-PENDING`) | [Mario Party 4 `src/TRK_MINNOW_DOLPHIN/__exception.s` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/TRK_MINNOW_DOLPHIN/__exception.s), `MatchingFor(USA,PAL)` | M4 authenticates the standalone `.init` exception-vector form and `0x1F34` size, but MP6 starts at a different address and has different vector/padding offsets. M5 has the MP6 bounds but is `NonMatching` with no source. A target-specific reconstruction and full gate are still required. |
 
-#### Bucket 2: `C-not-yet-matched` (146 current fallback owners)
+#### Bucket 2: `C-not-yet-matched` (141 current fallback owners)
 
 Twenty-two owners have current source candidates and are tagged `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
@@ -123,14 +123,13 @@ otherwise noted.
 | `board/branch.c` | 99.816%; 16/17 functions exact. `ev_Branch` is now target/source `0x8F0`/`0x8F0`; all 19 remaining differences are one `choice`/`choiceTime` register cycle, with no inserted, deleted, or replaced instructions. Whole-owner `.text` is `0x10E0`/`0x10E0` and all 210 relocations match; configured `.data` remains `0x18`/`0x12`. |
 | `board/effect.c` | 59.766%; 1/35 functions exact, target/source text sizes `0x3050`/`0x3074`, plus `.sdata` and `.sdata2` divergence. The restored FastCast header is not its blocker. |
 
-The other 124 owners are tagged `NO-SOURCE`. Each explicit brace group below
+The other 119 owners are tagged `NO-SOURCE`. Each explicit brace group below
 expands to the named owner files; the count audit is
-`1 + 14 + 2 + 19 + 1 + 65 + 22 = 124`.
+`1 + 9 + 2 + 19 + 1 + 65 + 22 = 119`.
 
 - `Runtime.PPCEABI.H/` (1): `ptmf.c`.
-- `MSL_C.PPCEABI.bare.H/` (14): `alloc.c`, `ansi_fp.c`, `assert.c`,
-  `file_io.c`, `mbstring.c`, `mem_funcs.c`, `printf.c`, `qsort.c`, `string.c`,
-  `e_exp.c`, `e_pow.c`, `s_atan.c`, `w_log.c`, `math_ppc.c`.
+- `MSL_C.PPCEABI.bare.H/` (9): `alloc.c`, `assert.c`, `printf.c`, `qsort.c`,
+  `string.c`, `e_exp.c`, `s_atan.c`, `w_log.c`, and `math_ppc.c`.
 - `TRK_MINNOW_DOLPHIN/` C owners (2): `targimpl.c`, `dolphin_trk.c`.
 - `musyx/runtime/` (19): `seq.c`, `synth.c`, `stream.c`, `synthdata.c`,
   `synthmacros.c`, `synthvoice.c`, `s_data.c`, `hw_dspctrl.c`, `snd3d.c`,
@@ -243,11 +242,22 @@ closure differences. All four remain fallback-linked and are not counted as
 decompiled owners. The accepted and rejected evidence is retained in
 [`docs/native_matching_wave20.md`](docs/native_matching_wave20.md).
 
+Five MSL owners are now Matching clean C from authenticated sibling source:
+`ansi_fp.c`, `file_io.c`, `mbstring.c`, `mem_funcs.c`, and `e_pow.c`. Their
+16 retained functions contribute `0x1AC0` exact linked code bytes, `0x358`
+configured constant/data bytes, and 234 relocations. The owner-local
+`GC/1.3` selection was proved by direct compiler probes; `GC/2.6` changed
+inline and fdlibm code shape. A nearby `s_atan.c` probe retained genuine
+instruction differences even after reaching the target size, so its source
+was removed and it remains fallback-linked. Full accepted/rejected evidence
+is retained in
+[`docs/native_matching_wave21.md`](docs/native_matching_wave21.md).
+
 ## Named DOL ownership
 
 The current snapshot descends from fork commit `353fa30`, which replaced every
 DOL `auto_*` blob with 121 named Runtime, MSL, MusyX, MetroTRK, and
-support-library owners. The pre-wave `fork/main` tip was `5e23675`. Neither
+support-library owners. The pre-wave-21 `fork/main` tip was `05da86b`. Neither
 `config/GP6E01/splits.txt` nor `configure.py` contains an `auto_*` owner.
 
 ## Native library recovery
@@ -267,6 +277,11 @@ configured data/BSS bytes.
   exact. `arith` retains an exact `abs` while the sibling-authenticated unused
   `labs` is linker-stripped; `errno` owns an exact four-byte symbol followed by
   the target split's four-byte alignment gap.
+- Five GC/1.3-shaped MSL owners: `ansi_fp`, `file_io`, `mbstring`,
+  `mem_funcs`, and `e_pow`. Their sibling-authenticated C contributes 6,848
+  exact linked code bytes and 856 configured data bytes. Object-level symbol
+  attribution differences in `ansi_fp` and `e_pow` are resolved by the exact
+  linked owner ranges; no assembly or source padding was added.
 - Two Runtime owners: `__va_arg` is exact at `0xC8`; `__mem` is exact at
   `0x138`, including the target order `memset`, `__fill_mem`, `memcpy` and its
   sole `R_PPC_REL24` relocation.
@@ -321,7 +336,7 @@ configured data/BSS bytes.
   `synthFlags`, `vs`, and `gWriteBuf`. The address, definition, and target
   relocation ledger is retained in `docs/easy_ports_wave.md`.
 
-The 147 current DOL fallback owners and their causes are exhaustive in the
+The 142 current DOL fallback owners and their causes are exhaustive in the
 two-bucket ledger above. Three REL Runtime variants also remain `NonMatching`;
-they are outside this main-DOL-first taxonomy and are not included in the 146
+they are outside this main-DOL-first taxonomy and are not included in the 141
 C-work/1-assembly-policy remaining counts.
