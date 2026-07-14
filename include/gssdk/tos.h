@@ -8,8 +8,10 @@ u8 reserved[0x50];
 void *heap;
 } TosContext;
 
+typedef struct TosQueue TosQueue;
+
 typedef struct TosQueuePort {
-void *queue;
+TosQueue *queue;
 u16 outputSize;
 u16 inputSize;
 } TosQueuePort;
@@ -38,7 +40,7 @@ u8 enabled;
 u8 reserved21[7];
 };
 
-extern void *qEnQueueOne(void *queue);
+extern void *qEnQueueOne(TosQueue *queue);
 extern u32 _tosGetProfileU32(void *block, u32 key, u32 defaultValue);
 extern f32 _tosGetProfileFloat(void *block, u32 key, f32 defaultValue);
 extern u32 _tosErrorLog(void *block, u32 error);

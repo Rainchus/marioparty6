@@ -11,12 +11,12 @@ This is an evidence snapshot, not a completion claim. It was last verified on
 - `cmp orig/GP6E01/sys/main.dol build/GP6E01/main.dol`: byte-identical
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 8.85% code and 27.85% data overall; 45.21% code
-  and 65.51% data in the DOL
-- Matching owners at that build: 289 of 895 overall, 280 of 396 in the DOL,
+- DTK progress at that build: 8.86% code and 28.07% data overall; 45.25% code
+  and 66.09% data in the DOL
+- Matching owners at that build: 291 of 895 overall, 282 of 396 in the DOL,
   and 9 of 499 in the REL modules
-- DOL policy split: 248 matching owners without the assembly exception, 32
-  matching owners admitted under the sibling-authentication exception, 115
+- DOL policy split: 250 matching owners without the assembly exception, 32
+  matching owners admitted under the sibling-authentication exception, 113
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
   awaiting target proof. These four numbers total all 396 DOL owners.
 
@@ -52,6 +52,16 @@ cross-check the table boundaries; the MP6 target symbols, bytes,
 relocations, and consumers establish the retained definitions.
 The ABI and per-owner evidence is retained in
 [`docs/native_matching_wave34.md`](docs/native_matching_wave34.md).
+
+The next easy-owner batch adds two more Matching clean-C GSSDK owners.
+`asrpho/common/blocks/stacker.c` recovers the real `0x38` block, conditional
+input copies, five control commands, profile-sized allocation, and all four
+functions; its `.text 0x384` and all 19 relocations match exactly.
+`asrpho/rec1600/ctrl.c` recovers the typed command headers, target pairs,
+state records, callback pointers, architecture tables, and global
+`ControlTable`; `.rodata 0x1000`, `.sdata2 0x28`, and all 390 relocations match
+exactly. Detailed evidence for these promotions and the retained source
+candidates is in [`docs/native_matching_wave35.md`](docs/native_matching_wave35.md).
 
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
@@ -130,9 +140,9 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/__exception.s` (`ASM-GATE-PENDING`) | [Mario Party 4 `src/TRK_MINNOW_DOLPHIN/__exception.s` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/TRK_MINNOW_DOLPHIN/__exception.s), `MatchingFor(USA,PAL)` | M4 authenticates the standalone `.init` exception-vector form and `0x1F34` size, but MP6 starts at a different address and has different vector/padding offsets. M5 has the MP6 bounds but is `NonMatching` with no source. A target-specific reconstruction and full gate are still required. |
 
-#### Bucket 2: `C-not-yet-matched` (115 current fallback owners)
+#### Bucket 2: `C-not-yet-matched` (113 current fallback owners)
 
-Twenty-eight owners have current source candidates and are tagged `SRC-DIVERGES`.
+Thirty-five owners have current source candidates and are tagged `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-14; percentages are raw `.text` scores unless
 otherwise noted.
@@ -144,6 +154,8 @@ otherwise noted.
 | `Runtime.PPCEABI.H/NMWException.cpp` | 7/8 functions exact (`0x3F4` bytes); `__construct_array` is target/source `0xF8`/`0xFC`, 93.854836%. Two authenticated loop-shape probes were byte-neutral, so the sibling form was restored and unsupported register forcing was rejected. |
 | `Runtime.PPCEABI.H/Gecko_ExceptionPPC.cpp` | Matching M4 donor gives 11/13 raw-exact retained functions, but emits a linker-stripped base-exception closure and divergent exception/data sections. A trial flip produced only 115 files OK and a divergent DOL/22 RELs, so it was de-flipped (`SRC-DIVERGES`). |
 | `MSL_C.PPCEABI.bare.H/printf.c` | The exact MP4/MP5 source blob gives 9/15 exact target functions totaling `0xC78`, including the target's hidden `0x12C` helper after a temporary name-only pairing probe. The retained authentic name is `round_decimal`. Target/source whole `.text` remain `0x2160`/`0x213C`; `fprintf` is absent, five numeric-format functions diverge, total relocations are 275/271, and `.rodata`/`.data`/`.sdata` sizes differ. |
+| `MSL_C.PPCEABI.bare.H/alloc.c` | Matching FFCC and Super Mario Strikers sources authenticate the allocator family. The recovered `Block`, `SubBlock`, fixed-pool, and `0x34` pool layouts plus all 11 target routines compile, and the six fixed sizes in `.rodata 0x18` are exact. The MP6 GC/2.6 object still diverges substantially from the GC/2.7 donor shape: mapped text scores range from 29.324675% to 61.834644%, and six target-local helpers retain address names, so the owner remains fallback-linked. |
+| `MSL_C.PPCEABI.bare.H/e_exp.c` | Matching Pikmin 2 commit `46aecad6` authenticates the fdlibm source. All `.rodata 0x30`, `.sdata2 0x78`, and 21 relocations match. `__ieee754_exp` remains target/source `0x21C/0x224` at 91.592590%, so exact constants do not justify promotion. |
 | `board/board.c` | 99.583%; 31/35 functions exact; `mbObjectSetup`, `mbMain`, `mbNextTime`, and `mbSaveInit` diverge. |
 | `dolphin/os/OS.c` | 59.719%; 0/14 functions exact. |
 | `dolphin/os/OSExec.c` | 80.972%; 2/8 functions exact. |
@@ -167,26 +179,30 @@ otherwise noted.
 | `gssdk_lib/asrpho/common/blocks/flfxblks/median.c` | The target-derived `0x44` median block and `0xC` doubly-linked node recover the ring replacement, sorted insertion, median selection, allocation, and destruction logic. `ControlMedian`, `InitMedian`, and `ConstructMedian` are exact. `ProcessMedian` is target/source `0x2F4/0x2F4` at 78.952380%, so the owner remains fallback-linked. MP7 has the same retained machine-code shape but supplies no source donor. |
 | `gssdk_lib/asrpho/common/blocks/flfxblks/statio.c` | The target-derived `0x50` stationarity block, queue/context fields, constants, and four functions are recovered. `ControlStationarity`, `InitStationarity`, and `ConstructStationarity` are exact. `ProcessStationarity` is target/source `0x1A8/0x1A8` at 99.575470%, with seven floating-point register-assignment differences. The target `.sdata2` is `0x10` versus source `0xC`, including a four-byte alignment tail, so the owner remains fallback-linked. |
 | `gssdk_lib/asrpho/common/ctxdata/ctxdata.c` | The binary-proven `ContextDataV2` layout through offset `0xB8`, virtual table, and all accessors are recovered. Seventeen accessors are byte-exact; the three packed-tail pointer computations remain at 79.500000%, 66.933334%, and 68.000000%, while `FillContextV2VirtualTable` retains one source/target table-relocation identity difference. The owner remains fallback-linked. |
+| `gssdk_lib/asrpho/common/blocks/flblocks/mtxopt.c` | The target-derived `0x10` float-matrix header and packed QR update are recovered. `mtxFillCopy` (`0x30`) and `mtxFillX` (`0x80`) are exact. `QrPreMult` is target/source `0x1A8/0x1A4` at 92.528305%, with the same unrolled arithmetic but divergent register allocation and outer-loop closure, so the owner remains fallback-linked. |
+| `gssdk_lib/gsapi/callbacks.c` | Six callback wrappers totaling `0x260` are exact, as are `AsrSpiSignalCallBacks` (`0x18`) and `AsrSpiRecogCallBacks` (`0x8`) with their relocation order. The target's `0x580` `asrspi_cbResult` remains unrecovered, so the complete owner stays fallback-linked. |
+| `gssdk_lib/gsapi/ctxfuncs.c` | Five small target-derived routines are materialized. `SessionDataFree`, `ContextAPIDeActivate`, `ContextSetActiveWords`, and `ContextSetCtxData` are exact; `ContextGetParam` is `0x50` at 84.500000%. Ten larger context/session routines remain absent, so the owner stays fallback-linked. |
+| `gssdk_lib/asrpho/common/ctxdata/langdata.c` | The real `LanguageDataV2` prefix and code-book layouts support 36 exact field/pointer accessors. `_langGetpErgodicPenalty` is `0x64` at 77.040000%; the deeper packed-layout functions and virtual-table closure remain unrecovered. The owner stays fallback-linked rather than hiding the unknown tail behind an opaque struct. |
+| `gssdk_lib/asrpho/common/tos/mqueue.c` | The target queue/list/reader prefix and three routines are recovered. `qQueueNbrElements` (`0x20`) is exact; `qDeQueueOne` (`0x50`) is 89.500000% and `qQueueConstruct` (`0x8C`) is 84.200000%. The remaining queue control, enqueue, reset, resize, and destruction routines are absent, so the owner remains fallback-linked. |
 
-The other 87 owners are tagged `NO-SOURCE`. Each explicit brace group below
+The other 78 owners are tagged `NO-SOURCE`. Each explicit brace group below
 expands to the named owner files; the count audit is
-`3 + 1 + 14 + 47 + 22 = 87`.
+`1 + 1 + 14 + 40 + 22 = 78`.
 
-- `MSL_C.PPCEABI.bare.H/` (3): `alloc.c`, `qsort.c`, and `e_exp.c`.
+- `MSL_C.PPCEABI.bare.H/` (1): `qsort.c`.
 - `TRK_MINNOW_DOLPHIN/` C owner (1): `targimpl.c`.
 - `musyx/runtime/` (14): `seq.c`, `synth.c`, `stream.c`, `synthdata.c`,
   `synthmacros.c`, `synthvoice.c`, `s_data.c`, `hw_dspctrl.c`, `snd3d.c`,
   `snd_midictrl.c`, `hardware.c`, `dsp_import.c`, `hw_aramdma.c`, and
   `StdReverb/reverb.c`.
-- `gssdk_lib/` (47):
-  - `gsapi/{callbacks,ctxfuncs,gsapi}.c`;
+- `gssdk_lib/` (40):
+  - `gsapi/gsapi.c`;
   - `asrpho/asrspi.c` and
-    `asrpho/rec1600/{convert,creasp,creaspch,creaspt,creatree,crsptrch,ctrl,spi1600,train,userword}.c`;
-  - `asrpho/common/blocks/{dpgenuw,dpscruw,exev_dp,fft_maye,fftmod,isoword,nbestdp,pitchdp,pitchwin,stacker}.c`;
-  - `asrpho/common/blocks/flblocks/{acne,dctlift,gender,logexp,mel,mtx,mtxopt,smoother,specsub,vad,vq1500,window}.c`;
+    `asrpho/rec1600/{convert,creasp,creaspch,creaspt,creatree,crsptrch,spi1600,train,userword}.c`;
+  - `asrpho/common/blocks/{dpgenuw,dpscruw,exev_dp,fft_maye,fftmod,isoword,nbestdp,pitchdp,pitchwin}.c`;
+  - `asrpho/common/blocks/flblocks/{acne,dctlift,gender,logexp,mel,mtx,smoother,specsub,vad,vq1500,window}.c`;
   - `asrpho/common/blocks/flfxblks/{combiner,dist16,pitchco,shs_vuv,slidhist,subsamp,trigglr,voicing}.c`;
-  - `asrpho/common/ctxdata/langdata.c`,
-    `asrpho/common/tos/{mqueue,tinyos}.c`;
+  - `asrpho/common/tos/tinyos.c`;
 - `board/` (22): `math.c`, `snpc.c`, `scroll.c`, `coin.c`, `star.c`,
   `dice.c`, `opening.c`, `tutorial.c`, `capselect.c`, `capmove.c`,
   `capthrow.c`, `captrap.c`, `capspecial.c`, `capsule.c`, `capevent.c`,
@@ -496,7 +512,7 @@ configured data/BSS bytes.
   `synthFlags`, `vs`, and `gWriteBuf`. The address, definition, and target
   relocation ledger is retained in `docs/easy_ports_wave.md`.
 
-The 116 current DOL fallback owners and their causes are exhaustive in the
+The 114 current DOL fallback owners and their causes are exhaustive in the
 two-bucket ledger above. Three REL Runtime variants also remain `NonMatching`;
-they are outside this main-DOL-first taxonomy and are not included in the 115
+they are outside this main-DOL-first taxonomy and are not included in the 113
 C-work/1-assembly-policy remaining counts.
