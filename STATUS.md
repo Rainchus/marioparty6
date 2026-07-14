@@ -95,6 +95,16 @@ restoring the real support prototypes; its seven inline-assembly routines are
 reported separately from clean C. Evidence is retained in
 [`docs/native_matching_wave38.md`](docs/native_matching_wave38.md).
 
+Wave 39 keeps that batched cadence and materializes 87 source functions across
+eight formerly `NO-SOURCE` board owners: `capselect.c`, `capsule.c`,
+`config.c`, `last5.c`, `opening.c`, `scroll.c`, `shopevent.c`, and `snpc.c`.
+Eighty-six functions pair with retained target functions and 63 are byte-exact,
+covering `0x1A5C` target text bytes. The source recovers real capsule-color,
+Last-5 coin, shop-call, pause-copy, opening-camera, scroll/map, and special-NPC
+state instead of opaque work buffers. All eight owners remain fallback-linked
+because their event/state-machine closures are incomplete. Evidence is retained
+in [`docs/native_matching_wave39.md`](docs/native_matching_wave39.md).
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -175,7 +185,7 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 
 #### Bucket 2: `C-not-yet-matched` (112 current fallback owners)
 
-Fifty-one owners have current source candidates and are tagged
+Fifty-nine owners have current source candidates and are tagged
 `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-15; percentages are raw `.text` scores unless
@@ -200,6 +210,14 @@ otherwise noted.
 | `board/star.c` | Sixteen layout-free callback/global setters, Num/Flag/Next accessors, empty legacy entry points, and the no-random result are recovered and exact. Target/source `.text` are `0x5C00/0xDC`. Object wrappers were rejected because a real complete `STARWORK` prefix is not yet recovered. |
 | `board/tutorial.c` | The real `0x14` call work (`scene`, `callNum`, `result`, `stat`, and `mode`), guide/process globals, exit flags, and ten accessors are recovered. `mbTutorialMultiCall` and `mbTutorialCall` prove the count field. All ten mapped functions are exact; target/source `.text` are `0x2C34/0x80`. |
 | `board/wipe.c` | The create/wait functions and all twelve fixed-time/caller-time fade, white-fade, and dissolve wrappers are recovered. All 14 mapped functions are exact; target/source `.text` are `0x3664/0x6DC`. The special-wipe and state-machine remainder is still absent. |
+| `board/capselect.c` | Eighteen result, story/type, capsule lookup/count, callback, and map-capsule object routines are recovered with the target-proven four-player result/model/type arrays and 16-entry map-object table. Target/source `.text` are `0x3460/0x32C`; 16/18 functions are exact. `mbCapSelectShrinkCheck` is 68.333336% and `CapSelectCapsuleGet` is 97.558136%. The selection state machines and unresolved `0x28` map-object work remain absent. |
+| `board/capsule.c` | Twenty-nine retained target functions recover the four-player effect state, `s16 capsuleNum[33][2]`, packed space-capsule/player helpers, and the real `0x2C` `CAPSULE_OBJ_COLOR` over 128 entries. Target/source `.text` are `0x146CC/0x1130`; 18/29 mapped functions are exact. The compiler also retains the sibling-authenticated out-of-line search helper, which has no named target pairing. `mbCapObjColorCreate` is omitted because the capsule-data field at `0x1C` is not yet semantically closed. |
+| `board/config.c` | Matching MP5 pause-copy shape plus MP6 instructions recover the framebuffer/model/counter globals, four-player display state, framebuffer create/kill/draw path, pad-disable setter, and story-mode helper. Target/source `.text` are `0x63BC/0x560`; `mbPauseDispCopyCreate`, `mbPauseDispCopyKill`, `PauseDispCopyDraw`, and `mbConfigPadDisableSet` are exact. `GWStorySingleCheck` is 72.272730%; the pause panel/guide/config state machines remain absent. |
+| `board/last5.c` | The target-derived stable rank/order routine and 40-coin effect recover `0x658` retained target text plus the real `LAST5COINWORK { s16 delay; float velocity; }` overlay on public `MBCOINOBJ` caller work. Target/source `.text` are `0x2458/0x614`; the two functions are 99.266050% and 89.601070%. The roulette work still has unproven fields and is omitted. |
+| `board/opening.c` | Fourteen curve, party wrapper, pad-delay, view/camera, hook, guide, and restore routines recover the real vectors, hook types, process pointer, pad-delay array, and initialized guide model ID. Target/source `.text` are `0x2B14/0x3D4`; 12/14 functions are exact. Only `mbev_Opening` (82.722220%) and `mbev_OpeningParty` (94.500000%) diverge; the large party/single events remain absent. |
+| `board/scroll.c` | Nine lifecycle, star-space, map-view, camera, and hook routines recover the typed `HSF_FACE *` collision owner, map model/animation state, camera vectors/zoom, and callback types. Target/source `.text` are `0x3E4C/0x27C`; 7/9 functions are exact. `ScrollKill` is 80.208336% and `mbMapCameraSet` is 87.692310%; collision construction and map rendering remain absent. |
+| `board/shopevent.c` | Six target-backed enable/hook/init/back-create/shop-call routines recover the typed object hook and real two-word `MBSHOPWORK { playerNo, shopNo }`. Target/source `.text` are `0x2FDC/0x160`; the enable setter, hook setter, and back-create wrapper are exact. The two init wrappers and shop-call wrapper are 92.395350%-95.357140%; shop construction and the large selection event remain absent. |
+| `board/snpc.c` | `mbSNpcInit`, `mbSNpcMasuGet`, and the authentic empty `SNpcStarFunc` are exact, with the target-proven three-byte save state (`flags`, `masuId`, `effectMissCount`) and typed runtime/save pointers. Target/source `.text` are `0x9594/0x44`. The `0x298` runtime object and all movement/dice/star state machines remain absent. |
 | `dolphin/os/OS.c` | 59.719%; 0/14 functions exact. |
 | `dolphin/os/OSExec.c` | 80.972%; 2/8 functions exact. |
 | `dolphin/os/OSMemory.c` | 52.707%; 4/8 functions exact. |
@@ -235,9 +253,9 @@ otherwise noted.
 | `gssdk_lib/asrpho/common/ctxdata/langdata.c` | The real `LanguageDataV2` prefix and code-book layouts support 36 exact field/pointer accessors. The target's `0x13C` language-method object and the code-book method slots consumed by `vq1500.c` are now typed in the shared header. `_langGetpErgodicPenalty` is `0x64` at 77.040000%; the deeper packed-layout functions and virtual-table source closure remain unrecovered. |
 | `gssdk_lib/asrpho/common/tos/mqueue.c` | The target queue/list/reader prefix and three routines are recovered. `qQueueNbrElements` (`0x20`) is exact; `qDeQueueOne` (`0x50`) is 89.500000% and `qQueueConstruct` (`0x8C`) is 84.200000%. The remaining queue control, enqueue, reset, resize, and destruction routines are absent, so the owner remains fallback-linked. |
 
-The other 61 owners are tagged `NO-SOURCE`. Each explicit brace group below
+The other 53 owners are tagged `NO-SOURCE`. Each explicit brace group below
 expands to the named owner files; the count audit is
-`14 + 33 + 14 = 61`.
+`14 + 33 + 6 = 53`.
 
 - `musyx/runtime/` (14): `seq.c`, `synth.c`, `stream.c`, `synthdata.c`,
   `synthmacros.c`, `synthvoice.c`, `s_data.c`, `hw_dspctrl.c`, `snd3d.c`,
@@ -251,9 +269,8 @@ expands to the named owner files; the count audit is
   - `asrpho/common/blocks/flblocks/{acne,gender,mel,smoother,specsub,vad,window}.c`;
   - `asrpho/common/blocks/flfxblks/{dist16,pitchco,shs_vuv,slidhist,subsamp,trigglr,voicing}.c`;
   - `asrpho/common/tos/tinyos.c`;
-- `board/` (14): `snpc.c`, `scroll.c`, `opening.c`, `capselect.c`, `capmove.c`,
-  `capthrow.c`, `captrap.c`, `capspecial.c`, `capsule.c`, `capevent.c`,
-  `shopevent.c`, `mgcall.c`, `config.c`, and `last5.c`.
+- `board/` (6): `capmove.c`, `capthrow.c`, `captrap.c`, `capspecial.c`,
+  `capevent.c`, and `mgcall.c`.
 
 Mixed C/assembly owners stay in the C bucket until all retained C and assembly
 passes the appropriate proof. `TRK_MINNOW_DOLPHIN/targimpl.c` no longer appears
