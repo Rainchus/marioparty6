@@ -520,11 +520,11 @@ config.libs = [
             Object(NonMatching, "musyx/runtime/hw_dolphin.c"),
             Object(Matching, "musyx/runtime/hw_memory.c"),
             Object(Matching, "musyx/runtime/CheapReverb/creverb_fx.c"),
-            Object(NonMatching, "musyx/runtime/CheapReverb/creverb.c"),
+            Object(Matching, "musyx/runtime/CheapReverb/creverb.c"),
             Object(Matching, "musyx/runtime/StdReverb/reverb_fx.c"),
             Object(NonMatching, "musyx/runtime/StdReverb/reverb.c"),
             Object(Matching, "musyx/runtime/Delay/delay_fx.c"),
-            Object(NonMatching, "musyx/runtime/Chorus/chorus_fx.c"),
+            Object(Matching, "musyx/runtime/Chorus/chorus_fx.c"),
         ],
     },
     {
