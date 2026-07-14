@@ -15,10 +15,11 @@ semantic symbol changes retained by this wave are listed.
 | MKDD | [Mario Kart: Double Dash](https://github.com/doldecomp/mkdd) | `8a91a6b4a32834dfb689fbdcf1dea8796be9c75f` | Matching `mtx44vec` owner |
 | P2 | [Pikmin 2](https://github.com/projectPiki/pikmin2) | `46aecad6f060c303a735e6b3850c2a212c846b27` | Matching `GXLight` owner |
 
-The target branch is based on `fork/rel-quickwins` commit
-`1a464ae4644077fb956c879dd5d2c710d4f12d52`; its current `fork/main`
-ancestor is `353fa30f9e489d867966223e87aa84d286eafcfc`. The exhaustive source
-audit also inspected the local `mwcc-decomp` reference at
+The consolidated wave was based on `fork/rel-quickwins` commit
+`1a464ae4644077fb956c879dd5d2c710d4f12d52`, whose `fork/main` ancestor was
+`353fa30f9e489d867966223e87aa84d286eafcfc`; the resulting `fork/main`
+snapshot before the kerent policy correction is `685f514`. The exhaustive
+source audit also inspected the local `mwcc-decomp` reference at
 `094b96ca1df4a035b5f93c351f773306c0241f3f`; it supplied no additional
 directly admissible owner in this wave.
 
@@ -44,12 +45,13 @@ powerpc-eabi-objdump -dr build/GP6E01/src/<owner>.o
 powerpc-eabi-objdump -d -t build/GP6E01/main.elf
 ```
 
-## Inline-assembly admission
+## Assembly admission
 
 The user-authorized exception is applied at the owner and corresponding-body
 level: an external sibling must configure the owner as Matching and carry the
-same inline operation or routine. Target-specific register allocation or
-instruction differences are accepted only when the compiled MP6 source passes
+same inline or standalone assembly operation/routine. Target-specific register
+allocation or instruction differences are accepted only when the compiled MP6
+source passes
 the target object and linked-container gate above.
 
 | MP6 owner | Matching sibling source |
@@ -71,6 +73,7 @@ the target object and linked-container gate above.
 | `src/dolphin/mtx/psmtx.c` | M4 `src/dolphin/mtx/psmtx.c` |
 | `src/dolphin/ai/ai.c` | M4 `src/dolphin/ai.c` |
 | `src/dolphin/thp/THPDec.c` | M4 `src/dolphin/thp/THPDec.c` |
+| `src/game/kerent.c` | M4 `src/game/kerent.c` |
 | `src/game/jmp.c` | M4 `src/game/jmp.c` |
 | `src/game/malloc.c` | M4 `src/game/malloc.c`; M5 `src/game/malloc.c` |
 | `src/Runtime.PPCEABI.H/runtime.c` | M4 `src/Runtime.PPCEABI.H/runtime.c` |
@@ -78,6 +81,7 @@ the target object and linked-container gate above.
 | `src/TRK_MINNOW_DOLPHIN/dolphin_trk_glue.c` | M4 `src/TRK_MINNOW_DOLPHIN/dolphin_trk_glue.c` |
 | `src/TRK_MINNOW_DOLPHIN/flush_cache.c` | M4 `src/TRK_MINNOW_DOLPHIN/flush_cache.c` |
 | `src/TRK_MINNOW_DOLPHIN/mpc_7xx_603e.c` | M4 `src/TRK_MINNOW_DOLPHIN/mpc_7xx_603e.c` |
+| `src/TRK_MINNOW_DOLPHIN/targsupp.s` | M5 `src/TRK_MINNOW_DOLPHIN/targsupp.s`; identical M4 source |
 | `src/dolphin/gx/GXLight.c` | P2 `src/Dolphin/gx/GXLight.c` |
 
 The following text-level differences received a second block-level audit. They
@@ -94,11 +98,24 @@ are not inferred C or locally invented assembly:
 | `__init_hardware` | M4 `__ppc_eabi_init.c` function of the same name | Target operand spelling differs textually |
 | `HuMemDirectRealloc`, `HuMemDirectFree`, `HuMemDirectFreeNum` | M4/M5 Matching `malloc.c` owners use the same `mflr retaddr` inline operation; the latter two functions occur directly | `HuMemDirectRealloc` is MP6-only and repeats that authenticated one-instruction operation |
 
-Ten complete staged blobs are also byte-identical to M4: `OSFastCast.h`,
+Ten complete staged C/header blobs are also byte-identical to M4: `OSFastCast.h`,
 `runtime.c`, `ctype.c`, `dolphin_trk_glue.c`, `flush_cache.c`,
 `mpc_7xx_603e.c`, `db.c`, `mtxvec.c`, `OSSync.c`, and `jmp.c`. The inherited
 `OSFastCast.h` `//HACK` comment is therefore provenance, not a local
 match-shaping change.
+
+`game/kerent.c` is a structural sibling exception rather than a byte-identical
+donor blob. M4 configures the owner `MatchingFor(USA,PAL)` and carries the same
+single `asm void _kerent`/`nofralloc`/`entry`-plus-branch source shape. The MP6
+owner restores its target-specific 2,472 branches from historical blob
+`bd5b7b9448a659e186d733e3bc3e13dc8291d6a2`; target and source are both
+`.text 0x26A0` with 2,472 `R_PPC_REL24` relocations and pass the full linked
+container gate. This owner is never counted as clean C.
+
+`TRK_MINNOW_DOLPHIN/targsupp.s` is the exact M5/M4 donor blob
+`0244131bd8219c6f5839ae2cda9254c2f28e005c`. Its four `twui; blr` functions
+fill the MP6 `.text 0x20` owner exactly. It is admitted only as authentic
+standalone assembly and is not counted as clean C.
 
 ## Semantic symbol ledger
 
