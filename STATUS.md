@@ -105,9 +105,9 @@ otherwise noted.
 
 | Owner | Objdiff reason for remaining fallback |
 | --- | --- |
-| `Runtime.PPCEABI.H/New.cp` | Two exact delete functions (`0x4C` each, including exception records); `operator new`, `operator new[]`, and `.sbss` handler state remain absent. |
-| `Runtime.PPCEABI.H/NewMore.cp` | Matching sibling source reproduces the `0x48` base-exception destructor and `0xC` `what` shape, but four split-label operands still differ and MP6's `0xC0` `bad_alloc` closure/data remain absent. |
-| `Runtime.PPCEABI.H/NMWException.cpp` | 7/8 functions exact (`0x3F4` bytes); `__construct_array` is target/source `0xF8`/`0xFC`, 93.854836%, with 16 instruction differences. |
+| `Runtime.PPCEABI.H/New.cp` | The real four-byte `std::__new_handler` global at `0x802C0C58` is recovered; the target `.sbss` size is `0x8` because of alignment, not a second global. Both delete functions remain exact (`0x4C` each). Canonical `operator new[]` and `operator new` bodies compile to `0x68` versus target `0x70`/`0x6C`, at 85.178570%/88.518520%, so the owner remains fallback-linked. |
+| `Runtime.PPCEABI.H/NewMore.cp` | Recovered the sibling-authenticated `std::__throws_bad_alloc` name, direct `bad_alloc : exception` inheritance, RTTI, vtables, and all five functions. Both destructors and `extab`/`extabindex` are 100%; `__throw_bad_alloc` is target/source `0x58`/`0x58` at 99.545456% with two pooled-string label operands, while each `what()` is `0xC`/`0x10`. String pooling and aligned data closure still diverge. |
+| `Runtime.PPCEABI.H/NMWException.cpp` | 7/8 functions exact (`0x3F4` bytes); `__construct_array` is target/source `0xF8`/`0xFC`, 93.854836%. Two authenticated loop-shape probes were byte-neutral, so the sibling form was restored and unsupported register forcing was rejected. |
 | `Runtime.PPCEABI.H/Gecko_ExceptionPPC.cpp` | Matching M4 donor gives 11/13 raw-exact retained functions, but emits a linker-stripped base-exception closure and divergent exception/data sections. A trial flip produced only 115 files OK and a divergent DOL/22 RELs, so it was de-flipped (`SRC-DIVERGES`). |
 | `board/board.c` | 99.583%; 31/35 functions exact; `mbObjectSetup`, `mbMain`, `mbNextTime`, and `mbSaveInit` diverge. |
 | `dolphin/os/OS.c` | 59.719%; 0/14 functions exact. |
@@ -282,11 +282,24 @@ fallback-linked bytes are counted as decompiled owners. Evidence and bounded
 rejected probes are retained in
 [`docs/native_matching_wave23.md`](docs/native_matching_wave23.md).
 
+Runtime allocation-exception recovery now names the map-authenticated
+`std::__new_handler` global and the sibling-authenticated
+`std::__throws_bad_alloc` state, and restores the `std::bad_alloc :
+std::exception` class closure, including RTTI and vtables.
+In `NewMore.cp`, both virtual destructors plus `extab` and `extabindex` are
+exact; the exact-size throw helper differs only in two pooled-string label
+operands. The canonical allocation bodies and two authenticated
+`__construct_array` spellings were compiled and rejected where they still
+diverged. `New.cp`, `NewMore.cp`, and `NMWException.cpp` therefore remain
+`NonMatching`, and none of their fallback-linked bytes are counted as
+decompiled owners. Evidence is retained in
+[`docs/native_matching_wave24.md`](docs/native_matching_wave24.md).
+
 ## Named DOL ownership
 
 The current snapshot descends from fork commit `353fa30`, which replaced every
 DOL `auto_*` blob with 121 named Runtime, MSL, MusyX, MetroTRK, and
-support-library owners. The pre-wave-23 `fork/main` tip was `310e5d0`. Neither
+support-library owners. The pre-wave-24 `fork/main` tip was `ba0fb96`. Neither
 `config/GP6E01/splits.txt` nor `configure.py` contains an `auto_*` owner.
 
 ## Native library recovery

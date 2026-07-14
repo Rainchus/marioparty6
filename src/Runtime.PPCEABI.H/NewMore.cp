@@ -1,15 +1,11 @@
 #include "PowerPC_EABI_Support/Runtime/New.h"
 
 namespace std {
-    class exception {
-        public:
-            virtual ~exception();
-            virtual const char *what() const;
-    };
+    char __throws_bad_alloc = 1;
+
+    void __throw_bad_alloc() {
+        if (__throws_bad_alloc) {
+            throw bad_alloc();
+        }
+    }
 }
-
-const char *std::exception::what() const {
-    return "exception";
-};
-
-std::exception::~exception() {};
