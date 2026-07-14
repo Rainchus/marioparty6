@@ -411,7 +411,7 @@ config.libs = [
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/qsort.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/float.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/signal.c"),
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/string.c"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/string.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/uart_console_io.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/wchar_io.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/e_acos.c"),
@@ -449,7 +449,7 @@ config.libs = [
             Object(NonMatching, "MSL_C.PPCEABI.bare.H/w_log.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/w_log10.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/w_pow.c"),
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/math_ppc.c"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/math_ppc.c"),
         ],
     },
     {

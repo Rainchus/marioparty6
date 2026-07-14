@@ -11,12 +11,12 @@ This is an evidence snapshot, not a completion claim. It was last verified on
 - `cmp orig/GP6E01/sys/main.dol build/GP6E01/main.dol`: byte-identical
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 8.68% code and 26.97% data overall; 44.24% code
+- DTK progress at that build: 8.69% code and 26.97% data overall; 44.29% code
   and 63.24% data in the DOL
-- Matching owners at that build: 265 of 895 overall, 256 of 396 in the DOL,
+- Matching owners at that build: 267 of 895 overall, 258 of 396 in the DOL,
   and 9 of 499 in the REL modules
-- DOL policy split: 227 matching owners without the assembly exception, 29
-  matching owners admitted under the sibling-authentication exception, 139
+- DOL policy split: 229 matching owners without the assembly exception, 29
+  matching owners admitted under the sibling-authentication exception, 137
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
   awaiting target proof. These four numbers total all 396 DOL owners.
 
@@ -96,9 +96,9 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/__exception.s` (`ASM-GATE-PENDING`) | [Mario Party 4 `src/TRK_MINNOW_DOLPHIN/__exception.s` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/TRK_MINNOW_DOLPHIN/__exception.s), `MatchingFor(USA,PAL)` | M4 authenticates the standalone `.init` exception-vector form and `0x1F34` size, but MP6 starts at a different address and has different vector/padding offsets. M5 has the MP6 bounds but is `NonMatching` with no source. A target-specific reconstruction and full gate are still required. |
 
-#### Bucket 2: `C-not-yet-matched` (139 current fallback owners)
+#### Bucket 2: `C-not-yet-matched` (137 current fallback owners)
 
-Twenty-two owners have current source candidates and are tagged `SRC-DIVERGES`.
+Twenty-three owners have current source candidates and are tagged `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-14; percentages are raw `.text` scores unless
 otherwise noted.
@@ -109,6 +109,7 @@ otherwise noted.
 | `Runtime.PPCEABI.H/NewMore.cp` | Recovered the sibling-authenticated `std::__throws_bad_alloc` name, direct `bad_alloc : exception` inheritance, RTTI, vtables, and all five functions. Both destructors and `extab`/`extabindex` are 100%; `__throw_bad_alloc` is target/source `0x58`/`0x58` at 99.545456% with two pooled-string label operands, while each `what()` is `0xC`/`0x10`. String pooling and aligned data closure still diverge. |
 | `Runtime.PPCEABI.H/NMWException.cpp` | 7/8 functions exact (`0x3F4` bytes); `__construct_array` is target/source `0xF8`/`0xFC`, 93.854836%. Two authenticated loop-shape probes were byte-neutral, so the sibling form was restored and unsupported register forcing was rejected. |
 | `Runtime.PPCEABI.H/Gecko_ExceptionPPC.cpp` | Matching M4 donor gives 11/13 raw-exact retained functions, but emits a linker-stripped base-exception closure and divergent exception/data sections. A trial flip produced only 115 files OK and a divergent DOL/22 RELs, so it was de-flipped (`SRC-DIVERGES`). |
+| `MSL_C.PPCEABI.bare.H/printf.c` | The exact MP4/MP5 source blob gives 9/15 exact target functions totaling `0xC78`, including the target's hidden `0x12C` helper after a temporary name-only pairing probe. The retained authentic name is `round_decimal`. Target/source whole `.text` remain `0x2160`/`0x213C`; `fprintf` is absent, five numeric-format functions diverge, total relocations are 275/271, and `.rodata`/`.data`/`.sdata` sizes differ. |
 | `board/board.c` | 99.583%; 31/35 functions exact; `mbObjectSetup`, `mbMain`, `mbNextTime`, and `mbSaveInit` diverge. |
 | `dolphin/os/OS.c` | 59.719%; 0/14 functions exact. |
 | `dolphin/os/OSExec.c` | 80.972%; 2/8 functions exact. |
@@ -128,13 +129,13 @@ otherwise noted.
 | `board/branch.c` | 99.816%; 16/17 functions exact. `ev_Branch` is now target/source `0x8F0`/`0x8F0`; all 19 remaining differences are one `choice`/`choiceTime` register cycle, with no inserted, deleted, or replaced instructions. Whole-owner `.text` is `0x10E0`/`0x10E0` and all 210 relocations match; configured `.data` remains `0x18`/`0x12`. |
 | `board/effect.c` | 59.766%; 1/35 functions exact, target/source text sizes `0x3050`/`0x3074`, plus `.sdata` and `.sdata2` divergence. The restored FastCast header is not its blocker. |
 
-The other 117 owners are tagged `NO-SOURCE`. Each explicit brace group below
+The other 114 owners are tagged `NO-SOURCE`. Each explicit brace group below
 expands to the named owner files; the count audit is
-`1 + 9 + 2 + 17 + 1 + 65 + 22 = 117`.
+`1 + 6 + 2 + 17 + 1 + 65 + 22 = 114`.
 
 - `Runtime.PPCEABI.H/` (1): `ptmf.c`.
-- `MSL_C.PPCEABI.bare.H/` (9): `alloc.c`, `assert.c`, `printf.c`, `qsort.c`,
-  `string.c`, `e_exp.c`, `s_atan.c`, `w_log.c`, and `math_ppc.c`.
+- `MSL_C.PPCEABI.bare.H/` (6): `alloc.c`, `assert.c`, `qsort.c`, `e_exp.c`,
+  `s_atan.c`, and `w_log.c`.
 - `TRK_MINNOW_DOLPHIN/` C owners (2): `targimpl.c`, `dolphin_trk.c`.
 - `musyx/runtime/` (17): `seq.c`, `synth.c`, `stream.c`, `synthdata.c`,
   `synthmacros.c`, `synthvoice.c`, `s_data.c`, `hw_dspctrl.c`, `snd3d.c`,
@@ -248,16 +249,18 @@ closure differences. All four remain fallback-linked and are not counted as
 decompiled owners. The accepted and rejected evidence is retained in
 [`docs/native_matching_wave20.md`](docs/native_matching_wave20.md).
 
-Five MSL owners are now Matching clean C from authenticated sibling source:
-`ansi_fp.c`, `file_io.c`, `mbstring.c`, `mem_funcs.c`, and `e_pow.c`. Their
-16 retained functions contribute `0x1AC0` exact linked code bytes, `0x358`
-configured constant/data bytes, and 234 relocations. The owner-local
-`GC/1.3` selection was proved by direct compiler probes; `GC/2.6` changed
-inline and fdlibm code shape. A nearby `s_atan.c` probe retained genuine
-instruction differences even after reaching the target size, so its source
-was removed and it remains fallback-linked. Full accepted/rejected evidence
-is retained in
-[`docs/native_matching_wave21.md`](docs/native_matching_wave21.md).
+Seven recent MSL owners are now Matching clean C. The authenticated sibling
+sources for `ansi_fp.c`, `file_io.c`, `mbstring.c`, `mem_funcs.c`, and
+`e_pow.c` require owner-local `GC/1.3`; direct probes proved that `GC/2.6`
+changes their inline and fdlibm code shape. The target-led `string.c` and
+`math_ppc.c` closure instead matches under the configured `GC/2.6`. Together
+the seven owners contribute 34 exact functions, `0x1F28` linked code bytes,
+`0x358` configured constant/data bytes, and 245 relocations. `printf.c` now
+retains authenticated source and nine exact functions totaling `0xC78`, but
+remains fallback-linked because the formatter closure genuinely diverges.
+The accepted and rejected evidence is retained in
+[`docs/native_matching_wave21.md`](docs/native_matching_wave21.md) and
+[`docs/native_matching_wave25.md`](docs/native_matching_wave25.md).
 
 Two MusyX owners are now Matching under the sibling-assembly exception:
 `CheapReverb/creverb.c` and `Chorus/chorus_fx.c`. Their nine retained functions
@@ -299,7 +302,7 @@ decompiled owners. Evidence is retained in
 
 The current snapshot descends from fork commit `353fa30`, which replaced every
 DOL `auto_*` blob with 121 named Runtime, MSL, MusyX, MetroTRK, and
-support-library owners. The pre-wave-24 `fork/main` tip was `ba0fb96`. Neither
+support-library owners. The pre-wave-25 `fork/main` tip was `cd3642f`. Neither
 `config/GP6E01/splits.txt` nor `configure.py` contains an `auto_*` owner.
 
 ## Native library recovery
@@ -324,6 +327,10 @@ configured data/BSS bytes.
   exact linked code bytes and 856 configured data bytes. Object-level symbol
   attribution differences in `ansi_fp` and `e_pow` are resolved by the exact
   linked owner ranges; no assembly or source padding was added.
+- Two GC/2.6-shaped MSL owners: `string` and `math_ppc`. Their 18 clean-C
+  functions contribute `0x468` exact linked code bytes and 11 relocations.
+  `printf` additionally retains nine exact functions but remains a fallback
+  owner and is not counted as decompiled source.
 - Two Runtime owners: `__va_arg` is exact at `0xC8`; `__mem` is exact at
   `0x138`, including the target order `memset`, `__fill_mem`, `memcpy` and its
   sole `R_PPC_REL24` relocation.
@@ -383,7 +390,7 @@ configured data/BSS bytes.
   `synthFlags`, `vs`, and `gWriteBuf`. The address, definition, and target
   relocation ledger is retained in `docs/easy_ports_wave.md`.
 
-The 140 current DOL fallback owners and their causes are exhaustive in the
+The 138 current DOL fallback owners and their causes are exhaustive in the
 two-bucket ledger above. Three REL Runtime variants also remain `NonMatching`;
-they are outside this main-DOL-first taxonomy and are not included in the 139
+they are outside this main-DOL-first taxonomy and are not included in the 137
 C-work/1-assembly-policy remaining counts.
