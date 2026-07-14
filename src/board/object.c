@@ -16,12 +16,12 @@ extern void *mbMalloc(s32 size);
 extern void mbPos3Dto2D(HuVecF *pos3D, HuVecF *pos2D);
 extern void mbObjCullInit(MBMODELID modelId);
 
-static int dataDirNight;
-static int dataDirDay;
-static int objManDispNum;
-static s16 objManNum;
-static MBOBJMODEL *objManData;
 static OMOBJ *objManOMObj;
+static MBOBJMODEL *objManData;
+static s16 objManNum;
+static int objManDispNum;
+static int dataDirDay;
+static int dataDirNight;
 
 static void ObjManOMExec(OMOBJ *obj);
 static MBMODELID ObjManObjCreate(int charNo, int dataNum, const int *motDataNum, BOOL linkF);
@@ -710,24 +710,35 @@ int mbObjMotionShiftIDGet(MBMODELID modelId)
 void mbObjMotionNoCreate(MBMODELID modelId, int dataNum, int motNo)
 {
     MBOBJMODEL *modelP = &objManData[modelId];
-    HU3D_MOTIONID motId;
+    int readDataNum;
 
     if (modelP->charNo == CHARNO_NONE) {
-        modelP->motData[motNo] = HuDataSelHeapReadNum(mbObjDataNumGet(dataNum), HU_MEMNUM_OVL, HEAP_MODEL);
-        motId = Hu3DJointMotion(modelP->modelId, modelP->motData[motNo]);
+        if (!GwSystem.curTime) {
+            if (DIRNUM(dataNum) == dataDirNight) {
+                readDataNum = dataDirDay | FILENUM(dataNum);
+                goto read_data;
+            }
+        } else if (DIRNUM(dataNum) == dataDirDay) {
+            readDataNum = dataDirNight | FILENUM(dataNum);
+            goto read_data;
+        }
+        readDataNum = dataNum;
+read_data:
+        modelP->motData[motNo] = HuDataSelHeapReadNum(readDataNum, HU_MEMNUM_OVL, HEAP_MODEL);
+        modelId = Hu3DJointMotion(modelP->modelId, modelP->motData[motNo]);
     } else {
-        motId = CharMotionCreate(modelP->charNo, dataNum);
+        modelId = CharMotionCreate(modelP->charNo, dataNum);
         CharMotionDataClose(modelP->charNo);
     }
-    modelP->motId[motNo] = motId;
+    modelP->motId[motNo] = modelId;
     modelP->motNum++;
 }
 
 int mbObjMotionCreate(MBMODELID modelId, int dataNum)
 {
     MBOBJMODEL *modelP = &objManData[modelId];
-    HU3D_MOTIONID motId;
     int motNo;
+    int readDataNum;
 
     for (motNo = 1; motNo < MB_OBJ_MOT_MAX; motNo++) {
         if (modelP->motId[motNo] == HU3D_MOTIONID_NONE) {
@@ -735,13 +746,24 @@ int mbObjMotionCreate(MBMODELID modelId, int dataNum)
         }
     }
     if (modelP->charNo == CHARNO_NONE) {
-        modelP->motData[motNo] = HuDataSelHeapReadNum(mbObjDataNumGet(dataNum), HU_MEMNUM_OVL, HEAP_MODEL);
-        motId = Hu3DJointMotion(modelP->modelId, modelP->motData[motNo]);
+        if (!GwSystem.curTime) {
+            if (DIRNUM(dataNum) == dataDirNight) {
+                readDataNum = dataDirDay | FILENUM(dataNum);
+                goto read_data;
+            }
+        } else if (DIRNUM(dataNum) == dataDirDay) {
+            readDataNum = dataDirNight | FILENUM(dataNum);
+            goto read_data;
+        }
+        readDataNum = dataNum;
+read_data:
+        modelP->motData[motNo] = HuDataSelHeapReadNum(readDataNum, HU_MEMNUM_OVL, HEAP_MODEL);
+        modelId = Hu3DJointMotion(modelP->modelId, modelP->motData[motNo]);
     } else {
-        motId = CharMotionCreate(modelP->charNo, dataNum);
+        modelId = CharMotionCreate(modelP->charNo, dataNum);
         CharMotionDataClose(modelP->charNo);
     }
-    modelP->motId[motNo] = motId;
+    modelP->motId[motNo] = modelId;
     modelP->motNum++;
     return motNo;
 }

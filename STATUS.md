@@ -11,12 +11,12 @@ This is an evidence snapshot, not a completion claim. It was last verified on
 - `cmp orig/GP6E01/sys/main.dol build/GP6E01/main.dol`: byte-identical
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 8.69% code and 26.97% data overall; 44.29% code
-  and 63.24% data in the DOL
-- Matching owners at that build: 267 of 895 overall, 258 of 396 in the DOL,
+- DTK progress at that build: 8.77% code and 26.97% data overall; 44.77% code
+  and 63.25% data in the DOL
+- Matching owners at that build: 268 of 895 overall, 259 of 396 in the DOL,
   and 9 of 499 in the REL modules
-- DOL policy split: 229 matching owners without the assembly exception, 29
-  matching owners admitted under the sibling-authentication exception, 137
+- DOL policy split: 230 matching owners without the assembly exception, 29
+  matching owners admitted under the sibling-authentication exception, 136
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
   awaiting target proof. These four numbers total all 396 DOL owners.
 
@@ -96,9 +96,9 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/__exception.s` (`ASM-GATE-PENDING`) | [Mario Party 4 `src/TRK_MINNOW_DOLPHIN/__exception.s` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/TRK_MINNOW_DOLPHIN/__exception.s), `MatchingFor(USA,PAL)` | M4 authenticates the standalone `.init` exception-vector form and `0x1F34` size, but MP6 starts at a different address and has different vector/padding offsets. M5 has the MP6 bounds but is `NonMatching` with no source. A target-specific reconstruction and full gate are still required. |
 
-#### Bucket 2: `C-not-yet-matched` (137 current fallback owners)
+#### Bucket 2: `C-not-yet-matched` (136 current fallback owners)
 
-Twenty-three owners have current source candidates and are tagged `SRC-DIVERGES`.
+Twenty-two owners have current source candidates and are tagged `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-14; percentages are raw `.text` scores unless
 otherwise noted.
@@ -123,7 +123,6 @@ otherwise noted.
 | `msm/msmsys.c` | 99.734%; 18/23 functions exact. |
 | `msm/msmstream.c` | 99.487020%; 23/28 functions exact. `msmStreamDvdCallback` and `msmStreamDvdCallback2` are exact. `msmStreamData` is now target/source `0x2EC/0x2EC` at 99.759360% after recovering the target pause/linked-slot/ARAM-update control flow; `msmStreamSlotInit` is `0x224/0x224` at 99.635040% after recovering its three distinct size/offset lifetimes. Five functions still diverge, so the owner remains fallback-linked. |
 | `board/player.c` | Raw section pairing is 1.155%; mapped-function weighted score is 99.965%, but only 10/165 functions are currently exact. |
-| `board/object.c` | 99.812744%; 78/80 functions exact. `ObjManModelCreate` is now exact at `0x1C0`, including its caller-local day/night data-directory selection. The two motion-create functions remain four source bytes too large. |
 | `board/audio.c` | 99.98862%; 46/49 functions exact. The remaining code differences are one compare-operand reversal in each of `mbMusBoardPlay` and `MusBoardFade`, plus twelve stack-slot offsets in `mbMusBoardFadeOut`; target/source `.text` are both `0x2BF0` and all 444 text relocations match. |
 | `board/masu.c` | Raw section pairing is 40.144%; mapped-function weighted score is 99.771%, with 89/119 functions exact. |
 | `board/branch.c` | 99.816%; 16/17 functions exact. `ev_Branch` is now target/source `0x8F0`/`0x8F0`; all 19 remaining differences are one `choice`/`choiceTime` register cycle, with no inserted, deleted, or replaced instructions. Whole-owner `.text` is `0x10E0`/`0x10E0` and all 210 relocations match; configured `.data` remains `0x18`/`0x12`. |
@@ -273,17 +272,26 @@ unresolved donor-only symbol closure and fully removed; the prior
 candidate. Evidence is retained in
 [`docs/native_matching_wave22.md`](docs/native_matching_wave22.md).
 
-Function-level real-C recovery advanced two fallback owners without promoting
-them. `board/object.c::ObjManModelCreate` is now exact at `0x1C0`, moving that
-owner to 78/80 exact functions. `msm/msmstream.c::msmStreamData` now has the
-target pause, linked-slot, buffer-clear, and ARAM-update behavior and the exact
-`0x2EC` size; `msmStreamSlotInit` now expresses the target's distinct
-half-buffer/read-size/wrap-distance lifetimes. Those two stream functions are
-99.759360% and 99.635040% respectively, with only operand allocation
-differences remaining. Both owners stay `NonMatching`, and none of their
-fallback-linked bytes are counted as decompiled owners. Evidence and bounded
-rejected probes are retained in
+Wave 23 advanced two fallback owners at function level. `board/object.c` has
+since passed the complete object and DOL gates and is reported below as
+Matching clean C. `msm/msmstream.c::msmStreamData` retains the target pause,
+linked-slot, buffer-clear, and ARAM-update behavior at the exact `0x2EC` size;
+`msmStreamSlotInit` retains the target's distinct half-buffer/read-size/
+wrap-distance lifetimes. Those two stream functions remain 99.759360% and
+99.635040% respectively, with only operand-allocation differences. The stream
+owner stays `NonMatching`, and none of its fallback-linked bytes are counted
+as decompiled source. Evidence and bounded rejected probes are retained in
 [`docs/native_matching_wave23.md`](docs/native_matching_wave23.md).
+
+`board/object.c` is now Matching clean C. Recovering the two motion-create
+functions and the target `.sbss` emission order makes all 80 functions,
+`0x2838` text bytes, `0x18` BSS bytes, `0x48` constant bytes, and 334 text
+relocations exact. The first linked trial was deliberately rejected despite a
+100% raw object score because its zero-filled BSS globals had different symbol
+offsets; the corrected declaration order reproduces every target offset and
+passes the final DOL gate. Source provenance, the rejected `board/audio.c`
+probes, and full proof are retained in
+[`docs/native_matching_wave26.md`](docs/native_matching_wave26.md).
 
 Runtime allocation-exception recovery now names the map-authenticated
 `std::__new_handler` global and the sibling-authenticated
@@ -302,7 +310,7 @@ decompiled owners. Evidence is retained in
 
 The current snapshot descends from fork commit `353fa30`, which replaced every
 DOL `auto_*` blob with 121 named Runtime, MSL, MusyX, MetroTRK, and
-support-library owners. The pre-wave-25 `fork/main` tip was `cd3642f`. Neither
+support-library owners. The pre-wave-26 `fork/main` tip was `f69d158`. Neither
 `config/GP6E01/splits.txt` nor `configure.py` contains an `auto_*` owner.
 
 ## Native library recovery
@@ -373,6 +381,10 @@ configured data/BSS bytes.
   and `roulette`. They contribute 89,256 code bytes and 18,336 data/BSS bytes;
   all 172 retained functions and 4,304 target relocations pass the strict
   linked-range gate.
+- Board object management contributes 10,296 exact clean-C code bytes, 96
+  configured BSS/constant bytes, 80 functions, and 334 target relocations.
+  Its small-data global offsets are target-proven rather than inferred from
+  zero-filled section bytes.
 - Seventeen Dolphin SDK owners: `PPCArch`, `OSAlarm`, `OSCache`, `OSContext`,
   `OSInterrupt`, `OSSync`, `OSTime`, `__ppc_eabi_init`, `db`, `mtx`, `mtxvec`,
   `mtx44vec`, `vec`, `quat`, `psmtx`, `ai`, and `THPDec`. Their 48,164 code
@@ -390,7 +402,7 @@ configured data/BSS bytes.
   `synthFlags`, `vs`, and `gWriteBuf`. The address, definition, and target
   relocation ledger is retained in `docs/easy_ports_wave.md`.
 
-The 138 current DOL fallback owners and their causes are exhaustive in the
+The 137 current DOL fallback owners and their causes are exhaustive in the
 two-bucket ledger above. Three REL Runtime variants also remain `NonMatching`;
-they are outside this main-DOL-first taxonomy and are not included in the 137
+they are outside this main-DOL-first taxonomy and are not included in the 136
 C-work/1-assembly-policy remaining counts.
