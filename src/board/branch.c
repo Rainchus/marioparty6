@@ -190,9 +190,9 @@ static BOOL ev_Branch(int playerNo, s16 *masuId, BOOL debugF)
     int linkNum;
     int choice;
     int choiceTime;
+    int padNo;
     s16 masuPlayer;
     int choiceAuto;
-    int padNo;
 
     choiceTime = -1;
     masuPlayer = GwPlayer[playerNo].masuId;
@@ -228,22 +228,22 @@ static BOOL ev_Branch(int playerNo, s16 *masuId, BOOL debugF)
 
         if (CheckFlag(FLAG_BOARD_TUTORIAL)) {
             if (choiceTime < 0) {
-                int tutorialDir = mbTutorialCall(13);
+                i = mbTutorialCall(13);
 
-                if (tutorialDir < 0) {
-                    tutorialDir = 0;
+                if (i < 0) {
+                    i = 0;
                 }
                 choiceAuto = 4;
-                if (tutorialDir & 8) {
+                if (i & 8) {
                     choiceAuto -= 3;
                 }
-                if (tutorialDir & 4) {
+                if (i & 4) {
                     choiceAuto += 3;
                 }
-                if (tutorialDir & 1) {
+                if (i & 1) {
                     choiceAuto--;
                 }
-                if (tutorialDir & 2) {
+                if (i & 2) {
                     choiceAuto++;
                 }
                 dir.x = 64.0f * mbCosDeg(angleTbl[choiceAuto]);

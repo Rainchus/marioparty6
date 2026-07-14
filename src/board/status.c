@@ -323,7 +323,7 @@ static BOOL StatusUpdate(void)
     for(i=0; i<GW_PLAYER_MAX; i++) {
         STATUSWORK *status = &statusWork[i];
         int capsuleNo;
-        if(!GWPartyGet() && i > 0) {
+        if(GWPartyGet() == FALSE && i > 0) {
             for(j=0; j<STATUS_SPR_MAX; j++) {
                 HuSprDispOff(status->gid, j);
             }
@@ -333,7 +333,7 @@ static BOOL StatusUpdate(void)
         GwPlayer[i].rank = mbPlayerRankGet(i);
         HuSprBankSet(status->gid, STATUS_SPRNO_RANK, GwPlayer[i].rank);
         mbSprNumSet(status->gid, STATUS_SPRNO_COIN_NUM, mbPlayerCoinGet(i));
-        if(GWPartyGet()) {
+        if(GWPartyGet() != FALSE) {
             mbSprNumSet(status->gid, STATUS_SPRNO_STAR_NUM, mbPlayerStarGet(i));
         } else {
             mbSprNumSet(status->gid, STATUS_SPRNO_STAR_NUM, mbSingleMgUnlockNumGet());
@@ -365,8 +365,6 @@ static BOOL StatusUpdate(void)
     }
     if(statusMasuWork.offF) {
         if(statusMasuWork.dispF) {
-            int masuNo;
-            int digit10;
             int digit1;
             HuSprGrpPosSet(statusMasuWork.gid, 472.0f, 72.0f);
             if(mbSingleStepGet() <= 1) {
@@ -381,21 +379,21 @@ static BOOL StatusUpdate(void)
                 HuSprDispOff(statusMasuWork.gid, 4);
             }
             HuSprDispOff(statusMasuWork.gid, 5);
-            masuNo = mbSingleStepGet();
-            if(masuNo < 0) {
-                masuNo = 0;
+            i = mbSingleStepGet();
+            if(i < 0) {
+                i = 0;
             }
-            if(masuNo >= mbMasuNumGet()) {
-                masuNo = 0;
+            if(i >= mbMasuNumGet()) {
+                i = 0;
             }
-            digit1 = statusMasuWork.masuNo = masuNo;
-            digit10 = digit1 / 10;
-            if(digit10 > 0) {
+            digit1 = statusMasuWork.masuNo = i;
+            j = digit1 / 10;
+            if(j > 0) {
                 HuSprDispOn(statusMasuWork.gid, 5);
-                HuSprBankSet(statusMasuWork.gid, 5, digit10);
+                HuSprBankSet(statusMasuWork.gid, 5, j);
             }
-            digit1 -= digit10 * 10;
-            if(masuNo > 0 && masuNo <= 5) {
+            digit1 -= j * 10;
+            if(i > 0 && i <= 5) {
                 digit1 += 9;
             }
             HuSprBankSet(statusMasuWork.gid, 6, digit1);

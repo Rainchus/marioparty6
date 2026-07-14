@@ -11,12 +11,12 @@ This is an evidence snapshot, not a completion claim. It was last verified on
 - `cmp orig/GP6E01/sys/main.dol build/GP6E01/main.dol`: byte-identical
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 8.46% code and 26.73% data overall; 42.99% code
-  and 62.62% data in the DOL
-- Matching owners at that build: 256 of 895 overall, 247 of 396 in the DOL,
+- DTK progress at that build: 8.59% code and 26.80% data overall; 43.71% code
+  and 62.80% data in the DOL
+- Matching owners at that build: 257 of 895 overall, 248 of 396 in the DOL,
   and 9 of 499 in the REL modules
-- DOL policy split: 220 matching owners without the assembly exception, 27
-  matching owners admitted under the sibling-authentication exception, 148
+- DOL policy split: 221 matching owners without the assembly exception, 27
+  matching owners admitted under the sibling-authentication exception, 147
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
   awaiting target proof. These four numbers total all 396 DOL owners.
 
@@ -91,9 +91,9 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/__exception.s` (`ASM-GATE-PENDING`) | [Mario Party 4 `src/TRK_MINNOW_DOLPHIN/__exception.s` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/TRK_MINNOW_DOLPHIN/__exception.s), `MatchingFor(USA,PAL)` | M4 authenticates the standalone `.init` exception-vector form and `0x1F34` size, but MP6 starts at a different address and has different vector/padding offsets. M5 has the MP6 bounds but is `NonMatching` with no source. A target-specific reconstruction and full gate are still required. |
 
-#### Bucket 2: `C-not-yet-matched` (148 current fallback owners)
+#### Bucket 2: `C-not-yet-matched` (147 current fallback owners)
 
-Nineteen owners have current source candidates and are tagged `SRC-DIVERGES`.
+Eighteen owners have current source candidates and are tagged `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-14; percentages are raw `.text` scores unless
 otherwise noted.
@@ -116,8 +116,7 @@ otherwise noted.
 | `board/object.c` | 99.754%; 77/80 functions exact. |
 | `board/audio.c` | 99.786%; 42/49 functions exact. |
 | `board/masu.c` | Raw section pairing is 40.144%; mapped-function weighted score is 99.771%, with 89/119 functions exact. |
-| `board/status.c` | 99.925%; 43/44 functions exact. |
-| `board/branch.c` | 99.259%; 16/17 functions exact. |
+| `board/branch.c` | 99.816%; 16/17 functions exact. `ev_Branch` is now target/source `0x8F0`/`0x8F0`; all 19 remaining differences are one `choice`/`choiceTime` register cycle, with no inserted, deleted, or replaced instructions. Whole-owner `.text` is `0x10E0`/`0x10E0` and all 210 relocations match; configured `.data` remains `0x18`/`0x12`. |
 | `board/effect.c` | 59.766%; 1/35 functions exact, target/source text sizes `0x3050`/`0x3074`, plus `.sdata` and `.sdata2` divergence. The restored FastCast header is not its blocker. |
 
 The other 129 owners are tagged `NO-SOURCE`. Each explicit brace group below
@@ -191,11 +190,30 @@ The four flips above are accepted only because their compiled source objects
 are selected exactly once by `configure.py` and the final `ninja`, explicit
 DTK SHA manifest, and original-vs-built `main.dol` comparison all pass.
 
+### Board status recovery and branch evidence
+
+`board/status.c` is now Matching clean C. `StatusUpdate` reuses the existing
+function-scoped `i` and `j` locals for the single-board space-number path and
+uses explicit comparisons around `GWPartyGet`; that source shape produces the
+target register lifetimes and exact `0x718` function. All 44 functions,
+`.text 0x3CB8`, `.rodata 0x18`, `.data 0x3F4`, `.bss 0xD8`, `.sbss 0x8`,
+`.sdata2 0x58`, and 807 relocations match. The old `.data` end at `0x802485A8`
+incorrectly assigned the four-byte linker-alignment gap before
+`board/opening.c` to this owner; the proven owner ends at `0x802485A4`.
+
+`board/branch.c` remains NonMatching. Reusing function-scoped `i` for the
+tutorial result and placing `padNo` before `masuPlayer` removed its stack
+spill, eight-byte size excess, and an unrelated register cycle. The only
+remaining `ev_Branch` differences are 19 operands in the coupled
+`choice`/`choiceTime` `r26`/`r27` assignment. No speculative declaration or
+scope rewrite is accepted without resolving that cycle. Full proof details
+are retained in [`docs/native_matching_wave17.md`](docs/native_matching_wave17.md).
+
 ## Named DOL ownership
 
 The current snapshot descends from fork commit `353fa30`, which replaced every
 DOL `auto_*` blob with 121 named Runtime, MSL, MusyX, MetroTRK, and
-support-library owners. The pre-patch `fork/main` tip is `685f514`. Neither
+support-library owners. The pre-wave `fork/main` tip was `5e23675`. Neither
 `config/GP6E01/splits.txt` nor `configure.py` contains an `auto_*` owner.
 
 ## Native library recovery
@@ -206,7 +224,9 @@ owners that were already `Matching` there. Together they account for 188,368
 code bytes and 46,100 configured data/BSS bytes. The latest consolidated wave
 contributes 52 of those owners, 166,580 code bytes, and 34,860 data/BSS bytes.
 The kerent exception restored by this policy correction is reported
-separately and is deliberately excluded from clean-C totals.
+separately and is deliberately excluded from clean-C totals. The subsequent
+clean-C `board/status.c` recovery adds `0x3CB8` code bytes and `0x544`
+configured data/BSS bytes.
 
 - Nine core MSL owners: `errno`, `arith`, `float`, `s_copysign`, `w_acos`,
   `w_asin`, `w_atan2`, `w_fmod`, and `w_pow`. Seven owners are whole-section
@@ -264,7 +284,7 @@ separately and is deliberately excluded from clean-C totals.
   `synthFlags`, `vs`, and `gWriteBuf`. The address, definition, and target
   relocation ledger is retained in `docs/easy_ports_wave.md`.
 
-The 149 current DOL fallback owners and their causes are exhaustive in the
+The 148 current DOL fallback owners and their causes are exhaustive in the
 two-bucket ledger above. Three REL Runtime variants also remain `NonMatching`;
-they are outside this main-DOL-first taxonomy and are not included in the 148
+they are outside this main-DOL-first taxonomy and are not included in the 147
 C-work/1-assembly-policy remaining counts.

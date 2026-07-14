@@ -1763,7 +1763,7 @@ board/dice.c:
 board/status.c:
 	.text       start:0x8018B238 end:0x8018EEF0
 	.rodata     start:0x8021AC18 end:0x8021AC30
-	.data       start:0x802481B0 end:0x802485A8
+	.data       start:0x802481B0 end:0x802485A4
 	.bss        start:0x802BC2F0 end:0x802BC3C8
 	.sbss       start:0x802C0EA8 end:0x802C0EB0
 	.sdata2     start:0x802C3980 end:0x802C39D8
