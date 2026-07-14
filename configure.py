@@ -278,6 +278,7 @@ cflags_sdk_mic = [
 # Game Speech SDK flags
 cflags_gssdk = [
     *cflags_base,
+    "-fp_contract off",
 ]
 
 config.linker_version = "GC/2.6"
@@ -875,7 +876,7 @@ config.libs = [
             Object(Matching, "gssdk_lib/gsapi/extaudio.c"),
             Object(NonMatching, "gssdk_lib/gsapi/gsapi.c"),
             Object(Matching, "gssdk_lib/gsapi/mathusage.c"),
-            Object(NonMatching, "gssdk_lib/gsapi/wrddata.c"),
+            Object(Matching, "gssdk_lib/gsapi/wrddata.c"),
             Object(NonMatching, "gssdk_lib/asrpho/asrspi.c"),
             Object(NonMatching, "gssdk_lib/asrpho/rec1600/convert.c"),
             Object(NonMatching, "gssdk_lib/asrpho/rec1600/creasp.c"),
@@ -908,7 +909,7 @@ config.libs = [
             Object(NonMatching, "gssdk_lib/asrpho/common/blocks/flblocks/mtx.c"),
             Object(NonMatching, "gssdk_lib/asrpho/common/blocks/flblocks/mtxopt.c"),
             Object(NonMatching, "gssdk_lib/asrpho/common/blocks/flblocks/smoother.c"),
-            Object(NonMatching, "gssdk_lib/asrpho/common/blocks/flblocks/spline.c"),
+            Object(Matching, "gssdk_lib/asrpho/common/blocks/flblocks/spline.c"),
             Object(NonMatching, "gssdk_lib/asrpho/common/blocks/flblocks/specsub.c"),
             Object(NonMatching, "gssdk_lib/asrpho/common/blocks/flblocks/vad.c"),
             Object(NonMatching, "gssdk_lib/asrpho/common/blocks/flblocks/vq1500.c"),
@@ -929,7 +930,7 @@ config.libs = [
             Object(NonMatching, "gssdk_lib/asrpho/common/ctxdata/langdata.c"),
             Object(NonMatching, "gssdk_lib/asrpho/common/tos/mqueue.c"),
             Object(NonMatching, "gssdk_lib/asrpho/common/tos/tinyos.c"),
-            Object(NonMatching, "gssdk_lib/asrpho/common/fastallo/fastallo.c"),
+            Object(Matching, "gssdk_lib/asrpho/common/fastallo/fastallo.c"),
             Object(Matching, "gssdk_lib/common/csspi/csspi.c"),
             Object(Matching, "gssdk_lib/common/safeh/safeh.c"),
             Object(Matching, "gssdk_lib/common/osspi/osspi.c"),
