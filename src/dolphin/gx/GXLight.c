@@ -198,6 +198,36 @@ void GXInitLightColor(GXLightObj* lt_obj, GXColor color)
     *(u32*)&obj->color = *(u32*)&color;
 }
 
+static inline void PushLight(const register GXLightObjInt* lt_obj, register void* dest)
+{
+	register u32 zero, color;
+	register f32 a0_a1, a2_k0, k1_k2;
+	register f32 px_py, pz_dx, dy_dz;
+#ifdef __MWERKS__ // clang-format off
+	asm {
+		lwz     color, 12(lt_obj)
+		xor     zero, zero, zero
+		psq_l   a0_a1, 16(lt_obj), 0, 0
+		psq_l   a2_k0, 24(lt_obj), 0, 0
+		psq_l   k1_k2, 32(lt_obj), 0, 0
+		psq_l   px_py, 40(lt_obj), 0, 0
+		psq_l   pz_dx, 48(lt_obj), 0, 0
+		psq_l   dy_dz, 56(lt_obj), 0, 0
+
+		stw     zero,  0(dest)
+		stw     zero,  0(dest)
+		stw     zero,  0(dest)
+		stw     color, 0(dest)
+		psq_st  a0_a1, 0(dest), 0, 0
+		psq_st  a2_k0, 0(dest), 0, 0
+		psq_st  k1_k2, 0(dest), 0, 0
+		psq_st  px_py, 0(dest), 0, 0
+		psq_st  pz_dx, 0(dest), 0, 0
+		psq_st  dy_dz, 0(dest), 0, 0
+	}
+#endif // clang-format on
+}
+
 void GXLoadLightObjImm(const GXLightObj* lt_obj, GXLightID light)
 {
     u32 addr;
@@ -209,22 +239,7 @@ void GXLoadLightObjImm(const GXLightObj* lt_obj, GXLightID light)
     addr = idx * XF_LIGHT_SIZE + XF_LIGHT_BASE;
     GX_WRITE_U8(0x10);
     GX_WRITE_U32(addr | 0xF0000);
-    GX_WRITE_U32(0);
-    GX_WRITE_U32(0);
-    GX_WRITE_U32(0);
-    GX_WRITE_U32(obj->color);
-    GX_WRITE_F32(obj->a[0]);
-    GX_WRITE_F32(obj->a[1]);
-    GX_WRITE_F32(obj->a[2]);
-    GX_WRITE_F32(obj->k[0]);
-    GX_WRITE_F32(obj->k[1]);
-    GX_WRITE_F32(obj->k[2]);
-    GX_WRITE_F32(obj->lpos[0]);
-    GX_WRITE_F32(obj->lpos[1]);
-    GX_WRITE_F32(obj->lpos[2]);
-    GX_WRITE_F32(obj->ldir[0]);
-    GX_WRITE_F32(obj->ldir[1]);
-    GX_WRITE_F32(obj->ldir[2]);
+    PushLight(obj, (void*)GX_FIFO_ADDR);
     gx->bpSentNot = 1;
 }
 
