@@ -4,5 +4,6 @@
 #include "PowerPC_EABI_Support/MetroTRK/trk.h"
 
 DSError TRKInitializeTarget(void);
+void __TRK_copy_vectors(void);
 
 #endif
