@@ -33,10 +33,6 @@ typedef struct LanguageDataV2 {
     u8 payload[];
 } LanguageDataV2;
 
-typedef struct LanguageData {
-    LanguageDataV2 *data;
-} LanguageData;
-
 typedef struct CodeBookData {
     u32 dimension;
     u32 firstSize;
@@ -45,5 +41,28 @@ typedef struct CodeBookData {
     u32 compressedStart;
     u32 nbrGastone;
 } CodeBookData;
+
+typedef struct LanguageData LanguageData;
+typedef void (*LanguageDataMethod)(void);
+
+struct LanguageData {
+    LanguageDataV2 *data;
+    LanguageDataMethod reserved04[3];
+    u32 (*getNbrCodeBook)(LanguageData *language);
+    LanguageDataMethod reserved14[23];
+    u32 (*getCodeBookDim)(CodeBookData *codeBook);
+    u32 (*getFirstCdbSize)(CodeBookData *codeBook);
+    u32 (*getNbrInSecSearch)(CodeBookData *codeBook);
+    u32 (*getSecondCdbSize)(CodeBookData *codeBook);
+    u32 (*getCompStart)(CodeBookData *codeBook);
+    u32 (*getNbrGastone)(CodeBookData *codeBook);
+    LanguageDataMethod reserved88[7];
+    CodeBookData *(*getpCodeBook)(LanguageData *language, u32 index);
+    LanguageDataMethod reservedA8[16];
+    f32 *(*getpFirstCdb)(CodeBookData *codeBook);
+    u32 *(*getpIndexInSecCdb)(CodeBookData *codeBook);
+    f32 *(*getpSecondCdb)(CodeBookData *codeBook);
+    LanguageDataMethod reservedF4[18];
+};
 
 #endif

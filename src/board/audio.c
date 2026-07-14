@@ -40,7 +40,7 @@ typedef struct MBMusData_s {
 } MBMUSDATA;
 
 typedef struct BoardMusData_s {
-    s32 boardNo;
+    u32 boardNo;
     s32 dayMusId;
     s32 nightMusId;
     BOOL timeF;
@@ -104,6 +104,11 @@ static int musChanId[MB_MUS_CHAN_MAX];
 extern HUPROCESS *mbMainProc;
 extern void mbPlayerPosGet(int playerNo, Vec *pos);
 extern void Hu3D3Dto2D(Vec *src, s16 cameraBit, Vec *dst);
+
+static inline int BoardNoGet(void)
+{
+    return GwSystem.boardNo;
+}
 
 static void MusPlay(void);
 static void MusPlayKill(void);
@@ -200,10 +205,8 @@ void mbMusBoardPlay(void)
     int i;
     int musId = boardMusData[0].dayMusId;
 
-    for (i = 0; (u32)boardMusData[i].boardNo != 0xFFFFFFFF; i++) {
-        u32 boardNo = GwSystem.boardNo;
-
-        if (boardNo == boardMusData[i].boardNo) {
+    for (i = 0; boardMusData[i].boardNo != 0xFFFFFFFF; i++) {
+        if (boardMusData[i].boardNo == BoardNoGet()) {
             if (boardMusData[i].timeF) {
                 if (GwSystem.curTime == FALSE) {
                     musId = boardMusData[i].dayMusId;
@@ -596,10 +599,8 @@ static void MusBoardFade(void)
         int i;
         int musId = boardMusData[0].dayMusId;
 
-        for (i = 0; (u32)boardMusData[i].boardNo != 0xFFFFFFFF; i++) {
-            u32 boardNo = GwSystem.boardNo;
-
-            if (boardNo == boardMusData[i].boardNo) {
+        for (i = 0; boardMusData[i].boardNo != 0xFFFFFFFF; i++) {
+            if (boardMusData[i].boardNo == BoardNoGet()) {
                 if (boardMusData[i].timeF) {
                     if (GwSystem.curTime == FALSE) {
                         musId = boardMusData[i].dayMusId;

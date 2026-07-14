@@ -1,17 +1,8 @@
-#include "types.h"
+#include "gssdk/gsapi.h"
 
 typedef struct ExtAudioState {
     u32 active;
 } ExtAudioState;
-
-typedef s32 (*GSGetSamplesCallback)(void *source, void *samples, u32 *sampleCount);
-
-typedef struct GSAPIState {
-    u8 reserved[0x20];
-    GSGetSamplesCallback getSamples;
-} GSAPIState;
-
-extern GSAPIState gGSAPI;
 
 extern void *heap_Alloc(void *heap, u32 size);
 extern void heap_Free(void *heap, void *ptr);
