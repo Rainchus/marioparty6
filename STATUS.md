@@ -11,14 +11,23 @@ This is an evidence snapshot, not a completion claim. It was last verified on
 - `cmp orig/GP6E01/sys/main.dol build/GP6E01/main.dol`: byte-identical
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 8.81% code and 27.11% data overall; 44.99% code
-  and 63.60% data in the DOL
-- Matching owners at that build: 275 of 895 overall, 266 of 396 in the DOL,
+- DTK progress at that build: 8.83% code and 27.56% data overall; 45.11% code
+  and 64.76% data in the DOL
+- Matching owners at that build: 283 of 895 overall, 274 of 396 in the DOL,
   and 9 of 499 in the REL modules
-- DOL policy split: 234 matching owners without the assembly exception, 32
-  matching owners admitted under the sibling-authentication exception, 129
+- DOL policy split: 242 matching owners without the assembly exception, 32
+  matching owners admitted under the sibling-authentication exception, 121
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
   awaiting target proof. These four numbers total all 396 DOL owners.
+
+The current build also corrects the Game Speech SDK library from the global
+GC/2.6 default to `GC/1.2.5n`. GC/2.6 produced systematic prologue and
+indirect-call instruction divergence in target-led probes; `GC/1.2.5n`
+reproduces the retained code and enabled six clean-C owner promotions:
+`gsapi/sid/sid.c`, `gsapi/extaudio.c`, `gsapi/mathusage.c`,
+`common/csspi/csspi.c`, `common/osspi/osspi.c`, and
+`common/safeh/safeh.c`. This decision is based on emitted bytes and the final
+container proof, not synthesized `.comment` metadata.
 
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
@@ -97,7 +106,7 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/__exception.s` (`ASM-GATE-PENDING`) | [Mario Party 4 `src/TRK_MINNOW_DOLPHIN/__exception.s` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/TRK_MINNOW_DOLPHIN/__exception.s), `MatchingFor(USA,PAL)` | M4 authenticates the standalone `.init` exception-vector form and `0x1F34` size, but MP6 starts at a different address and has different vector/padding offsets. M5 has the MP6 bounds but is `NonMatching` with no source. A target-specific reconstruction and full gate are still required. |
 
-#### Bucket 2: `C-not-yet-matched` (129 current fallback owners)
+#### Bucket 2: `C-not-yet-matched` (121 current fallback owners)
 
 Twenty-two owners have current source candidates and are tagged `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
@@ -129,20 +138,18 @@ otherwise noted.
 | `board/branch.c` | 99.816%; 16/17 functions exact. `ev_Branch` is now target/source `0x8F0`/`0x8F0`; all 19 remaining differences are one `choice`/`choiceTime` register cycle, with no inserted, deleted, or replaced instructions. Whole-owner `.text` is `0x10E0`/`0x10E0` and all 210 relocations match; configured `.data` remains `0x18`/`0x12`. |
 | `board/effect.c` | 59.766%; 1/35 functions exact, target/source text sizes `0x3050`/`0x3074`, plus `.sdata` and `.sdata2` divergence. The restored FastCast header is not its blocker. |
 
-The other 107 owners are tagged `NO-SOURCE`. Each explicit brace group below
+The other 99 owners are tagged `NO-SOURCE`. Each explicit brace group below
 expands to the named owner files; the count audit is
-`3 + 1 + 16 + 65 + 22 = 107`.
+`3 + 1 + 14 + 59 + 22 = 99`.
 
 - `MSL_C.PPCEABI.bare.H/` (3): `alloc.c`, `qsort.c`, and `e_exp.c`.
 - `TRK_MINNOW_DOLPHIN/` C owner (1): `targimpl.c`.
-- `musyx/runtime/` (16): `seq.c`, `synth.c`, `stream.c`, `synthdata.c`,
+- `musyx/runtime/` (14): `seq.c`, `synth.c`, `stream.c`, `synthdata.c`,
   `synthmacros.c`, `synthvoice.c`, `s_data.c`, `hw_dspctrl.c`, `snd3d.c`,
-  `snd_init.c`, `snd_midictrl.c`, `hardware.c`,
-  `dsp_import.c`, `hw_aramdma.c`, `hw_dolphin.c`, and
+  `snd_midictrl.c`, `hardware.c`, `dsp_import.c`, `hw_aramdma.c`, and
   `StdReverb/reverb.c`.
-- `gssdk_lib/` (65):
-  - `gsapi/sid/sid.c` and
-    `gsapi/{callbacks,ctxfuncs,extaudio,gsapi,mathusage,wrddata}.c`;
+- `gssdk_lib/` (59):
+  - `gsapi/{callbacks,ctxfuncs,gsapi,wrddata}.c`;
   - `asrpho/asrspi.c` and
     `asrpho/rec1600/{convert,creasp,creaspch,creaspt,creatree,crsptrch,ctrl,initial,spi1600,train,userword}.c`;
   - `asrpho/common/blocks/{delaybl,dpgenuw,dpscruw,exev_dp,fft_maye,fftmod,isoword,nbestdp,pitchdp,pitchwin,stacker,undersam}.c`;
@@ -151,8 +158,7 @@ expands to the named owner files; the count audit is
   - `asrpho/common/ctxdata/{ctxdata,langdata}.c`,
     `asrpho/common/tos/{mqueue,tinyos}.c`, and
     `asrpho/common/fastallo/fastallo.c`;
-  - `common/csspi/csspi.c`, `common/safeh/safeh.c`,
-    `common/osspi/osspi.c`, and `common/rsrc/rsrc.c`.
+  - `common/rsrc/rsrc.c`.
 - `board/` (22): `math.c`, `snpc.c`, `scroll.c`, `coin.c`, `star.c`,
   `dice.c`, `opening.c`, `tutorial.c`, `capselect.c`, `capmove.c`,
   `capthrow.c`, `captrap.c`, `capspecial.c`, `capsule.c`, `capevent.c`,

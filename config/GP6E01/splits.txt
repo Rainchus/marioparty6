@@ -1344,7 +1344,7 @@ gssdk_lib/gsapi/gsapi.c:
 
 gssdk_lib/gsapi/mathusage.c:
 	.text       start:0x80106C74 end:0x80106CB0
-	.sdata2     start:0x802C28D0 end:0x802C28D8
+	.sdata2     start:0x802C28D0 end:0x802C28D4
 
 gssdk_lib/gsapi/wrddata.c:
 	.text       start:0x80106CB0 end:0x80106DC8
