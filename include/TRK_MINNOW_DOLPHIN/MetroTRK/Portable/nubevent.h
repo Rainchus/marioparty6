@@ -3,15 +3,6 @@
 
 #include "PowerPC_EABI_Support/MetroTRK/trk.h"
 
-typedef enum NubEventType {
-    NUBEVENT_Null = 0,
-    NUBEVENT_Shutdown = 1,
-    NUBEVENT_Request = 2,
-    NUBEVENT_Breakpoint = 3,
-    NUBEVENT_Exception = 4,
-    NUBEVENT_Support = 5,
-} NubEventType;
-
 typedef u32 NubEventID;
 
 typedef struct TRKEvent {
@@ -19,6 +10,16 @@ typedef struct TRKEvent {
     NubEventID eventID;
     MessageBufferID msgBufID;
 } TRKEvent;
+
+typedef struct TRKEventQueue {
+    int mutex;
+    int count;
+    int next;
+    TRKEvent events[2];
+    NubEventID eventID;
+} TRKEventQueue;
+
+extern TRKEventQueue gTRKEventQueue;
 
 BOOL TRKGetNextEvent(TRKEvent* event);
 void TRKDestructEvent(TRKEvent* event);

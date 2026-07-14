@@ -1,120 +1,166 @@
 #ifndef _DOLPHIN_OSFASTCAST
 #define _DOLPHIN_OSFASTCAST
 
-#include <dolphin/types.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void OSInitFastCast(void);
+#define OS_GQR_F32 0x0000
+#define OS_GQR_U8 0x0004
+#define OS_GQR_U16 0x0005
+#define OS_GQR_S8 0x0006
+#define OS_GQR_S16 0x0007
 
-static s16 __OSf32tos16(f32 inF)
+#define OS_FASTCAST_U8 2
+#define OS_FASTCAST_U16 3
+#define OS_FASTCAST_S8 4
+#define OS_FASTCAST_S16 5
+// clang-format off
+static inline void OSInitFastCast(void) {
+#ifdef __MWERKS__
+  asm
+  {
+        li      r3, OS_GQR_U8
+        oris    r3, r3, OS_GQR_U8
+        mtspr   GQR2, r3
+
+        li      r3, OS_GQR_U16
+        oris    r3, r3, OS_GQR_U16
+        mtspr   GQR3, r3
+
+        li      r3, OS_GQR_S8
+        oris    r3, r3, OS_GQR_S8
+        mtspr   GQR4, r3
+
+        li      r3, OS_GQR_S16
+        oris    r3, r3, OS_GQR_S16
+        mtspr   GQR5, r3
+  }
+#else
+
+#endif
+}
+// clang-format off
+
+static inline s16 __OSf32tos16(register f32 inF)
 {
-    if (inF != inF || inF >= 32767.0f) {
-        return 32767;
+	u32 tmp;
+	register u32* tmpPtr = &tmp;
+	register s16 out;
+	// clang-format off
+    asm {
+        psq_st inF, 0(tmpPtr), 0x1, OS_FASTCAST_S16
+        lha out, 0(tmpPtr)
     }
-    if (inF <= -32768.0f) {
-        return -32768;
+  // clang-format on
+
+  return out;
+}
+
+static inline void OSf32tos16(f32 *f, s16 *out) { *out = __OSf32tos16(*f); }
+
+static inline u8 __OSf32tou8(register f32 inF)
+{
+  u32 tmp;
+  register u32 *tmpPtr = &tmp;
+  register u8 out;
+  // clang-format off
+    asm {
+        psq_st inF, 0(tmpPtr), 0x1, OS_FASTCAST_U8
+        lbz out, 0(tmpPtr)
     }
-    return (s16)inF;
+  // clang-format on
+
+  return out;
 }
 
-static void OSf32tos16(f32* in, s16* out)
-{
-    *out = __OSf32tos16(*in);
-}
+static inline void OSf32tou8(f32 *f, u8 *out) { *out = __OSf32tou8(*f); }
 
-static u8 __OSf32tou8(f32 inF)
+static inline s8 __OSf32tos8(register f32 inF)
 {
-    if (inF != inF || inF >= 255.0f) {
-        return 255;
+  u32 tmp;
+  register u32 *tmpPtr = &tmp;
+  register s8 out;
+  // clang-format off
+    asm {
+        psq_st inF, 0(tmpPtr), 0x1, OS_FASTCAST_S8
+        lbz out, 0(tmpPtr)
+		extsb out, out //HACK to match fast cast inlines
     }
-    if (inF <= 0.0f) {
-        return 0;
+  // clang-format on
+
+  return out;
+}
+
+static inline void OSf32tos8(f32 *f, s8 *out) { *out = __OSf32tos8(*f); }
+
+static inline u16 __OSf32tou16(register f32 inF)
+{
+  u32 tmp;
+  register u32 *tmpPtr = &tmp;
+  register u16 out;
+  // clang-format off
+    asm {
+        psq_st inF, 0(tmpPtr), 0x1, OS_FASTCAST_U16
+        lbz out, 0(tmpPtr)
     }
-    return (u8)inF;
+  // clang-format on
+
+  return out;
 }
 
-static void OSf32tou8(f32* in, u8* out)
-{
-    *out = __OSf32tou8(*in);
-}
+static inline void OSf32tou16(f32 *f, u16 *out) { *out = __OSf32tou16(*f); }
 
-static s8 __OSf32tos8(f32 inF)
-{
-    if (inF != inF || inF >= 127.0f) {
-        return 127;
+static inline float __OSs8tof32(register const s8* arg) {
+    register float ret;
+
+    asm {
+        psq_l ret, 0(arg), 1, OS_FASTCAST_S8
     }
-    if (inF <= -128.0f) {
-        return -128;
+
+    return ret;
+}
+
+static inline void OSs8tof32(const s8* in, float* out) { *out = __OSs8tof32(in); }
+
+static inline float __OSs16tof32(register const s16* arg) {
+    register float ret;
+
+    asm {
+        psq_l ret, 0(arg), 1, OS_FASTCAST_S16
     }
-    return (s8)inF;
+
+    return ret;
 }
 
-static void OSf32tos8(f32* in, s8* out)
-{
-    *out = __OSf32tos8(*in);
-}
+static inline void OSs16tof32(const s16* in, float* out) { *out = __OSs16tof32(in); }
 
-static u16 __OSf32tou16(f32 inF)
-{
-    if (inF != inF || inF >= 65535.0f) {
-        return 65535;
+static inline float __OSu8tof32(register const u8* arg) {
+    register float ret;
+
+    asm {
+        psq_l ret, 0(arg), 1, OS_FASTCAST_U8
     }
-    if (inF <= 0.0f) {
-        return 0;
+
+    return ret;
+}
+
+static inline void OSu8tof32(const u8* in, float* out) { *out = __OSu8tof32(in); }
+
+static inline float __OSu16tof32(register const u16* arg) {
+    register float ret;
+
+    asm {
+        psq_l ret, 0(arg), 1, OS_FASTCAST_U16
     }
-    return (u16)inF;
+
+    return ret;
 }
 
-static void OSf32tou16(f32* in, u16* out)
-{
-    *out = __OSf32tou16(*in);
-}
-
-static f32 __OSs8tof32(const s8* in)
-{
-    return (f32)*in;
-}
-
-static void OSs8tof32(const s8* in, f32* out)
-{
-    *out = __OSs8tof32(in);
-}
-
-static f32 __OSs16tof32(const s16* in)
-{
-    return (f32)*in;
-}
-
-static void OSs16tof32(const s16* in, f32* out)
-{
-    *out = __OSs16tof32(in);
-}
-
-static f32 __OSu8tof32(const u8* in)
-{
-    return (f32)*in;
-}
-
-static void OSu8tof32(const u8* in, f32* out)
-{
-    *out = __OSu8tof32(in);
-}
-
-static f32 __OSu16tof32(const u16* in)
-{
-    return (f32)*in;
-}
-
-static void OSu16tof32(const u16* in, f32* out)
-{
-    *out = __OSu16tof32(in);
-}
+static inline void OSu16tof32(const u16* in, float* out) { *out = __OSu16tof32(in); }
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif // _DOLPHIN_OSFASTCAST

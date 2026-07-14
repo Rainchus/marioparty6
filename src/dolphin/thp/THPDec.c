@@ -25,15 +25,6 @@ static BOOL __THPInitFlag = FALSE;
 
 #define THPROUNDUP(a, b) ((((s32)(a)) + ((s32)(b)-1L)) / ((s32)(b)))
 
-/* Unresolved here; the extracted original object replaces this nonmatching translation unit. */
-void __THPGQRSetup(void);
-void __THPGQRRestore(void);
-void __THPInverseDCTNoYPos(THPCoeff *in, u32 xPos);
-void __THPInverseDCTY8(THPCoeff *in, u32 xPos);
-void __THPHuffDecodeDCTCompY(THPFileInfo *info, THPCoeff *block);
-void __THPHuffDecodeDCTCompU(THPFileInfo *info, THPCoeff *block);
-void __THPHuffDecodeDCTCompV(THPFileInfo *info, THPCoeff *block);
-
 s32 THPVideoDecode(void *file, void *tileY, void *tileU, void *tileV, void *work)
 {
     u8 all_done, status;
@@ -409,6 +400,46 @@ static void __THPRestartDefinition(void)
     __THPInfo->currMCU = __THPInfo->nMCU;
 }
 
+static inline void __THPGQRSetup(void)
+{
+    register u32 tmp1, tmp2;
+
+    // clang-format off
+    asm {
+        mfspr   tmp1, GQR5;
+        mfspr   tmp2, GQR6;
+    }
+    // clang-format on
+
+    __THPOldGQR5 = tmp1;
+    __THPOldGQR6 = tmp2;
+
+    // clang-format off
+	asm {
+        li      r3, 0x0007
+        oris    r3, r3, 0x0007
+        mtspr   GQR5, r3
+        li      r3, 0x3D04
+        oris    r3, r3, 0x3D04
+        mtspr   GQR6, r3
+    }
+    // clang-format on
+}
+
+static inline void __THPGQRRestore(void)
+{
+    register u32 tmp1, tmp2;
+    tmp1 = __THPOldGQR5;
+    tmp2 = __THPOldGQR6;
+
+    // clang-format off
+	asm {
+        mtspr   GQR5, tmp1;
+        mtspr   GQR6, tmp2;
+    }
+    // clang-format on
+}
+
 void __THPPrepBitStream(void)
 {
     u32 *ptr;
@@ -503,6 +534,623 @@ static void __THPDecompressYUV(void *tileY, void *tileU, void *tileV)
     __THPGQRRestore();
 }
 
+inline void __THPInverseDCTNoYPos(register THPCoeff *in, register u32 xPos)
+{
+    register f32 *q, *ws;
+    register f32 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9;
+    register f32 tmp10, tmp11, tmp12, tmp13;
+    register f32 tmp20, tmp21, tmp22, tmp23;
+    register f32 cc4 = 1.414213562F;
+    register f32 cc2 = 1.847759065F;
+    register f32 cc2c6s = 1.082392200F;
+    register f32 cc2c6a = -2.613125930F;
+    register f32 bias = 1024.0F;
+    q = Gq;
+    ws = &__THPIDCTWorkspace[0] - 2;
+
+    {
+        register u32 itmp0, itmp1, itmp2, itmp3;
+        // clang-format off
+        asm {
+            li          itmp2, 8
+            mtctr       itmp2
+
+        _loopHead0:
+            psq_l       tmp10, 0(in), 0, 5
+            psq_l       tmp11, 0(q), 0, 0
+            lwz         itmp0, 12(in)
+            lwz         itmp3, 8(in)
+            ps_mul      tmp10, tmp10, tmp11
+            lwz         itmp1, 4(in)
+            lhz         itmp2, 2(in)
+            or.         itmp0, itmp0, itmp3
+
+        _loopHead1:
+            cmpwi       itmp0, 0
+            bne         _regularIDCT
+            ps_merge00  tmp0, tmp10, tmp10
+            cmpwi       itmp1, 0
+            psq_st      tmp0, 8(ws), 0, 0
+            bne         _halfIDCT
+            psq_st      tmp0, 16(ws), 0, 0
+            cmpwi       itmp2, 0
+            psq_st      tmp0, 24(ws), 0, 0
+            bne         _quarterIDCT
+            addi        q, q, 8*sizeof(f32)
+            psq_stu     tmp0, 32(ws), 0, 0
+            addi        in, in, 8*sizeof(THPCoeff)
+            bdnz        _loopHead0
+            b           _loopEnd
+
+        _quarterIDCT:
+            addi        in, in, 8*sizeof(THPCoeff)
+            ps_msub     tmp2, tmp10, cc2, tmp10
+            addi        q, q, 8*sizeof(f32)
+            ps_merge00  tmp9, tmp10, tmp10
+            lwz         itmp1, 4(in)
+            ps_sub      tmp1, cc2, cc2c6s
+            ps_msub     tmp3, tmp10, cc4, tmp2
+            lhz         itmp2, 2(in)
+            ps_merge11  tmp5, tmp10, tmp2
+            psq_l       tmp11, 0(q), 0, 0
+            ps_nmsub    tmp4, tmp10, tmp1, tmp3
+            ps_add      tmp7, tmp9, tmp5
+            psq_l       tmp10, 0(in), 0, 5
+            ps_merge11  tmp6, tmp3, tmp4
+            ps_sub      tmp5, tmp9, tmp5
+            lwz         itmp0, 12(in)
+            ps_add      tmp8, tmp9, tmp6
+            lwz         itmp3, 8(in)
+            ps_sub      tmp6, tmp9, tmp6
+            psq_stu     tmp7, 8(ws), 0, 0
+            ps_merge10  tmp6, tmp6, tmp6
+            psq_stu     tmp8, 8(ws), 0, 0
+            ps_merge10  tmp5, tmp5, tmp5
+            or          itmp0, itmp0, itmp3
+            psq_stu     tmp6, 8(ws), 0, 0
+            ps_mul      tmp10, tmp10, tmp11
+            psq_stu     tmp5, 8(ws), 0, 0
+            bdnz        _loopHead1
+            b           _loopEnd
+
+        _halfIDCT:
+            psq_l       tmp1, 4(in), 0, 5
+            psq_l       tmp9, 8(q), 0, 0
+            addi        in, in, 8*sizeof(THPCoeff)
+            ps_mul      tmp1, tmp1, tmp9
+            addi        q, q, 8*sizeof(f32)
+            ps_sub      tmp3, tmp10, tmp1
+            ps_add      tmp2, tmp10, tmp1
+            lwz         itmp0, 12(in)
+            ps_madd     tmp4, tmp1, cc4, tmp3
+            ps_nmsub    tmp5, tmp1, cc4, tmp2
+            ps_mul      tmp8, tmp3, cc2
+            ps_merge00  tmp4, tmp2, tmp4
+            lwz         itmp3, 8(in)
+            ps_nmsub    tmp6, tmp1, cc2c6a, tmp8
+            ps_merge00  tmp5, tmp5, tmp3
+            lwz         itmp1, 4(in)
+            ps_sub      tmp6, tmp6, tmp2
+            ps_msub    tmp7, tmp10, cc2c6s, tmp8
+            lhz         itmp2, 2(in)
+            ps_merge11  tmp2, tmp2, tmp6
+            ps_msub     tmp8, tmp3, cc4, tmp6
+            psq_l       tmp10, 0(in), 0, 5
+            ps_add      tmp9, tmp4, tmp2
+            ps_add      tmp7, tmp8, tmp7
+            psq_l       tmp11, 0(q), 0, 0
+            ps_merge11  tmp3, tmp8, tmp7
+            ps_sub      tmp4, tmp4, tmp2
+            psq_stu     tmp9, 8(ws), 0, 0
+            ps_add      tmp0, tmp5, tmp3
+            ps_sub      tmp1, tmp5, tmp3
+            or          itmp0, itmp0, itmp3
+            psq_stu     tmp0, 8(ws), 0, 0
+            ps_merge10  tmp1, tmp1, tmp1
+            ps_merge10  tmp4, tmp4, tmp4
+            psq_stu     tmp1, 8(ws), 0, 0
+            ps_mul      tmp10, tmp10, tmp11
+            psq_stu     tmp4, 8(ws), 0, 0
+            bdnz        _loopHead1
+            b           _loopEnd
+
+        _regularIDCT:
+            psq_l       tmp9, 4(in), 0, 5
+            psq_l       tmp5, 8(q), 0, 0
+            ps_mul      tmp9, tmp9, tmp5
+            psq_l       tmp2, 8(in), 0, 5
+            psq_l       tmp6, 16(q), 0, 0
+            ps_merge01  tmp0, tmp10, tmp9
+            psq_l       tmp3, 12(in), 0, 5
+            ps_merge01  tmp1, tmp9, tmp10
+            psq_l       tmp7, 24(q), 0, 0
+            addi        in, in, 8*sizeof(THPCoeff)
+            ps_madd     tmp4, tmp2, tmp6, tmp0
+            ps_nmsub    tmp5, tmp2, tmp6, tmp0
+            ps_madd     tmp6, tmp3, tmp7, tmp1
+            ps_nmsub    tmp7, tmp3, tmp7, tmp1
+            addi        q, q, 8*sizeof(f32)
+            ps_add      tmp0, tmp4, tmp6
+            ps_sub      tmp3, tmp4, tmp6
+            ps_msub     tmp2, tmp7, cc4, tmp6
+            lwz         itmp0, 12(in)
+            ps_sub      tmp8, tmp7, tmp5
+            ps_add      tmp1, tmp5, tmp2
+            ps_sub      tmp2, tmp5, tmp2
+            ps_mul      tmp8, tmp8, cc2
+            lwz         itmp3, 8(in)
+            ps_merge00  tmp1, tmp0, tmp1
+            ps_nmsub    tmp6, tmp5, cc2c6a, tmp8
+            ps_msub     tmp4, tmp7, cc2c6s, tmp8
+            lwz         itmp1, 4(in)
+            ps_sub      tmp6, tmp6, tmp0
+            ps_merge00  tmp2, tmp2, tmp3
+            lhz         itmp2, 2(in)
+            ps_madd     tmp5, tmp3, cc4, tmp6
+            ps_merge11  tmp7, tmp0, tmp6
+            psq_l       tmp10, 0(in), 0, 5
+            ps_sub      tmp4, tmp4, tmp5
+            ps_add      tmp3, tmp1, tmp7
+            psq_l       tmp11, 0(q), 0, 0
+            ps_merge11  tmp4, tmp5, tmp4
+            ps_sub      tmp0, tmp1, tmp7
+            ps_mul      tmp10, tmp10, tmp11
+            ps_add      tmp5, tmp2, tmp4
+            ps_sub      tmp6, tmp2, tmp4
+            ps_merge10  tmp5, tmp5, tmp5
+            psq_stu     tmp3, 8(ws), 0, 0
+            ps_merge10  tmp0, tmp0, tmp0
+            psq_stu     tmp6, 8(ws), 0, 0
+            psq_stu     tmp5, 8(ws), 0, 0
+            or          itmp0, itmp0, itmp3
+            psq_stu     tmp0, 8(ws), 0, 0
+            bdnz        _loopHead1
+
+        _loopEnd:
+
+        }
+        // clang-format on
+    }
+
+    ws = &__THPIDCTWorkspace[0];
+
+    {
+        register THPSample *obase = Gbase;
+        register u32 wid = Gwid;
+
+        register u32 itmp0, off0, off1;
+        register THPSample *out0, *out1;
+
+        // clang-format off
+		asm {
+            psq_l       tmp10, 8*0*sizeof(f32)(ws), 0, 0
+            slwi        xPos, xPos, 2
+            psq_l       tmp11, 8*4*sizeof(f32)(ws), 0, 0
+            slwi        off1, wid, 2
+            psq_l       tmp12, 8*2*sizeof(f32)(ws), 0, 0
+            mr         off0, xPos
+            ps_add      tmp6, tmp10, tmp11
+            psq_l       tmp13, 8*6*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp8, tmp10, tmp11
+            add         off1, off0, off1
+            ps_add      tmp6, tmp6, bias
+            li      itmp0, 3
+            ps_add      tmp7, tmp12, tmp13
+            add         out0, obase, off0
+            ps_sub      tmp9, tmp12, tmp13
+            ps_add      tmp0, tmp6, tmp7
+            add         out1, obase, off1
+            ps_add      tmp8, tmp8, bias
+            mtctr   itmp0
+
+        _loopHead10:
+            psq_l       tmp4, 8*1*sizeof(f32)(ws), 0, 0
+            ps_msub     tmp9, tmp9, cc4, tmp7
+            psq_l       tmp5, 8*3*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp3, tmp6, tmp7
+            ps_add      tmp1, tmp8, tmp9
+            psq_l       tmp6, 8*5*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp2, tmp8, tmp9
+            psq_l       tmp7, 8*7*sizeof(f32)(ws), 0, 0
+            ps_add      tmp8, tmp6, tmp5
+            ps_sub      tmp6, tmp6, tmp5
+            addi        ws, ws, 2*sizeof(f32)
+            ps_add      tmp9, tmp4, tmp7
+            ps_sub      tmp4, tmp4, tmp7
+            psq_l       tmp10, 8*0*sizeof(f32)(ws), 0, 0
+            ps_add      tmp7, tmp9, tmp8
+            ps_sub      tmp5, tmp9, tmp8
+            ps_add      tmp8, tmp6, tmp4
+            psq_l       tmp11, 8*4*sizeof(f32)(ws), 0, 0
+            ps_add      tmp9, tmp0, tmp7
+            ps_mul      tmp8, tmp8, cc2
+            psq_l       tmp12, 8*2*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp23, tmp0, tmp7
+            ps_madd     tmp6, tmp6, cc2c6a, tmp8
+            psq_l       tmp13, 8*6*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp6, tmp6, tmp7
+            addi        off0, off0, 2*sizeof(THPSample)
+            psq_st      tmp9, 0(out0), 0, 6
+            ps_msub     tmp4, tmp4, cc2c6s, tmp8
+            ps_add      tmp9, tmp1, tmp6
+            ps_msub     tmp5, tmp5, cc4, tmp6
+            ps_sub      tmp22, tmp1, tmp6
+            psq_st      tmp9, 8(out0), 0, 6
+            ps_add      tmp8, tmp2, tmp5
+            ps_add      tmp4, tmp4, tmp5
+            psq_st      tmp8, 16(out0), 0, 6
+            addi        off1, off1, 2*sizeof(THPSample)
+            ps_sub      tmp9, tmp3, tmp4
+            ps_add      tmp20, tmp3, tmp4
+            psq_st      tmp9, 24(out0), 0, 6
+            ps_sub      tmp21, tmp2, tmp5
+            ps_add      tmp6, tmp10, tmp11
+            psq_st      tmp20, 0(out1), 0, 6
+            ps_sub      tmp8, tmp10, tmp11
+            ps_add      tmp6, tmp6, bias
+            psq_st      tmp21, 8(out1), 0, 6
+            ps_add      tmp7, tmp12, tmp13
+            ps_sub      tmp9, tmp12, tmp13
+            psq_st      tmp22, 16(out1), 0, 6
+            add         out0, obase, off0
+            ps_add      tmp0, tmp6, tmp7
+            psq_st      tmp23, 24(out1), 0, 6
+            ps_add      tmp8, tmp8, bias
+            add         out1, obase, off1
+            bdnz        _loopHead10
+            psq_l       tmp4, 8*1*sizeof(f32)(ws), 0, 0
+            ps_msub     tmp9, tmp9, cc4, tmp7
+            psq_l       tmp5, 8*3*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp3, tmp6, tmp7
+            ps_add      tmp1, tmp8, tmp9
+            psq_l       tmp6, 8*5*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp2, tmp8, tmp9
+            psq_l       tmp7, 8*7*sizeof(f32)(ws), 0, 0
+            ps_add      tmp8, tmp6, tmp5
+            ps_sub      tmp6, tmp6, tmp5
+            ps_add      tmp9, tmp4, tmp7
+            ps_sub      tmp4, tmp4, tmp7
+            ps_add      tmp7, tmp9, tmp8
+            ps_sub      tmp5, tmp9, tmp8
+            ps_add      tmp8, tmp6, tmp4
+            ps_add      tmp9, tmp0, tmp7
+            ps_mul      tmp8, tmp8, cc2
+            ps_sub      tmp23, tmp0, tmp7
+            ps_madd     tmp6, tmp6, cc2c6a, tmp8
+            psq_st      tmp9, 0(out0), 0, 6
+            ps_sub      tmp6, tmp6, tmp7
+            ps_msub     tmp4, tmp4, cc2c6s, tmp8
+            psq_st      tmp23, 24(out1), 0, 6
+            ps_add      tmp9, tmp1, tmp6
+            ps_msub     tmp5, tmp5, cc4, tmp6
+            ps_sub      tmp22, tmp1, tmp6
+            psq_st      tmp9, 8(out0), 0, 6
+            ps_add      tmp8, tmp2, tmp5
+            ps_add      tmp4, tmp4, tmp5
+            psq_st      tmp22, 16(out1), 0, 6
+            psq_st      tmp8, 16(out0), 0, 6
+            ps_sub      tmp9, tmp3, tmp4
+            ps_add      tmp20, tmp3, tmp4
+            psq_st      tmp9, 24(out0), 0, 6
+            ps_sub      tmp21, tmp2, tmp5
+            psq_st      tmp20, 0(out1), 0, 6
+            psq_st      tmp21, 8(out1), 0, 6
+        }
+        // clang-format on
+    }
+}
+
+inline void __THPInverseDCTY8(register THPCoeff *in, register u32 xPos)
+{
+    register f32 *q, *ws;
+    register f32 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9;
+    register f32 tmp10, tmp11, tmp12, tmp13;
+    register f32 tmp20, tmp21, tmp22, tmp23;
+    register f32 cc4 = 1.414213562F;
+    register f32 cc2 = 1.847759065F;
+    register f32 cc2c6s = 1.082392200F;
+    register f32 cc2c6a = -2.613125930F;
+    register f32 bias = 1024.0F;
+
+    q = Gq;
+    ws = &__THPIDCTWorkspace[0] - 2;
+
+    {
+        register u32 itmp0, itmp1, itmp2, itmp3;
+
+        // clang-format off
+		asm {
+            li          itmp2, 8
+            mtctr       itmp2
+
+        _loopHead0:
+            psq_l       tmp10, 0(in), 0, 5
+            psq_l       tmp11, 0(q), 0, 0
+            lwz         itmp0, 12(in)
+            lwz         itmp3, 8(in)
+            ps_mul      tmp10, tmp10, tmp11
+            lwz         itmp1, 4(in)
+            lhz         itmp2, 2(in)
+            or          itmp0, itmp0, itmp3
+
+        _loopHead1:
+            cmpwi       itmp0, 0
+            bne         _regularIDCT
+            ps_merge00  tmp0, tmp10, tmp10
+            cmpwi       itmp1, 0
+            psq_st      tmp0, 8(ws), 0, 0
+            bne         _halfIDCT
+            psq_st      tmp0, 16(ws), 0, 0
+            cmpwi       itmp2, 0
+            psq_st      tmp0, 24(ws), 0, 0
+            bne         _quarterIDCT
+            addi        q, q, 8*sizeof(f32)
+            psq_stu     tmp0, 32(ws), 0, 0
+            addi        in, in, 8*sizeof(THPCoeff)
+            bdnz        _loopHead0
+            b           _loopEnd
+
+        _quarterIDCT:
+            ps_msub     tmp2, tmp10, cc2, tmp10
+            addi        in, in, 8*sizeof(THPCoeff)
+            ps_merge00  tmp9, tmp10, tmp10
+            addi        q, q, 8*sizeof(f32)
+            ps_sub      tmp1, cc2, cc2c6s
+            lwz         itmp1, 4(in)
+            ps_msub     tmp3, tmp10, cc4, tmp2
+            lhz         itmp2, 2(in)
+            ps_merge11  tmp5, tmp10, tmp2
+            psq_l       tmp11, 0(q), 0, 0
+            ps_nmsub    tmp4, tmp10, tmp1, tmp3
+            ps_add      tmp7, tmp9, tmp5
+            psq_l       tmp10, 0(in), 0, 5
+            ps_merge11  tmp6, tmp3, tmp4
+            ps_sub      tmp5, tmp9, tmp5
+            lwz         itmp0, 12(in)
+            ps_add      tmp8, tmp9, tmp6
+            lwz         itmp3, 8(in)
+            ps_sub      tmp6, tmp9, tmp6
+            psq_stu     tmp7, 8(ws), 0, 0
+            ps_merge10  tmp6, tmp6, tmp6
+            psq_stu     tmp8, 8(ws), 0, 0
+            ps_merge10  tmp5, tmp5, tmp5
+            or          itmp0, itmp0, itmp3
+            psq_stu     tmp6, 8(ws), 0, 0
+            ps_mul      tmp10, tmp10, tmp11
+            psq_stu     tmp5, 8(ws), 0, 0
+            bdnz        _loopHead1
+            b           _loopEnd
+
+        _halfIDCT:
+            psq_l       tmp1, 4(in), 0, 5
+            psq_l       tmp9, 8(q), 0, 0
+            addi        in, in, 8*sizeof(THPCoeff)
+            ps_mul      tmp1, tmp1, tmp9
+            addi        q, q, 8*sizeof(f32)
+            ps_sub      tmp3, tmp10, tmp1
+            ps_add      tmp2, tmp10, tmp1
+            lwz         itmp0, 12(in)
+            ps_madd     tmp4, tmp1, cc4, tmp3
+            ps_nmsub    tmp5, tmp1, cc4, tmp2
+            ps_mul      tmp8, tmp3, cc2
+            ps_merge00  tmp4, tmp2, tmp4
+            lwz         itmp3, 8(in)
+            ps_nmsub    tmp6, tmp1, cc2c6a, tmp8
+            ps_merge00  tmp5, tmp5, tmp3
+            lwz         itmp1, 4(in)
+            ps_sub      tmp6, tmp6, tmp2
+            ps_msub    tmp7, tmp10, cc2c6s, tmp8
+            lhz         itmp2, 2(in)
+            ps_merge11  tmp2, tmp2, tmp6
+            ps_msub     tmp8, tmp3, cc4, tmp6
+            psq_l       tmp10, 0(in), 0, 5
+            ps_add      tmp9, tmp4, tmp2
+            ps_add      tmp7, tmp8, tmp7
+            psq_l       tmp11, 0(q), 0, 0
+            ps_merge11  tmp3, tmp8, tmp7
+            ps_sub      tmp4, tmp4, tmp2
+            psq_stu     tmp9, 8(ws), 0, 0
+            ps_add      tmp0, tmp5, tmp3
+            ps_sub      tmp1, tmp5, tmp3
+            or          itmp0, itmp0, itmp3
+            psq_stu     tmp0, 8(ws), 0, 0
+            ps_merge10  tmp1, tmp1, tmp1
+            ps_merge10  tmp4, tmp4, tmp4
+            psq_stu     tmp1, 8(ws), 0, 0
+            ps_mul      tmp10, tmp10, tmp11
+            psq_stu     tmp4, 8(ws), 0, 0
+            bdnz        _loopHead1
+            b           _loopEnd
+
+        _regularIDCT:
+            psq_l       tmp9, 4(in), 0, 5
+            psq_l       tmp5, 8(q), 0, 0
+            ps_mul      tmp9, tmp9, tmp5
+            psq_l       tmp2, 8(in), 0, 5
+            psq_l       tmp6, 16(q), 0, 0
+            ps_merge01  tmp0, tmp10, tmp9
+            psq_l       tmp3, 12(in), 0, 5
+            ps_merge01  tmp1, tmp9, tmp10
+            psq_l       tmp7, 24(q), 0, 0
+            addi        in, in, 8*sizeof(THPCoeff)
+            ps_madd     tmp4, tmp2, tmp6, tmp0
+            ps_nmsub    tmp5, tmp2, tmp6, tmp0
+            ps_madd     tmp6, tmp3, tmp7, tmp1
+            ps_nmsub    tmp7, tmp3, tmp7, tmp1
+            addi        q, q, 8*sizeof(f32)
+            ps_add      tmp0, tmp4, tmp6
+            ps_sub      tmp3, tmp4, tmp6
+            ps_msub     tmp2, tmp7, cc4, tmp6
+            lwz         itmp0, 12(in)
+            ps_sub      tmp8, tmp7, tmp5
+            ps_add      tmp1, tmp5, tmp2
+            ps_sub      tmp2, tmp5, tmp2
+            ps_mul      tmp8, tmp8, cc2
+            lwz         itmp3, 8(in)
+            ps_merge00  tmp1, tmp0, tmp1
+            ps_nmsub    tmp6, tmp5, cc2c6a, tmp8
+            ps_msub     tmp4, tmp7, cc2c6s, tmp8
+            lwz         itmp1, 4(in)
+            ps_sub      tmp6, tmp6, tmp0
+            ps_merge00  tmp2, tmp2, tmp3
+            lhz         itmp2, 2(in)
+            ps_madd     tmp5, tmp3, cc4, tmp6
+            ps_merge11  tmp7, tmp0, tmp6
+            psq_l       tmp10, 0(in), 0, 5
+            ps_sub      tmp4, tmp4, tmp5
+            ps_add      tmp3, tmp1, tmp7
+            psq_l       tmp11, 0(q), 0, 0
+            ps_merge11  tmp4, tmp5, tmp4
+            ps_sub      tmp0, tmp1, tmp7
+            ps_mul      tmp10, tmp10, tmp11
+            ps_add      tmp5, tmp2, tmp4
+            ps_sub      tmp6, tmp2, tmp4
+            ps_merge10  tmp5, tmp5, tmp5
+            psq_stu     tmp3, 8(ws), 0, 0
+            ps_merge10  tmp0, tmp0, tmp0
+            psq_stu     tmp6, 8(ws), 0, 0
+            psq_stu     tmp5, 8(ws), 0, 0
+            or          itmp0, itmp0, itmp3
+            psq_stu     tmp0, 8(ws), 0, 0
+            bdnz        _loopHead1
+
+        _loopEnd:
+
+        }
+        // clang-format on
+    }
+
+    ws = &__THPIDCTWorkspace[0];
+
+    {
+        register THPSample *obase = Gbase;
+        register u32 wid = Gwid;
+
+        register u32 itmp0, off0, off1;
+        register THPSample *out0, *out1;
+
+        // clang-format off
+		asm {
+            psq_l       tmp10, 8*0*sizeof(f32)(ws), 0, 0
+            slwi off0, wid, 3;
+            psq_l       tmp11, 8*4*sizeof(f32)(ws), 0, 0
+            slwi        xPos, xPos, 2
+            psq_l       tmp12, 8*2*sizeof(f32)(ws), 0, 0
+            slwi        off1, wid, 2
+            ps_add      tmp6, tmp10, tmp11
+            add         off0, off0, xPos
+            psq_l       tmp13, 8*6*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp8, tmp10, tmp11
+            add         off1, off0, off1
+            ps_add      tmp6, tmp6, bias
+            li          itmp0, 3
+            ps_add      tmp7, tmp12, tmp13
+            add         out0, obase, off0
+            ps_sub      tmp9, tmp12, tmp13
+            ps_add      tmp0, tmp6, tmp7
+            add         out1, obase, off1
+            ps_add      tmp8, tmp8, bias
+            mtctr       itmp0
+
+        _loopHead10:
+            psq_l       tmp4, 8*1*sizeof(f32)(ws), 0, 0
+            ps_msub     tmp9, tmp9, cc4, tmp7
+            psq_l       tmp5, 8*3*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp3, tmp6, tmp7
+            ps_add      tmp1, tmp8, tmp9
+            psq_l       tmp6, 8*5*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp2, tmp8, tmp9
+            psq_l       tmp7, 8*7*sizeof(f32)(ws), 0, 0
+            ps_add      tmp8, tmp6, tmp5
+            ps_sub      tmp6, tmp6, tmp5
+            addi        ws, ws, 2*sizeof(f32)
+            ps_add      tmp9, tmp4, tmp7
+            ps_sub      tmp4, tmp4, tmp7
+            psq_l       tmp10, 8*0*sizeof(f32)(ws), 0, 0
+            ps_add      tmp7, tmp9, tmp8
+            ps_sub      tmp5, tmp9, tmp8
+            ps_add      tmp8, tmp6, tmp4
+            psq_l       tmp11, 8*4*sizeof(f32)(ws), 0, 0
+            ps_add      tmp9, tmp0, tmp7
+            ps_mul      tmp8, tmp8, cc2
+            psq_l       tmp12, 8*2*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp23, tmp0, tmp7
+            ps_madd     tmp6, tmp6, cc2c6a, tmp8
+            psq_l       tmp13, 8*6*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp6, tmp6, tmp7
+            addi        off0, off0, 2*sizeof(THPSample)
+            psq_st      tmp9, 0(out0), 0, 6
+            ps_msub     tmp4, tmp4, cc2c6s, tmp8
+            ps_add      tmp9, tmp1, tmp6
+            ps_msub     tmp5, tmp5, cc4, tmp6
+            ps_sub      tmp22, tmp1, tmp6
+            psq_st      tmp9, 8(out0), 0, 6
+            ps_add      tmp8, tmp2, tmp5
+            ps_add      tmp4, tmp4, tmp5
+            psq_st      tmp8, 16(out0), 0, 6
+            addi        off1, off1, 2*sizeof(THPSample)
+            ps_sub      tmp9, tmp3, tmp4
+            ps_add      tmp20, tmp3, tmp4
+            psq_st      tmp9, 24(out0), 0, 6
+            ps_sub      tmp21, tmp2, tmp5
+            ps_add      tmp6, tmp10, tmp11
+            psq_st      tmp20, 0(out1), 0, 6
+            ps_sub      tmp8, tmp10, tmp11
+            ps_add      tmp6, tmp6, bias
+            psq_st      tmp21, 8(out1), 0, 6
+            ps_add      tmp7, tmp12, tmp13
+            ps_sub      tmp9, tmp12, tmp13
+            psq_st      tmp22, 16(out1), 0, 6
+            add         out0, obase, off0
+            ps_add      tmp0, tmp6, tmp7
+            psq_st      tmp23, 24(out1), 0, 6
+            ps_add      tmp8, tmp8, bias
+            add         out1, obase, off1
+
+            bdnz        _loopHead10
+            psq_l       tmp4, 8*1*sizeof(f32)(ws), 0, 0
+            ps_msub     tmp9, tmp9, cc4, tmp7
+            psq_l       tmp5, 8*3*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp3, tmp6, tmp7
+            ps_add      tmp1, tmp8, tmp9
+            psq_l       tmp6, 8*5*sizeof(f32)(ws), 0, 0
+            ps_sub      tmp2, tmp8, tmp9
+            psq_l       tmp7, 8*7*sizeof(f32)(ws), 0, 0
+            ps_add      tmp8, tmp6, tmp5
+            ps_sub      tmp6, tmp6, tmp5
+            ps_add      tmp9, tmp4, tmp7
+            ps_sub      tmp4, tmp4, tmp7
+            ps_add      tmp7, tmp9, tmp8
+            ps_sub      tmp5, tmp9, tmp8
+            ps_add      tmp8, tmp6, tmp4
+            ps_add      tmp9, tmp0, tmp7
+            ps_mul      tmp8, tmp8, cc2
+            ps_sub      tmp23, tmp0, tmp7
+            ps_madd     tmp6, tmp6, cc2c6a, tmp8
+            psq_st      tmp9, 0(out0), 0, 6
+            ps_sub      tmp6, tmp6, tmp7
+            ps_msub     tmp4, tmp4, cc2c6s, tmp8
+            psq_st      tmp23, 24(out1), 0, 6
+            ps_add      tmp9, tmp1, tmp6
+            ps_msub     tmp5, tmp5, cc4, tmp6
+            ps_sub      tmp22, tmp1, tmp6
+            psq_st      tmp9, 8(out0), 0, 6
+            ps_add      tmp8, tmp2, tmp5
+            ps_add      tmp4, tmp4, tmp5
+            psq_st      tmp8, 16(out0), 0, 6
+            ps_sub      tmp9, tmp3, tmp4
+            psq_st      tmp22, 16(out1), 0, 6
+            ps_add      tmp20, tmp3, tmp4
+            psq_st      tmp9, 24(out0), 0, 6
+            ps_sub      tmp21, tmp2, tmp5
+            psq_st      tmp20, 0(out1), 0, 6
+            psq_st      tmp21, 8(out1), 0, 6
+
+        }
+        // clang-format on
+    }
+}
+
 static void __THPDecompressiMCURow512x448(void)
 {
     u8 cl_num;
@@ -563,6 +1211,255 @@ static void __THPDecompressiMCURow512x448(void)
     __THPInfo->dLC[0] += 0x2000;
     __THPInfo->dLC[1] += 0x800;
     __THPInfo->dLC[2] += 0x800;
+}
+
+inline s32 __THPHuffDecodeTab(register THPFileInfo *info, register THPHuffmanTab *h)
+{
+    register s32 code;
+    register u32 cnt;
+    register s32 cb;
+    register u32 increment;
+    register s32 tmp;
+
+    // clang-format off
+	asm
+    {
+        lwz     cnt, info->cnt;
+        addi    increment, h, 32;
+        lwz     cb, info->currByte;
+        addi    code, cnt, 4;
+        cmpwi   cnt, 28;
+        rlwnm   tmp, cb, code, 27, 31;
+        bgt     _notEnoughBits;
+        lbzx    code, h, tmp;
+        lbzx    increment, increment, tmp;
+        cmpwi   code, 0xFF;
+        beq     _FailedCheckEnoughBits;
+        add     cnt, cnt, increment;
+        stw     cnt, info->cnt;
+    }
+    // clang-format on
+_done:
+    return code;
+
+    {
+        register u32 maxcodebase;
+        register u32 tmp2;
+
+    _FailedCheckEnoughBits:
+        maxcodebase = (u32) & (h->maxCode);
+        cnt += 5;
+
+        // clang-format off
+		asm {
+            li          tmp2, sizeof(s32)*(5);
+            li          code, 5;
+            add         maxcodebase, maxcodebase, tmp2;
+          __WHILE_START:
+            cmpwi       cnt, 33;
+            slwi        tmp, tmp, 1
+
+            beq         _FCEB_faster;
+            rlwnm       increment, cb, cnt, 31, 31;
+            lwzu        tmp2, 4(maxcodebase);
+            or          tmp, tmp, increment
+            addi        cnt, cnt, 1;
+            b __WHILE_CHECK;
+
+          _FCEB_faster:
+            lwz     increment, info->c;
+            li      cnt, 1;
+            lwzu    cb, 4(increment);
+            lwzu    tmp2, 4(maxcodebase);
+
+            stw     increment, info->c;
+            rlwimi  tmp, cb, 1,31,31;
+            stw     cb, info->currByte;
+            b __FL_WHILE_CHECK;
+
+          __FL_WHILE_START:
+            slwi    tmp, tmp, 1;
+            rlwnm   increment, cb, cnt, 31, 31;
+            lwzu    tmp2, 4(maxcodebase);
+            or      tmp, tmp, increment;
+
+          __FL_WHILE_CHECK:
+            cmpw    tmp,tmp2
+            addi    cnt, cnt, 1;
+            addi        code, code, 1
+            bgt     __FL_WHILE_START;
+            b _FCEB_Done;
+
+          __WHILE_CHECK:
+            cmpw    tmp,tmp2
+            addi        code, code, 1
+            bgt     __WHILE_START;
+        }
+        // clang-format on
+    }
+_FCEB_Done:
+    info->cnt = cnt;
+    return (h->Vij[(s32)(tmp + h->valPtr[code])]);
+
+    // clang-format off
+	asm
+    {
+      _notEnoughBits:
+        cmpwi   cnt, 33;
+        lwz     tmp, info->c;
+        beq     _getfullword;
+
+        cmpwi   cnt, 32;
+        rlwnm   code, cb, code, 27, 31
+        beq     _1bitleft;
+
+        lbzx    tmp, h, code;
+        lbzx    increment, increment, code;
+        cmpwi   tmp, 0xFF;
+        add     code, cnt, increment;
+        beq _FailedCheckNoBits0;
+
+        cmpwi   code, 33;
+        stw     code, info->cnt;
+        bgt     _FailedCheckNoBits1;
+    }
+    // clang-format on
+    return tmp;
+
+    // clang-format off
+	asm
+    {
+      _1bitleft:
+        lwzu    cb, 4(tmp);
+
+        stw     tmp, info->c;
+        rlwimi  code, cb, 4, 28, 31;
+        lbzx    tmp, h, code;
+        lbzx    increment, increment, code
+        stw     cb, info->currByte;
+        cmpwi   tmp, 0xFF
+        stw     increment, info->cnt;
+        beq     _Read4;
+
+    }
+    // clang-format on
+    return tmp;
+
+_Read4 : {
+    register u32 maxcodebase = (u32) & (h->maxCode);
+    register u32 tmp2;
+
+    // clang-format off
+	asm
+    {
+            li      cnt, sizeof(s32)*5;
+            add     maxcodebase, maxcodebase, cnt;
+
+            slwi    tmp, code, 32-5;
+            li      cnt,5;
+            rlwimi  tmp, cb, 32-1, 1,31;
+
+          __DR4_WHILE_START:
+
+            subfic  cb, cnt, 31;
+            lwzu    tmp2, 4(maxcodebase);
+            srw     code, tmp, cb;
+          __DR4_WHILE_CHECK:
+            cmpw    code, tmp2
+            addi    cnt, cnt, 1
+            bgt     __DR4_WHILE_START;
+
+    }
+    // clang-format on
+}
+
+    info->cnt = cnt;
+__CODE_PLUS_VP_CNT:
+    return (h->Vij[(s32)(code + h->valPtr[cnt])]);
+
+_getfullword:
+    // clang-format off
+	asm
+    {
+        lwzu    cb, 4(tmp);
+
+        rlwinm  code, cb, 5, 27, 31
+        stw     tmp, info->c;
+        lbzx    cnt, h, code;
+        lbzx    increment, increment, code;
+        cmpwi   cnt, 0xFF
+        stw     cb, info->currByte;
+        addi    increment, increment, 1
+        beq     _FailedCheckEnoughbits_Updated;
+
+        stw     increment, info->cnt;
+    }
+    // clang-format on
+    return (s32)cnt;
+
+_FailedCheckEnoughbits_Updated:
+
+    cnt = 5;
+    do {
+        // clang-format off
+        asm
+        {
+            subfic  tmp, cnt, 31;
+            addi    cnt, cnt, 1;
+            srw     code, cb, tmp;
+        }
+        // clang-format on
+    } while (code > h->maxCode[cnt]);
+
+    info->cnt = cnt + 1;
+    goto __CODE_PLUS_VP_CNT;
+
+_FailedCheckNoBits0:
+_FailedCheckNoBits1 :
+
+{
+    register u32 mask = 0xFFFFFFFF << (33 - cnt);
+    register u32 tmp2;
+
+    code = (s32)(cb & (~mask));
+    mask = (u32) & (h->maxCode);
+
+    // clang-format off
+	asm
+    {
+            lwz     tmp, info->c;
+            subfic  tmp2, cnt, 33;
+            addi    cnt, tmp2, 1;
+            slwi    tmp2, tmp2, 2;
+            lwzu    cb, 4(tmp);
+            add     mask,mask, tmp2;
+            stw     tmp, info->c;
+            slwi    code, code, 1;
+            stw     cb, info->currByte;
+            rlwimi  code, cb, 1, 31, 31;
+            lwzu    tmp2, 4(mask);
+            li      tmp, 2;
+            b       __FCNB1_WHILE_CHECK;
+
+          __FCNB1_WHILE_START:
+            slwi    code, code, 1;
+
+            addi    cnt, cnt, 1;
+            lwzu    tmp2, 4(mask);
+            add     code, code, increment;
+            addi    tmp, tmp, 1;
+
+          __FCNB1_WHILE_CHECK:
+            cmpw    code, tmp2;
+            rlwnm   increment, cb, tmp, 31, 31;
+            bgt     __FCNB1_WHILE_START;
+
+    }
+    // clang-format on
+}
+
+    info->cnt = (u32)tmp;
+    return (h->Vij[(s32)(code + h->valPtr[cnt])]);
 }
 
 static void __THPDecompressiMCURow640x480(void)
@@ -696,4 +1593,688 @@ static void __THPDecompressiMCURowNxN(void)
     __THPInfo->dLC[0] += ((4 * sizeof(u8) * 64) * (x / 16));
     __THPInfo->dLC[1] += ((sizeof(u8) * 64) * (x / 16));
     __THPInfo->dLC[2] += ((sizeof(u8) * 64) * (x / 16));
+}
+
+static void __THPHuffDecodeDCTCompY(register THPFileInfo *info, THPCoeff *block)
+{
+    {
+        register s32 t;
+        THPCoeff dc;
+        register THPCoeff diff;
+
+        __dcbz((void *)block, 0);
+        t = __THPHuffDecodeTab(info, Ydchuff);
+        __dcbz((void *)block, 32);
+        diff = 0;
+        __dcbz((void *)block, 64);
+
+        if (t) {
+            {
+                register s32 v;
+                register u32 cb;
+                register u32 cnt;
+                register u32 code;
+                register u32 tmp;
+                register u32 cnt1;
+                register u32 tmp1;
+                // clang-format off
+                asm {
+                        lwz      cnt,info->cnt;
+                        subfic   code,cnt,33;
+                        lwz      cb,info->currByte;
+
+                        subfc. tmp, code, t;
+                        subi     cnt1,cnt,1;
+
+                        bgt      _notEnoughBitsDIFF;
+                        add      v,cnt,t;
+
+                        slw      cnt,cb,cnt1;
+                        stw      v,info->cnt;
+                        subfic   v,t,32;
+                        srw      diff,cnt,v;
+                }
+                // clang-format on
+
+                // clang-format off
+				asm
+                {
+                    b _DoneDIFF;
+                _notEnoughBitsDIFF:
+                    lwz tmp1, info->c;
+                    slw v, cb, cnt1;
+                    lwzu cb, 4(tmp1);
+                    addi tmp, tmp, 1;
+                    stw cb, info->currByte;
+                    srw cb, cb, code;
+                    stw tmp1, info->c;
+                    add v, cb, v;
+                    stw tmp, info->cnt;
+                    subfic tmp, t, 32;
+                    srw diff, v, tmp;
+                _DoneDIFF:
+                }
+                // clang-format on
+            }
+
+            if (__cntlzw((u32)diff) > 32 - t) {
+                diff += ((0xFFFFFFFF << t) + 1);
+            }
+        };
+
+        __dcbz((void *)block, 96);
+        dc = (s16)(info->components[0].predDC + diff);
+        block[0] = info->components[0].predDC = dc;
+    }
+
+    {
+        register s32 k;
+        register s32 code;
+        register u32 cnt;
+        register u32 cb;
+        register u32 increment;
+        register s32 tmp;
+        register THPHuffmanTab *h = Yachuff;
+
+        // clang-format off
+		asm
+        {
+            lwz     cnt, info->cnt;
+            addi    increment, h, 32;
+            lwz     cb, info->currByte;
+        }
+        // clang-format on
+
+        for (k = 1; k < 64; k++)
+        {
+            register s32 ssss;
+            register s32 rrrr;
+
+            // clang-format off
+			asm {
+                addi    code, cnt, 4;
+                cmpwi   cnt, 28;
+                rlwnm   tmp, cb, code, 27, 31;
+                bgt     _notEnoughBits;
+
+                lbzx    ssss, h, tmp;
+                lbzx    code, increment, tmp;
+                cmpwi   ssss, 0xFF;
+
+                beq     _FailedCheckEnoughBits;
+                add     cnt, cnt, code;
+                b       _DoneDecodeTab;
+            }
+            // clang-format on
+
+            {
+                register u32 maxcodebase;
+                register u32 tmp2;
+
+            _FailedCheckEnoughBits:
+                cnt += 5;
+                maxcodebase = (u32) & (h->maxCode);
+                // clang-format off
+				asm {
+                    li          tmp2, sizeof(s32)*(5);
+                    li          code, 5;
+                    add         maxcodebase, maxcodebase, tmp2;
+                  __WHILE_START:
+                    cmpwi       cnt, 33;
+                    slwi        tmp, tmp, 1
+
+                    beq         _FCEB_faster;
+                    rlwnm       ssss, cb, cnt, 31, 31;
+                    lwzu        tmp2, 4(maxcodebase);
+                    or          tmp, tmp, ssss
+                    addi        cnt, cnt, 1;
+                    b __WHILE_CHECK;
+
+                  _FCEB_faster:
+                    lwz     ssss, info->c;
+                    li      cnt, 1;
+                    lwzu    cb, 4(ssss);
+
+                    lwzu    tmp2, 4(maxcodebase);
+
+                    stw     ssss, info->c;
+                    rlwimi  tmp, cb, 1,31,31;
+                    b __FL_WHILE_CHECK;
+
+                  __FL_WHILE_START:
+                    slwi    tmp, tmp, 1;
+
+                    rlwnm   ssss, cb, cnt, 31, 31;
+                    lwzu    tmp2, 4(maxcodebase);
+                    or      tmp, tmp, ssss;
+
+                  __FL_WHILE_CHECK:
+                    cmpw    tmp,tmp2
+                    addi    cnt, cnt, 1;
+                    addi    code, code, 1
+                    bgt     __FL_WHILE_START;
+                    b _FCEB_Done;
+
+                  __WHILE_CHECK:
+                    cmpw    tmp,tmp2
+                    addi    code, code, 1
+                    bgt     __WHILE_START;
+                }
+                // clang-format on
+            }
+        _FCEB_Done:
+            ssss = (h->Vij[(s32)(tmp + h->valPtr[code])]);
+            goto _DoneDecodeTab;
+
+        _notEnoughBits:
+            // clang-format off
+			asm
+            {
+                cmpwi   cnt, 33;
+                lwz     tmp, info->c;
+                beq     _getfullword;
+
+                cmpwi   cnt, 32;
+                rlwnm   code, cb, code, 27, 31
+                beq     _1bitleft;
+
+                lbzx    ssss, h, code;
+                lbzx    rrrr, increment, code;
+                cmpwi   ssss, 0xFF;
+                add     code, cnt, rrrr;
+                beq _FailedCheckNoBits0;
+
+                cmpwi   code, 33;
+                bgt     _FailedCheckNoBits1;
+            }
+            // clang-format on
+            cnt = (u32)code;
+            goto _DoneDecodeTab;
+
+        _getfullword : {
+            // clang-format off
+			asm
+            {
+                    lwzu    cb, 4(tmp);
+                    rlwinm  code, cb, 5, 27, 31
+                    stw     tmp, info->c;
+                    lbzx    ssss, h, code;
+                    lbzx    tmp, increment, code;
+                    cmpwi   ssss, 0xFF
+                    addi    cnt, tmp, 1
+                    beq     _FailedCheckEnoughbits_Updated;
+            }
+            // clang-format on
+        }
+            goto _DoneDecodeTab;
+
+        _FailedCheckEnoughbits_Updated:
+            ssss = 5;
+            do {
+                // clang-format off
+				asm
+                {
+                    subfic  tmp, ssss, 31;
+                    addi    ssss, ssss, 1;
+                    srw     code, cb, tmp;
+                }
+                // clang-format on
+            } while (code > h->maxCode[ssss]);
+
+            cnt = (u32)(ssss + 1);
+            ssss = (h->Vij[(s32)(code + h->valPtr[ssss])]);
+
+            goto _DoneDecodeTab;
+
+        _1bitleft:
+            // clang-format off
+			asm {
+                lwzu    cb, 4(tmp);
+
+                stw     tmp, info->c;
+                rlwimi  code, cb, 4, 28, 31;
+                lbzx    ssss, h, code;
+                lbzx    cnt, increment, code
+                cmpwi   ssss, 0xFF
+                beq     _Read4;
+
+            }
+            // clang-format on
+
+            goto _DoneDecodeTab;
+
+        _Read4 : {
+            register u32 maxcodebase = (u32) & (h->maxCode);
+            register u32 tmp2;
+
+            // clang-format off
+			asm {
+                    li  cnt, sizeof(s32)*5;
+                    add     maxcodebase, maxcodebase, cnt;
+
+                    slwi    tmp, code, 32-5;
+                    li      cnt,5;
+                    rlwimi  tmp, cb, 32-1, 1,31;
+
+                  __DR4_WHILE_START:
+
+                    subfic  ssss, cnt, 31;
+                    lwzu    tmp2, 4(maxcodebase);
+                    srw     code, tmp, ssss;
+                  __DR4_WHILE_CHECK:
+                    cmpw    code, tmp2
+                    addi    cnt, cnt, 1
+                    bgt     __DR4_WHILE_START;
+
+            }
+            // clang-format on
+        }
+            ssss = (h->Vij[(s32)(code + h->valPtr[cnt])]);
+            goto _DoneDecodeTab;
+
+        _FailedCheckNoBits0:
+        _FailedCheckNoBits1:
+        _REALFAILEDCHECKNOBITS : {
+            register u32 mask = 0xFFFFFFFF << (33 - cnt);
+            register u32 tmp2;
+            register u32 tmp3;
+            code = (s32)(cb & (~mask));
+            mask = (u32) & (h->maxCode);
+
+            // clang-format off
+			asm {
+                    lwz     tmp, info->c;
+                    subfic  tmp2, cnt, 33;
+                    addi    tmp3, tmp2, 1;
+                    slwi    tmp2, tmp2, 2;
+                    lwzu    cb, 4(tmp);
+                    add     mask,mask, tmp2;
+                    stw     tmp, info->c;
+                    slwi    code, code, 1;
+                    rlwimi  code, cb, 1, 31, 31;
+                    lwzu    tmp2, 4(mask);
+                    li      cnt, 2;
+                    b       __FCNB1_WHILE_CHECK;
+
+                  __FCNB1_WHILE_START:
+                    slwi    code, code, 1;
+
+                    addi    tmp3, tmp3, 1;
+                    lwzu    tmp2, 4(mask);
+                    add     code, code, rrrr;
+                    addi    cnt, cnt, 1;
+
+                  __FCNB1_WHILE_CHECK:
+                    cmpw    code, tmp2;
+                    rlwnm   rrrr, cb, cnt, 31, 31;
+                    bgt     __FCNB1_WHILE_START;
+
+            }
+            // clang-format on
+            ssss = (h->Vij[(s32)(code + h->valPtr[tmp3])]);
+        }
+
+            goto _DoneDecodeTab;
+
+        _DoneDecodeTab:
+            // clang-format off
+			asm {
+                andi.   rrrr, ssss, 15;
+                srawi   ssss, ssss, 4;
+                beq     _RECV_SSSS_ZERO;
+            }
+            // clang-format on
+
+            {
+                k += ssss;
+                {
+                    register s32 v;
+                    register u32 cnt1;
+                    register u32 tmp1;
+                    // clang-format off
+					asm
+                    {
+                        subfic   code,cnt,33;
+                        subfc. tmp, code, rrrr;
+                        subi     cnt1,cnt,1;
+                        bgt      _RECVnotEnoughBits;
+                        add      cnt,cnt,rrrr;
+                        slw      tmp1,cb,cnt1;
+                        subfic   v,rrrr,32;
+                        srw      ssss,tmp1,v;
+                    }
+                    // clang-format on
+                    // clang-format off
+					asm
+                    {
+                        b _RECVDone;
+                    _RECVnotEnoughBits:
+                        lwz tmp1, info->c;
+                        slw v, cb, cnt1;
+                        lwzu cb, 4(tmp1);
+                        addi cnt, tmp, 1;
+                        stw tmp1, info->c;
+                        srw tmp1, cb, code;
+
+                        add v, tmp1, v;
+                        subfic tmp, rrrr, 32;
+                        srw ssss, v, tmp;
+                    _RECVDone:
+                    }
+                    // clang-format on
+                }
+
+                if (__cntlzw((u32)ssss) > 32 - rrrr) {
+                    ssss += ((0xFFFFFFFF << rrrr) + 1);
+                }
+
+                block[__THPJpegNaturalOrder[k]] = (s16)ssss;
+                goto _RECV_END;
+            }
+
+            {
+            _RECV_SSSS_ZERO:
+                if (ssss != 15) {
+                    break;
+                }
+
+                k += 15;
+            };
+
+            // clang-format off
+			asm
+            {
+              _RECV_END:
+            }
+            // clang-format on
+        }
+        info->cnt = cnt;
+        info->currByte = cb;
+    }
+}
+
+static void __THPHuffDecodeDCTCompU(register THPFileInfo *info, THPCoeff *block)
+{
+    register s32 t;
+    register THPCoeff diff;
+    THPCoeff dc;
+    register s32 v;
+    register u32 cb;
+    register u32 cnt;
+    register u32 cnt33;
+    register u32 tmp;
+    register u32 cnt1;
+    register u32 tmp1;
+    register s32 k;
+    register s32 ssss;
+    register s32 rrrr;
+
+    __dcbz((void *)block, 0);
+    t = __THPHuffDecodeTab(info, Udchuff);
+    __dcbz((void *)block, 32);
+    diff = 0;
+    __dcbz((void *)block, 64);
+
+    if (t) {
+        // clang-format off
+		asm
+        {
+            lwz      cnt,info->cnt;
+            subfic   cnt33,cnt,33;
+            lwz      cb,info->currByte;
+            subfc. tmp, cnt33, t;
+            subi     cnt1,cnt,1;
+            bgt      _notEnoughBitsDIFF;
+            add      v,cnt,t;
+            slw      cnt,cb,cnt1;
+            stw      v,info->cnt;
+            subfic   v,t,32;
+            srw      diff,cnt,v;
+        }
+        // clang-format on
+
+        // clang-format off
+		asm
+        {
+            b _DoneDIFF;
+        _notEnoughBitsDIFF:
+            lwz tmp1, info->c;
+            slw v, cb, cnt1;
+            lwzu cb, 4(tmp1);
+            addi tmp, tmp, 1;
+            stw cb, info->currByte;
+            srw cb, cb, cnt33;
+            stw tmp1, info->c;
+            add v, cb, v;
+            stw tmp, info->cnt;
+            subfic tmp, t, 32;
+            srw diff, v, tmp;
+        _DoneDIFF:
+        }
+        // clang-format on
+
+        if (__cntlzw((u32)diff) > 32 - t) {
+            diff += ((0xFFFFFFFF << t) + 1);
+        }
+    }
+
+    __dcbz((void *)block, 96);
+    dc = (s16)(info->components[1].predDC + diff);
+    block[0] = info->components[1].predDC = dc;
+
+    for (k = 1; k < 64; k++) {
+        ssss = __THPHuffDecodeTab(info, Uachuff);
+        rrrr = ssss >> 4;
+        ssss &= 15;
+
+        if (ssss) {
+            k += rrrr;
+            // clang-format off
+			asm
+            {
+                lwz      cnt,info->cnt;
+                subfic   cnt33,cnt,33;
+                lwz      cb,info->currByte;
+                subf. tmp, cnt33, ssss;
+                subi     cnt1,cnt,1;
+                bgt      _notEnoughBits;
+                add      v,cnt,ssss;
+                slw      cnt,cb,cnt1;
+                stw      v,info->cnt;
+                subfic   v,ssss,32;
+                srw      rrrr,cnt,v;
+            }
+            // clang-format on
+
+            // clang-format off
+			asm
+            {
+                b _Done;
+            _notEnoughBits:
+                lwz tmp1, info->c;
+                slw v, cb, cnt1;
+                lwzu cb, 4(tmp1);
+                addi tmp, tmp, 1;
+                stw cb, info->currByte;
+                srw cb, cb, cnt33;
+                stw tmp1, info->c;
+                add v, cb, v;
+                stw tmp, info->cnt;
+                subfic tmp, ssss, 32;
+                srw rrrr, v, tmp;
+            _Done:
+            }
+            // clang-format on
+
+            if (__cntlzw((u32)rrrr) > 32 - ssss) {
+                rrrr += ((0xFFFFFFFF << ssss) + 1);
+            }
+
+            block[__THPJpegNaturalOrder[k]] = (s16)rrrr;
+        }
+
+        else {
+            if (rrrr != 15)
+                break;
+            k += 15;
+        }
+    }
+}
+
+static void __THPHuffDecodeDCTCompV(register THPFileInfo *info, THPCoeff *block)
+{
+    register s32 t;
+    register THPCoeff diff;
+    THPCoeff dc;
+    register s32 v;
+    register u32 cb;
+    register u32 cnt;
+    register u32 cnt33;
+    register u32 tmp;
+    register u32 cnt1;
+    register u32 tmp1;
+    register s32 k;
+    register s32 ssss;
+    register s32 rrrr;
+
+    __dcbz((void *)block, 0);
+    t = __THPHuffDecodeTab(info, Vdchuff);
+    __dcbz((void *)block, 32);
+    diff = 0;
+    __dcbz((void *)block, 64);
+
+    if (t) {
+        // clang-format off
+		asm
+        {
+            lwz      cnt,info->cnt;
+            subfic   cnt33,cnt,33;
+            lwz      cb,info->currByte;
+            subf. tmp, cnt33, t;
+            subi     cnt1,cnt,1;
+            bgt      _notEnoughBitsDIFF;
+            add      v,cnt,t;
+            slw      cnt,cb,cnt1;
+            stw      v,info->cnt;
+            subfic   v,t,32;
+            srw      diff,cnt,v;
+        }
+        // clang-format on
+
+        // clang-format off
+		asm
+        {
+            b _DoneDIFF;
+        _notEnoughBitsDIFF:
+            lwz tmp1, info->c;
+            slw v, cb, cnt1;
+            lwzu cb, 4(tmp1);
+            addi tmp, tmp, 1;
+            stw cb, info->currByte;
+            srw cb, cb, cnt33;
+            stw tmp1, info->c;
+            add v, cb, v;
+            stw tmp, info->cnt;
+            subfic tmp, t, 32;
+            srw diff, v, tmp;
+        _DoneDIFF:
+        }
+        // clang-format on
+
+        if (__cntlzw((u32)diff) > 32 - t) {
+            diff += ((0xFFFFFFFF << t) + 1);
+        }
+    }
+
+    __dcbz((void *)block, 96);
+
+    dc = (s16)(info->components[2].predDC + diff);
+    block[0] = info->components[2].predDC = dc;
+
+    for (k = 1; k < 64; k++) {
+        ssss = __THPHuffDecodeTab(info, Vachuff);
+        rrrr = ssss >> 4;
+        ssss &= 15;
+
+        if (ssss) {
+            k += rrrr;
+
+            // clang-format off
+			asm
+            {
+                lwz      cnt,info->cnt;
+                subfic   cnt33,cnt,33;
+                lwz      cb,info->currByte;
+
+                subf. tmp, cnt33, ssss;
+                subi     cnt1,cnt,1;
+
+                bgt      _notEnoughBits;
+                add      v,cnt,ssss;
+
+                slw      cnt,cb,cnt1;
+                stw      v,info->cnt;
+                subfic   v,ssss,32;
+                srw      rrrr,cnt,v;
+            }
+            // clang-format on
+
+            // clang-format off
+			asm
+            {
+                b _Done;
+            _notEnoughBits:
+                lwz tmp1, info->c;
+                slw v, cb, cnt1;
+                lwzu cb, 4(tmp1);
+                addi tmp, tmp, 1;
+                stw cb, info->currByte;
+                srw cb, cb, cnt33;
+                stw tmp1, info->c;
+                add v, cb, v;
+                stw tmp, info->cnt;
+                subfic tmp, ssss, 32;
+                srw rrrr, v, tmp;
+            _Done:
+            }
+            // clang-format on
+
+            if (__cntlzw((u32)rrrr) > 32 - ssss) {
+                rrrr += ((0xFFFFFFFF << ssss) + 1);
+            }
+
+            block[__THPJpegNaturalOrder[k]] = (s16)rrrr;
+        }
+        else {
+            if (rrrr != 15)
+                break;
+            k += 15;
+        }
+    }
+}
+
+BOOL THPInit(void)
+{
+    u8 *base;
+    base = (u8 *)(0xE000 << 16);
+
+    __THPLCWork512[0] = base;
+    base += 0x2000;
+    __THPLCWork512[1] = base;
+    base += 0x800;
+    __THPLCWork512[2] = base;
+    base += 0x200;
+
+    base = (u8 *)(0xE000 << 16);
+    __THPLCWork640[0] = base;
+    base += 0x2800;
+    __THPLCWork640[1] = base;
+    base += 0xA00;
+    __THPLCWork640[2] = base;
+    base += 0xA00;
+
+    OSInitFastCast();
+
+    __THPInitFlag = TRUE;
+    return TRUE;
 }

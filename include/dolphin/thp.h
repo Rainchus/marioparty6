@@ -62,9 +62,14 @@ static void __THPHuffGenerateDecoderTables(u8 tabIndex);
 static void __THPRestartDefinition(void);
 static void __THPPrepBitStream(void);
 static void __THPDecompressYUV(void*, void*, void*);
+static void __THPGQRRestore(void);
 static void __THPDecompressiMCURow512x448(void);
 static void __THPDecompressiMCURow640x480(void);
 static void __THPDecompressiMCURowNxN(void);
+static void __THPInverseDCTNoYPos(THPCoeff*, u32);
+static void __THPHuffDecodeDCTCompY(THPFileInfo*, THPCoeff*);
+static void __THPHuffDecodeDCTCompU(THPFileInfo*, THPCoeff*);
+static void __THPHuffDecodeDCTCompV(THPFileInfo*, THPCoeff*);
 
 static const u8 __THPJpegNaturalOrder[80] = {
     0,  1,  8,  16, 9,  2,  3,  10, 17, 24, 32, 25, 18, 11, 4,  5,  12, 19, 26, 33,
