@@ -105,6 +105,16 @@ state instead of opaque work buffers. All eight owners remain fallback-linked
 because their event/state-machine closures are incomplete. Evidence is retained
 in [`docs/native_matching_wave39.md`](docs/native_matching_wave39.md).
 
+Wave 40 closes the remaining board `NO-SOURCE` inventory with 58 source
+functions across `capmove.c`, `capthrow.c`, `captrap.c`, `capspecial.c`,
+`capevent.c`, and `mgcall.c`. All 58 functions pair with retained targets and
+50 are byte-exact, covering `0x494` target text bytes. The batch recovers the
+real `0x28` Teresa fade work, `0x10` minigame-list work, exact minigame history
+arrays/tables, capsule-event globals, and 27 target-proven one-instruction kill
+callbacks. All six owners remain fallback-linked because their large event
+closures are incomplete. Evidence is retained in
+[`docs/native_matching_wave40.md`](docs/native_matching_wave40.md).
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -185,7 +195,7 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 
 #### Bucket 2: `C-not-yet-matched` (112 current fallback owners)
 
-Fifty-nine owners have current source candidates and are tagged
+Sixty-five owners have current source candidates and are tagged
 `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-15; percentages are raw `.text` scores unless
@@ -218,6 +228,12 @@ otherwise noted.
 | `board/scroll.c` | Nine lifecycle, star-space, map-view, camera, and hook routines recover the typed `HSF_FACE *` collision owner, map model/animation state, camera vectors/zoom, and callback types. Target/source `.text` are `0x3E4C/0x27C`; 7/9 functions are exact. `ScrollKill` is 80.208336% and `mbMapCameraSet` is 87.692310%; collision construction and map rendering remain absent. |
 | `board/shopevent.c` | Six target-backed enable/hook/init/back-create/shop-call routines recover the typed object hook and real two-word `MBSHOPWORK { playerNo, shopNo }`. Target/source `.text` are `0x2FDC/0x160`; the enable setter, hook setter, and back-create wrapper are exact. The two init wrappers and shop-call wrapper are 92.395350%-95.357140%; shop construction and the large selection event remain absent. |
 | `board/snpc.c` | `mbSNpcInit`, `mbSNpcMasuGet`, and the authentic empty `SNpcStarFunc` are exact, with the target-proven three-byte save state (`flags`, `masuId`, `effectMissCount`) and typed runtime/save pointers. Target/source `.text` are `0x9594/0x44`. The `0x298` runtime object and all movement/dice/star state machines remain absent. |
+| `board/capmove.c` | Nine named capsule-movement kill callbacks are recovered from their complete target ranges. Every target/source function is `0x4/0x4` and byte-exact; target/source whole `.text` are `0x6F68/0x24`. The movement event bodies remain absent. |
+| `board/capthrow.c` | Eight named capsule-throw kill callbacks are recovered from their complete target ranges. Every target/source function is `0x4/0x4` and byte-exact; target/source whole `.text` are `0x8CB0/0x20`. The throw event bodies remain absent. |
+| `board/captrap.c` | Five named capsule-trap kill callbacks are recovered from their complete target ranges. Every target/source function is `0x4/0x4` and byte-exact; target/source whole `.text` are `0x6A40/0x14`. The trap event bodies remain absent. |
+| `board/capspecial.c` | Thirteen target-backed functions recover the exact `0x28` `TERESA_FADE_WORK`, Teresa steal state, Miracle lifecycle hooks, and Koopa dice/motion hooks. Target/source `.text` are `0xE744/0x1E8`; 9/13 mapped functions are exact. Fade kill/object/setter and Koopa motion remain 88.214290%-92.826090%; the large special-capsule state machines remain absent. |
+| `board/capevent.c` | Eleven move/stop, bank, duel-coin, and bubble-hook routines are exact, with the target's `10`/`5` duel defaults, four `-1` sentinels, and six-argument hook. Target/source `.text` are `0x14EFC/0x178`; the other 226 retained event functions remain absent. |
+| `board/mgcall.c` | Twelve functions recover the exact `0x10` `MGLISTWORK`, `.bss 0xD8` history/status/list closure, `.rodata 0x70` status tables, and `.data 0x48` pointer/size tables. Target/source `.text` are `0x75FC/0x3DC`; 8/12 mapped functions are exact. Init/focus-kill are 99.965515%/99.875000%, while data-close/battle-message are 87.307690%/89.000000%; the roulette/UI executors remain absent. |
 | `dolphin/os/OS.c` | 59.719%; 0/14 functions exact. |
 | `dolphin/os/OSExec.c` | 80.972%; 2/8 functions exact. |
 | `dolphin/os/OSMemory.c` | 52.707%; 4/8 functions exact. |
@@ -253,9 +269,8 @@ otherwise noted.
 | `gssdk_lib/asrpho/common/ctxdata/langdata.c` | The real `LanguageDataV2` prefix and code-book layouts support 36 exact field/pointer accessors. The target's `0x13C` language-method object and the code-book method slots consumed by `vq1500.c` are now typed in the shared header. `_langGetpErgodicPenalty` is `0x64` at 77.040000%; the deeper packed-layout functions and virtual-table source closure remain unrecovered. |
 | `gssdk_lib/asrpho/common/tos/mqueue.c` | The target queue/list/reader prefix and three routines are recovered. `qQueueNbrElements` (`0x20`) is exact; `qDeQueueOne` (`0x50`) is 89.500000% and `qQueueConstruct` (`0x8C`) is 84.200000%. The remaining queue control, enqueue, reset, resize, and destruction routines are absent, so the owner remains fallback-linked. |
 
-The other 53 owners are tagged `NO-SOURCE`. Each explicit brace group below
-expands to the named owner files; the count audit is
-`14 + 33 + 6 = 53`.
+The other 47 owners are tagged `NO-SOURCE`. Each explicit brace group below
+expands to the named owner files; the count audit is `14 + 33 = 47`.
 
 - `musyx/runtime/` (14): `seq.c`, `synth.c`, `stream.c`, `synthdata.c`,
   `synthmacros.c`, `synthvoice.c`, `s_data.c`, `hw_dspctrl.c`, `snd3d.c`,
@@ -268,9 +283,7 @@ expands to the named owner files; the count audit is
   - `asrpho/common/blocks/{dpgenuw,dpscruw,fft_maye,fftmod,isoword,nbestdp,pitchdp}.c`;
   - `asrpho/common/blocks/flblocks/{acne,gender,mel,smoother,specsub,vad,window}.c`;
   - `asrpho/common/blocks/flfxblks/{dist16,pitchco,shs_vuv,slidhist,subsamp,trigglr,voicing}.c`;
-  - `asrpho/common/tos/tinyos.c`;
-- `board/` (6): `capmove.c`, `capthrow.c`, `captrap.c`, `capspecial.c`,
-  `capevent.c`, and `mgcall.c`.
+  - `asrpho/common/tos/tinyos.c`.
 
 Mixed C/assembly owners stay in the C bucket until all retained C and assembly
 passes the appropriate proof. `TRK_MINNOW_DOLPHIN/targimpl.c` no longer appears
