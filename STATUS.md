@@ -11,12 +11,12 @@ This is an evidence snapshot, not a completion claim. It was last verified on
 - `cmp orig/GP6E01/sys/main.dol build/GP6E01/main.dol`: byte-identical
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 8.77% code and 26.97% data overall; 44.77% code
-  and 63.25% data in the DOL
-- Matching owners at that build: 268 of 895 overall, 259 of 396 in the DOL,
+- DTK progress at that build: 8.78% code and 26.99% data overall; 44.80% code
+  and 63.28% data in the DOL
+- Matching owners at that build: 271 of 895 overall, 262 of 396 in the DOL,
   and 9 of 499 in the REL modules
-- DOL policy split: 230 matching owners without the assembly exception, 29
-  matching owners admitted under the sibling-authentication exception, 136
+- DOL policy split: 233 matching owners without the assembly exception, 29
+  matching owners admitted under the sibling-authentication exception, 133
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
   awaiting target proof. These four numbers total all 396 DOL owners.
 
@@ -96,7 +96,7 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/__exception.s` (`ASM-GATE-PENDING`) | [Mario Party 4 `src/TRK_MINNOW_DOLPHIN/__exception.s` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/TRK_MINNOW_DOLPHIN/__exception.s), `MatchingFor(USA,PAL)` | M4 authenticates the standalone `.init` exception-vector form and `0x1F34` size, but MP6 starts at a different address and has different vector/padding offsets. M5 has the MP6 bounds but is `NonMatching` with no source. A target-specific reconstruction and full gate are still required. |
 
-#### Bucket 2: `C-not-yet-matched` (136 current fallback owners)
+#### Bucket 2: `C-not-yet-matched` (133 current fallback owners)
 
 Twenty-two owners have current source candidates and are tagged `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
@@ -128,13 +128,12 @@ otherwise noted.
 | `board/branch.c` | 99.816%; 16/17 functions exact. `ev_Branch` is now target/source `0x8F0`/`0x8F0`; all 19 remaining differences are one `choice`/`choiceTime` register cycle, with no inserted, deleted, or replaced instructions. Whole-owner `.text` is `0x10E0`/`0x10E0` and all 210 relocations match; configured `.data` remains `0x18`/`0x12`. |
 | `board/effect.c` | 59.766%; 1/35 functions exact, target/source text sizes `0x3050`/`0x3074`, plus `.sdata` and `.sdata2` divergence. The restored FastCast header is not its blocker. |
 
-The other 114 owners are tagged `NO-SOURCE`. Each explicit brace group below
+The other 111 owners are tagged `NO-SOURCE`. Each explicit brace group below
 expands to the named owner files; the count audit is
-`1 + 6 + 2 + 17 + 1 + 65 + 22 = 114`.
+`1 + 3 + 2 + 17 + 1 + 65 + 22 = 111`.
 
 - `Runtime.PPCEABI.H/` (1): `ptmf.c`.
-- `MSL_C.PPCEABI.bare.H/` (6): `alloc.c`, `assert.c`, `qsort.c`, `e_exp.c`,
-  `s_atan.c`, and `w_log.c`.
+- `MSL_C.PPCEABI.bare.H/` (3): `alloc.c`, `qsort.c`, and `e_exp.c`.
 - `TRK_MINNOW_DOLPHIN/` C owners (2): `targimpl.c`, `dolphin_trk.c`.
 - `musyx/runtime/` (17): `seq.c`, `synth.c`, `stream.c`, `synthdata.c`,
   `synthmacros.c`, `synthvoice.c`, `s_data.c`, `hw_dspctrl.c`, `snd3d.c`,
@@ -261,6 +260,18 @@ The accepted and rejected evidence is retained in
 [`docs/native_matching_wave21.md`](docs/native_matching_wave21.md) and
 [`docs/native_matching_wave25.md`](docs/native_matching_wave25.md).
 
+Wave 28 adds three more Matching clean-C MSL owners: `assert.c`, `s_atan.c`,
+and `w_log.c`. The target establishes the older three-argument assertion
+routine and its exact diagnostic string; the source function and all six
+relocations match, while the target object's `0x30` rodata includes the
+linker's zero alignment tail. The Matching-MP5 fdlibm `s_atan.c` source under
+owner-local `GC/1.3` reproduces `0x200` text bytes, `0xC0` constant bytes, and
+ten effective relocations. `w_log.c` reproduces its authentic old-style
+`0x20` wrapper and sole relocation under `GC/2.6`. Together the three owners
+add `0x26C` linked code bytes, `0xF0` configured constant bytes, and 17
+relocations. Evidence and rejected donor probes are retained in
+[`docs/native_matching_wave28.md`](docs/native_matching_wave28.md).
+
 Two MusyX owners are now Matching under the sibling-assembly exception:
 `CheapReverb/creverb.c` and `Chorus/chorus_fx.c`. Their nine retained functions
 contribute `0x1124` exact linked code bytes, `0x858` configured data bytes,
@@ -343,13 +354,15 @@ configured data/BSS bytes.
   exact. `arith` retains an exact `abs` while the sibling-authenticated unused
   `labs` is linker-stripped; `errno` owns an exact four-byte symbol followed by
   the target split's four-byte alignment gap.
-- Five GC/1.3-shaped MSL owners: `ansi_fp`, `file_io`, `mbstring`,
-  `mem_funcs`, and `e_pow`. Their sibling-authenticated C contributes 6,848
-  exact linked code bytes and 856 configured data bytes. Object-level symbol
+- Six GC/1.3-shaped MSL owners: `ansi_fp`, `file_io`, `mbstring`,
+  `mem_funcs`, `e_pow`, and `s_atan`. Their sibling-authenticated C contributes
+  7,360 exact linked code bytes and 1,048 configured data bytes. Object-level symbol
   attribution differences in `ansi_fp` and `e_pow` are resolved by the exact
-  linked owner ranges; no assembly or source padding was added.
-- Two GC/2.6-shaped MSL owners: `string` and `math_ppc`. Their 18 clean-C
-  functions contribute `0x468` exact linked code bytes and 11 relocations.
+  linked owner ranges; `s_atan` likewise resolves compiler-local pool labels
+  through its exact linked range. No assembly or source padding was added.
+- Four GC/2.6-shaped MSL owners: `string`, `math_ppc`, `assert`, and `w_log`.
+  Their 20 clean-C functions contribute `0x4D4` exact linked code bytes,
+  `0x30` configured constant bytes, and 18 relocations.
   `printf` additionally retains nine exact functions but remains a fallback
   owner and is not counted as decompiled source.
 - Two Runtime owners: `__va_arg` is exact at `0xC8`; `__mem` is exact at
@@ -415,7 +428,7 @@ configured data/BSS bytes.
   `synthFlags`, `vs`, and `gWriteBuf`. The address, definition, and target
   relocation ledger is retained in `docs/easy_ports_wave.md`.
 
-The 137 current DOL fallback owners and their causes are exhaustive in the
+The 134 current DOL fallback owners and their causes are exhaustive in the
 two-bucket ledger above. Three REL Runtime variants also remain `NonMatching`;
-they are outside this main-DOL-first taxonomy and are not included in the 136
+they are outside this main-DOL-first taxonomy and are not included in the 133
 C-work/1-assembly-policy remaining counts.
