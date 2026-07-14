@@ -8,9 +8,9 @@ This is an evidence snapshot, not a completion claim. It was last verified on
 - `ninja -j1`: `137 files OK` (the DOL and all configured REL outputs)
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 6.94% code and 24.42% data overall; 34.29% code
-  and 56.66% data in the DOL
-- Matching owners at that build: 179 of 895 overall and 170 of 396 in the
+- DTK progress at that build: 7.01% code and 24.82% data overall; 34.68% code
+  and 57.70% data in the DOL
+- Matching owners at that build: 196 of 895 overall and 187 of 396 in the
   DOL
 - `src/` and `include/` contain no C or C++ `asm`/`__asm` blocks
 
@@ -61,10 +61,10 @@ owners. Neither `config/GP6E01/splits.txt` nor `configure.py` contains an
 
 ## Native library recovery
 
-The current recovery series promotes 28 newly named DOL owners from clean
-source. Together they account for 9,152 code bytes and 3,384 configured data
-bytes. The semantic source span is 12,532 bytes; the remaining four bytes are
-the documented alignment tail of the `errno` split.
+The current recovery series promotes 45 newly named DOL owners from clean
+source. Together they account for 17,588 code bytes and 10,824 configured data
+bytes. The semantic source span is 28,400 bytes; the remaining 12 bytes are the
+documented alignment tails of the `errno` and `nubinit` splits.
 
 - Nine core MSL owners: `errno`, `arith`, `float`, `s_copysign`, `w_acos`,
   `w_asin`, `w_atan2`, `w_fmod`, and `w_pow`. Seven owners are whole-section
@@ -78,9 +78,19 @@ the documented alignment tail of the `errno` split.
   `creverb_fx`, and `reverb_fx`. These promote 1,392 code bytes and 2,976 data
   bytes and recover the `dspAttenuationTab`, `dspScale2IndexTab`,
   `dspDLSVolTab`, `seqMIDIPriority`, `synthInfo`, and `salHooks` owners.
+- Five additional native owners: MSL `misc_io` and `signal`, plus MusyX
+  `delay_fx`, `hw_volconv`, and `snd_math`. They promote 3,868 code bytes and
+  632 data bytes.
 - Eleven fdlibm owners: `s_tan`, `s_frexp`, `k_sin`, `s_cos`, `s_sin`,
   `s_modf`, `s_floor`, `s_ldexp`, `e_atan2`, `e_fmod`, and `k_rem_pio2`.
   Their 7,032 text bytes, 392 constant bytes, and 115 relocations match.
+- Seven MetroTRK core owners: `dispatch`, `main_TRK`, `mem_TRK`, `msgbuf`,
+  `mutex_TRK`, `target_options`, and `usr_put`. They promote 3,292 code bytes
+  and 6,768 data bytes.
+- Five MetroTRK control-path owners: `mainloop`, `mslsupp`, `notify`,
+  `nubinit`, and `targcont`. Their eight retained functions contribute 1,276
+  code bytes, 40 configured data bytes, and 45 exact relocations. `nubinit`'s
+  semantic data is followed by four-byte rodata and BSS alignment tails.
 
 Candidates rejected at the first structural mismatch remain `NonMatching`.
 This includes `s_atan` (`0x200` target text versus `0x218` sibling source) and
