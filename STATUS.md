@@ -11,12 +11,12 @@ This is an evidence snapshot, not a completion claim. It was last verified on
 - `cmp orig/GP6E01/sys/main.dol build/GP6E01/main.dol`: byte-identical
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 8.84% code and 27.71% data overall; 45.14% code
+- DTK progress at that build: 8.84% code and 27.71% data overall; 45.18% code
   and 65.16% data in the DOL
-- Matching owners at that build: 286 of 895 overall, 277 of 396 in the DOL,
+- Matching owners at that build: 287 of 895 overall, 278 of 396 in the DOL,
   and 9 of 499 in the REL modules
-- DOL policy split: 245 matching owners without the assembly exception, 32
-  matching owners admitted under the sibling-authentication exception, 118
+- DOL policy split: 246 matching owners without the assembly exception, 32
+  matching owners admitted under the sibling-authentication exception, 117
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
   awaiting target proof. These four numbers total all 396 DOL owners.
 
@@ -33,6 +33,14 @@ reproduce the retained code and enabled nine clean-C owner promotions:
 `asrpho/common/blocks/flblocks/spline.c`. This decision is based on emitted
 bytes and the final container proof, not synthesized `.comment` metadata.
 
+`gssdk_lib/common/rsrc/rsrc.c` is now an additional Matching clean-C owner.
+Its callers prove that `SafeHandle` is an eight-byte aggregate passed by
+value; correcting that shared ABI preserves the already-exact `safeh.c` and
+allows the real `0x14` `Resource` layout, null resource, open/check/close
+logic, all three retained functions, and all effective relocations to match.
+The old `0x18` `.rodata` split incorrectly attributed a four-byte alignment
+gap to the resource object; the proven semantic owner ends at `0x8021A4B4`.
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -42,11 +50,11 @@ that assembly into decompiled C.
 
 ## `game/` ownership
 
-`game/` is not fully decompiled. The current `Game` library has 60 of 61
-object owners configured as matching: 57 without the assembly exception and
-`game/kerent.c`, `game/jmp.c`, and `game/malloc.c` under authenticated
-assembly exceptions. The remaining fallback owner is `board/board.c`, which
-is real C matching work.
+The `src/game/` path is fully matched: all 57 owners are configured Matching,
+54 as clean C and `game/kerent.c`, `game/jmp.c`, and `game/malloc.c` under
+authenticated assembly exceptions. It is therefore not 100% clean C. The
+broader `Game` library is 60 of 61 owners Matching because it also owns the
+still-fallback-linked `board/board.c`.
 
 `game/mic.c` is matching and is linked from recovered C.
 
@@ -110,9 +118,9 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/__exception.s` (`ASM-GATE-PENDING`) | [Mario Party 4 `src/TRK_MINNOW_DOLPHIN/__exception.s` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/TRK_MINNOW_DOLPHIN/__exception.s), `MatchingFor(USA,PAL)` | M4 authenticates the standalone `.init` exception-vector form and `0x1F34` size, but MP6 starts at a different address and has different vector/padding offsets. M5 has the MP6 bounds but is `NonMatching` with no source. A target-specific reconstruction and full gate are still required. |
 
-#### Bucket 2: `C-not-yet-matched` (118 current fallback owners)
+#### Bucket 2: `C-not-yet-matched` (117 current fallback owners)
 
-Twenty-two owners have current source candidates and are tagged `SRC-DIVERGES`.
+Twenty-five owners have current source candidates and are tagged `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-14; percentages are raw `.text` scores unless
 otherwise noted.
@@ -141,10 +149,13 @@ otherwise noted.
 | `board/masu.c` | Raw `.text` pairing is 64.42536%; mapped-function weighted score is 99.763774%, with 112/119 target functions represented and 103/119 exact. Wave 27 recovered 21 formerly absent functions and the real `0x1C` next-space work layout. Fourteen additions are fully exact; seven exact-size instruction streams retain only compiler-local constant/static-data relocation identities while the owner is incomplete. Seven large draw/event/color/value functions remain absent, so the owner stays fallback-linked. |
 | `board/branch.c` | 99.816%; 16/17 functions exact. `ev_Branch` is now target/source `0x8F0`/`0x8F0`; all 19 remaining differences are one `choice`/`choiceTime` register cycle, with no inserted, deleted, or replaced instructions. Whole-owner `.text` is `0x10E0`/`0x10E0` and all 210 relocations match; configured `.data` remains `0x18`/`0x12`. |
 | `board/effect.c` | 59.766%; 1/35 functions exact, target/source text sizes `0x3050`/`0x3074`, plus `.sdata` and `.sdata2` divergence. The restored FastCast header is not its blocker. |
+| `gssdk_lib/asrpho/common/blocks/delaybl.c` | The target-derived `DelayBlock`/`TosBaseBlock` ABI and all four functions are recovered. `InitDelayBlock` and `ConstructDelayBlock` are exact; `ProcessDelayBlock` is target/source `0x198/0x198` at 99.931370% with only stack-frame offsets divergent, and `ControlDelayBlock` is `0xE4/0xE4` at 98.859650%. It remains fallback-linked. |
+| `gssdk_lib/asrpho/common/blocks/flfxblks/statio.c` | The target-derived `0x50` stationarity block, queue/context fields, constants, and four functions are recovered. `ConstructStationarity` is exact; the other functions are target/source `0x1A8/0x1B0`, `0x8C/0x8C`, and `0x144/0x148` at 97.198110%, 93.457146%, and 97.703705%. The `0x10/0xC` `.sdata2` closure also diverges, so the owner remains fallback-linked. |
+| `gssdk_lib/asrpho/common/ctxdata/ctxdata.c` | The binary-proven `ContextDataV2` layout through offset `0xB8`, virtual table, and all accessors are recovered. Seventeen accessors are byte-exact; the three packed-tail pointer computations remain at 79.500000%, 66.933334%, and 68.000000%, while `FillContextV2VirtualTable` retains one source/target table-relocation identity difference. The owner remains fallback-linked. |
 
-The other 96 owners are tagged `NO-SOURCE`. Each explicit brace group below
+The other 92 owners are tagged `NO-SOURCE`. Each explicit brace group below
 expands to the named owner files; the count audit is
-`3 + 1 + 14 + 56 + 22 = 96`.
+`3 + 1 + 14 + 52 + 22 = 92`.
 
 - `MSL_C.PPCEABI.bare.H/` (3): `alloc.c`, `qsort.c`, and `e_exp.c`.
 - `TRK_MINNOW_DOLPHIN/` C owner (1): `targimpl.c`.
@@ -152,16 +163,15 @@ expands to the named owner files; the count audit is
   `synthmacros.c`, `synthvoice.c`, `s_data.c`, `hw_dspctrl.c`, `snd3d.c`,
   `snd_midictrl.c`, `hardware.c`, `dsp_import.c`, `hw_aramdma.c`, and
   `StdReverb/reverb.c`.
-- `gssdk_lib/` (56):
+- `gssdk_lib/` (52):
   - `gsapi/{callbacks,ctxfuncs,gsapi}.c`;
   - `asrpho/asrspi.c` and
     `asrpho/rec1600/{convert,creasp,creaspch,creaspt,creatree,crsptrch,ctrl,initial,spi1600,train,userword}.c`;
-  - `asrpho/common/blocks/{delaybl,dpgenuw,dpscruw,exev_dp,fft_maye,fftmod,isoword,nbestdp,pitchdp,pitchwin,stacker,undersam}.c`;
+  - `asrpho/common/blocks/{dpgenuw,dpscruw,exev_dp,fft_maye,fftmod,isoword,nbestdp,pitchdp,pitchwin,stacker,undersam}.c`;
   - `asrpho/common/blocks/flblocks/{acne,dctlift,gender,logexp,mel,mtx,mtxopt,smoother,specsub,vad,vq1500,window}.c`;
-  - `asrpho/common/blocks/flfxblks/{combiner,dist16,genfilt,lkahead,median,pitchco,shs_vuv,slidhist,statio,subsamp,trigglr,voicing}.c`;
-  - `asrpho/common/ctxdata/{ctxdata,langdata}.c`,
+  - `asrpho/common/blocks/flfxblks/{combiner,dist16,genfilt,lkahead,median,pitchco,shs_vuv,slidhist,subsamp,trigglr,voicing}.c`;
+  - `asrpho/common/ctxdata/langdata.c`,
     `asrpho/common/tos/{mqueue,tinyos}.c`;
-  - `common/rsrc/rsrc.c`.
 - `board/` (22): `math.c`, `snpc.c`, `scroll.c`, `coin.c`, `star.c`,
   `dice.c`, `opening.c`, `tutorial.c`, `capselect.c`, `capmove.c`,
   `capthrow.c`, `captrap.c`, `capspecial.c`, `capsule.c`, `capevent.c`,

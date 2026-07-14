@@ -1571,7 +1571,7 @@ gssdk_lib/common/osspi/osspi.c:
 
 gssdk_lib/common/rsrc/rsrc.c:
 	.text       start:0x8013EAC4 end:0x8013EE1C
-	.rodata     start:0x8021A4A0 end:0x8021A4B8
+	.rodata     start:0x8021A4A0 end:0x8021A4B4
 
 libhu/setvf.c:
 	.text       start:0x8013EE1C end:0x8013EE2C

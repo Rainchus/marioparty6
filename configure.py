@@ -934,7 +934,7 @@ config.libs = [
             Object(Matching, "gssdk_lib/common/csspi/csspi.c"),
             Object(Matching, "gssdk_lib/common/safeh/safeh.c"),
             Object(Matching, "gssdk_lib/common/osspi/osspi.c"),
-            Object(NonMatching, "gssdk_lib/common/rsrc/rsrc.c"),
+            Object(Matching, "gssdk_lib/common/rsrc/rsrc.c"),
         ],
     },
     {
