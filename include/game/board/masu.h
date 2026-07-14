@@ -33,8 +33,13 @@ typedef struct Masu_s {
 typedef int (*MASUPATHCHECKHOOK)(s16 id, u32 mAttr, s16 *linkTbl, BOOL endF);
 typedef int (*MASUEVENTHOOK)(int playerNo, s16 id);
 
+void mbMasuInit(int dataNum);
+void mbMasuClose(void);
 BOOL mbMasuDataRead(int dataNum);
+void mbMasuNextSet(s16 id);
 void mbMasuNextDispSet(BOOL dispF);
+int mbev_MasuMasuStart(int playerNo);
+int mbev_MasuMasuEnd(int id);
 int mbMasuNumGet(void);
 int mbMasuRawNumGet(void);
 MASU *mbMasuGet(s16 id);
@@ -44,6 +49,8 @@ u16 mbMasuAttrGet(s16 id);
 void mbMasuAttrSet(s16 id, u16 attr);
 u32 mbMasuMAttrGet(s16 id);
 void mbMasuMAttrSet(s16 id, u32 attr);
+u32 mbev_MasuBitGet(u32 attr, u32 mask);
+u32 mbev_MasuAttrGet(int attr, u32 mask);
 int mbMasuTypeGet(s16 id);
 void mbMasuTypeSet(s16 id, int type);
 void mbMasuTypeChange(u16 oldType, u16 newType);
@@ -54,6 +61,8 @@ void mbMasuCapsuleSet(s16 id, int capsuleNo);
 void mbMasuPosGet(s16 id, HuVecF *pos);
 void mbMasuPosSet(s16 id, float x, float y, float z);
 void mbMasuPosSetV(s16 id, HuVecF *pos);
+void mbMasuCornerRotPosGet(s16 id, int cornerNo, HuVecF *pos);
+void mbMasuCornerPosGet(s16 id, int cornerNo, HuVecF *pos);
 void mbMasuRotGet(s16 id, HuVecF *rot);
 void mbMasuRotSet(s16 id, float x, float y, float z);
 void mbMasuRotSetV(s16 id, HuVecF *rot);
@@ -112,6 +121,7 @@ int mbMasuFind_AttrNumGet(s16 id, u16 attr, u32 unused);
 int mbMasuFind_AttrMatchNumGet(s16 id, u16 arg1, u16 arg2, u32 unused);
 int mbMasuFind_AttrMatchNumGet2(s16 id, u16 arg1, u16 arg2, BOOL hookF,
     BOOL dispF, u32 unused);
+s16 mbMasuFind_MAttrNumGet(s16 id, u32 attr);
 int mbMasuFind_MAttrMatchListGet(s16 id, u32 arg1, u32 arg2, s16 *list);
 int mbMasuFind_MAttrMatchListGet2(s16 id, u32 arg1, u32 arg2, BOOL hookF,
     BOOL dispF, s16 *list);
@@ -122,8 +132,11 @@ void mbev_MasuMoveEndSet(MASUEVENTHOOK hook);
 void mbev_MasuMoveStartSet(MASUEVENTHOOK hook);
 void mbev_MasuHatenaSet(MASUEVENTHOOK hook);
 void mbev_MasuLinkTblHookSet(MASUPATHCHECKHOOK hook);
+int mbMasuPlayerCapMoveCheck(int playerNo, s16 id);
+int mbMasuPlayerCapStopCheck(int playerNo, s16 id);
 void mbMasuPlayerDispSet(BOOL dispF);
 void mbMasuPlayerFadeSet(BOOL fadeF);
+void mbMasuPlayerPrizeReset(int playerNo);
 int mbMasuStub(void);
 
 #endif

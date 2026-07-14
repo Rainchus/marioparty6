@@ -1,9 +1,16 @@
 #include "game/board/masu.h"
+#include "game/board/audio.h"
 #include "game/board/branch.h"
+#include "game/board/gate.h"
+#include "game/board/main.h"
+#include "game/board/object.h"
+#include "game/board/player.h"
 #include "game/data.h"
 #include "game/gamework.h"
 #include "game/hsfex.h"
 #include "game/hu3d.h"
+#include "game/object.h"
+#include "game/sprite.h"
 #include <string.h>
 
 typedef struct MasuFindWork_s {
@@ -12,6 +19,18 @@ typedef struct MasuFindWork_s {
 } MASUFINDWORK;
 
 typedef BOOL (*MASUFINDCHECK)(int id, u32 value, u32 mask);
+
+typedef struct MasuNextWork_s {
+    int playerNo;
+    int state;
+    s16 masuId;
+    float angle;
+    float scale;
+    u8 alpha;
+    s16 delay;
+    s16 time;
+    s16 duration;
+} MASUNEXTWORK;
 
 static MASUFINDWORK masuFindWork[MASU_MAX];
 static s16 masuFindResult[MASU_MAX];
@@ -30,16 +49,53 @@ static MASUEVENTHOOK masuev_MasuEnd;
 static MASUEVENTHOOK masuev_HatenaHook;
 static MASUPATHCHECKHOOK masuev_LinkTblHook;
 static s16 masuMdlId;
+static s16 masuDispCnt;
+static ANIMDATA *masuAnimTbl[2];
+static void *masuDisplayList;
+static u32 masuDisplayListLen;
+static void *masuDisplayListKao;
+static u32 masuDisplayListKaoLen;
+static MASUNEXTWORK *masuNextWork;
+static ANIMDATA *masuNextAnim;
+static s16 masuNextId;
+static HUPROCESS *masuNextProc;
+static s16 masuNextMdlId;
 static BOOL masuNextDispF;
 static s16 masuFindNo;
 static s16 masuFindStep;
 static s16 masuFindId;
 static s16 masuFindResultNum;
 
+extern void *mbMalloc(s32 size);
+extern float mbCosDeg(float angle);
+extern float mbSinDeg(float angle);
+extern s16 mbCapMasuPlayerGet(s16 id);
+extern s16 mbCapMasuDispTypeGet(s16 id);
+extern void mbPlayerColSnapPlayerSet(int playerNo, BOOL snapF);
+static void MasuDispInit(void);
+static void MasuDispClose(void);
+static u32 MasuDisplayListMake(void **displayList);
+static u32 MasuDisplayListKaoMake(void **displayList);
+void MasuDraw(HU3D_MODEL *modelP, Mtx *mtx);
+static void MasuNextCreate(void);
+static void MasuNextMain(void);
+static void MasuNextKill(void);
+void MasuNextDraw(HU3D_MODEL *modelP, Mtx *mtx);
+
 typedef struct MasuDisp_s {
     int type;
     BOOL dispF;
 } MASUDISP;
+
+static int masuFileTbl[] = {
+    DATANUM(DATA_bmasu, 0),
+    DATANUM(DATA_bmasu, 3),
+};
+
+static int masuSingleFileTbl[] = {
+    DATANUM(DATA_bmasu, 1),
+    DATANUM(DATA_bmasu, 3),
+};
 
 static MASUDISP masuDispTbl[] = {
     { 0, FALSE },
@@ -95,6 +151,46 @@ static MASUDISP masuSingleDispTbl[] = {
     (ptr) = (u8 *)(ptr) + sizeof(HuVecF); \
 } while (0)
 
+void mbMasuInit(int dataNum)
+{
+    int i;
+
+    for (i = 0; i < MASU_LAYER_MAX; i++) {
+        masuData[i] = mbMalloc(sizeof(MASU) * MASU_MAX);
+    }
+    mbMasuLayerSet(MASU_LAYER_DEFAULT);
+    for (i = 0; i < MASU_LAYER_MAX; i++) {
+        masuDispAttrMask[i] = 0x10;
+        masuDispMAttrMask[i] = 0;
+    }
+    masuev_MasuStart = NULL;
+    masuev_MasuEnd = NULL;
+    masuev_HatenaHook = NULL;
+    masuev_LinkTblHook = NULL;
+    masuDispF = TRUE;
+    masuCapsuleDispF = TRUE;
+    masuCapsuleFadeOnF = FALSE;
+    mbMasuDataRead(mbObjDataNumGet(dataNum));
+    MasuDispInit();
+    mbGateCreate();
+    MasuNextCreate();
+    HuDataDirClose(DATA_bmasu);
+}
+
+void mbMasuClose(void)
+{
+    int i;
+
+    MasuDispClose();
+    MasuNextKill();
+    for (i = 0; i < MASU_LAYER_MAX; i++) {
+        MASU *masuP = masuData[i];
+
+        HuMemDirectFree(masuP);
+        masuData[i] = NULL;
+    }
+}
+
 BOOL mbMasuDataRead(int dataNum)
 {
     MASU *masuP;
@@ -134,9 +230,306 @@ BOOL mbMasuDataRead(int dataNum)
     return TRUE;
 }
 
+static void MasuDispInit(void)
+{
+    int i;
+    BOOL partyF = GwSystem.partyF;
+
+    if (partyF) {
+        for (i = 0; i < 2; i++) {
+            masuAnimTbl[i] = HuSprAnimDataRead(masuFileTbl[i]);
+            HuSprAnimLock(masuAnimTbl[i]);
+        }
+    } else {
+        for (i = 0; i < 2; i++) {
+            masuAnimTbl[i] = HuSprAnimDataRead(masuSingleFileTbl[i]);
+            HuSprAnimLock(masuAnimTbl[i]);
+        }
+    }
+    masuDisplayListLen = MasuDisplayListMake(&masuDisplayList);
+    masuDisplayListKaoLen = MasuDisplayListKaoMake(&masuDisplayListKao);
+    masuMdlId = Hu3DHookFuncCreate(MasuDraw);
+    Hu3DModelCameraSet(masuMdlId, HU3D_CAM0);
+    Hu3DModelLayerSet(masuMdlId, 2);
+}
+
+static void MasuDispClose(void)
+{
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        if (masuAnimTbl[i] != NULL) {
+            HuSprAnimKill(masuAnimTbl[i]);
+            masuAnimTbl[i] = NULL;
+        }
+    }
+    if (masuDisplayList != NULL) {
+        void *displayList = masuDisplayList;
+
+        HuMemDirectFree(displayList);
+        masuDisplayList = NULL;
+    }
+    if (masuMdlId >= 0) {
+        Hu3DModelKill(masuMdlId);
+        masuMdlId = HU3D_MODELID_NONE;
+    }
+}
+
+#define MASU_DL_BUF_SIZE 0x1000
+
+static u32 MasuDisplayListMake(void **displayList)
+{
+    u8 *dlBufRaw = HuMemDirectMallocNum(HEAP_HEAP, MASU_DL_BUF_SIZE, HU_MEMNUM_OVL);
+    void *dlBuf = dlBufRaw;
+    u8 *displayListP;
+    u32 dlSize;
+
+    DCInvalidateRange(dlBuf, MASU_DL_BUF_SIZE);
+    GXBeginDisplayList(dlBuf, MASU_DL_BUF_SIZE);
+    GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+    GXPosition3f32(-100.0f, 0.0f, -100.0f);
+    GXTexCoord2f32(0.0f, 0.0f);
+    GXPosition3f32(100.0f, 0.0f, -100.0f);
+    GXTexCoord2f32(1.0f, 0.0f);
+    GXPosition3f32(100.0f, 0.0f, 100.0f);
+    GXTexCoord2f32(1.0f, 1.0f);
+    GXPosition3f32(-100.0f, 0.0f, 100.0f);
+    GXTexCoord2f32(0.0f, 1.0f);
+    GXEnd();
+    dlSize = GXEndDisplayList();
+    displayListP = HuMemDirectMallocNum(HEAP_HEAP, dlSize, HU_MEMNUM_OVL);
+    *displayList = displayListP;
+    memcpy(*displayList, dlBuf, dlSize);
+    DCFlushRange(*displayList, dlSize);
+    HuMemDirectFree(dlBuf);
+    return dlSize;
+}
+
+static u32 MasuDisplayListKaoMake(void **displayList)
+{
+    u8 *dlBufRaw = HuMemDirectMallocNum(HEAP_HEAP, MASU_DL_BUF_SIZE, HU_MEMNUM_OVL);
+    void *dlBuf = dlBufRaw;
+    u8 *displayListP;
+    u32 dlSize;
+
+    DCInvalidateRange(dlBuf, MASU_DL_BUF_SIZE);
+    GXBeginDisplayList(dlBuf, MASU_DL_BUF_SIZE);
+    GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+    GXPosition3f32(-100.0f, 200.0f, 0.0f);
+    GXTexCoord2f32(0.0f, 0.0f);
+    GXPosition3f32(100.0f, 200.0f, 0.0f);
+    GXTexCoord2f32(1.0f, 0.0f);
+    GXPosition3f32(100.0f, 0.0f, 0.0f);
+    GXTexCoord2f32(1.0f, 1.0f);
+    GXPosition3f32(-100.0f, 0.0f, 0.0f);
+    GXTexCoord2f32(0.0f, 1.0f);
+    GXEnd();
+    dlSize = GXEndDisplayList();
+    displayListP = HuMemDirectMallocNum(HEAP_HEAP, dlSize, HU_MEMNUM_OVL);
+    *displayList = displayListP;
+    memcpy(*displayList, dlBuf, dlSize);
+    DCFlushRange(*displayList, dlSize);
+    HuMemDirectFree(dlBuf);
+    return dlSize;
+}
+
+#undef MASU_DL_BUF_SIZE
+
+static void MasuNextCreate(void)
+{
+    masuNextProc = HuPrcChildCreate(MasuNextMain, 0x2003, 0x2000, 0, mbMainProc);
+    masuNextWork = mbMalloc(sizeof(MASUNEXTWORK) * GW_PLAYER_MAX);
+    masuNextMdlId = Hu3DHookFuncCreate(MasuNextDraw);
+    Hu3DModelCameraSet(masuNextMdlId, HU3D_CAM0);
+    Hu3DModelLayerSet(masuNextMdlId, 2);
+    masuNextAnim = HuSprAnimDataRead(DATANUM(DATA_bmasu, 5));
+    masuNextDispF = TRUE;
+}
+
+static void MasuNextMain(void)
+{
+    MASUNEXTWORK *work;
+    int playerNo;
+    int i;
+
+    for (;;) {
+        playerNo = GwSystem.turnPlayerNo;
+        work = masuNextWork;
+        for (i = 0; i < GW_PLAYER_MAX; i++, work++) {
+            float time;
+
+            if (work->masuId == 0) {
+                continue;
+            }
+            if (work->delay != 0) {
+                work->delay--;
+                continue;
+            }
+            if (work->playerNo != playerNo) {
+                work->masuId = 0;
+                continue;
+            }
+            switch (work->state) {
+                case 0:
+                    time = (float)work->time / work->duration;
+                    if (work->time < work->duration) {
+                        work->time++;
+                    }
+                    work->scale = 1.0f
+                        + mbCosDeg(90.0f * work->time / work->duration);
+                    work->alpha = 192.0f * time;
+                    if (masuNextId != work->masuId) {
+                        work->state = 1;
+                        work->time = 0;
+                    }
+                    break;
+                case 1:
+                    time = (float)work->time++ / work->duration;
+                    work->alpha = 192.0f * (1.0f - time);
+                    if (work->time > work->duration) {
+                        work->masuId = 0;
+                    }
+                    break;
+            }
+        }
+        HuPrcVSleep();
+    }
+}
+
+static void MasuNextKill(void)
+{
+    if (masuNextWork != NULL) {
+        MASUNEXTWORK *work = masuNextWork;
+
+        HuMemDirectFree(work);
+        masuNextWork = NULL;
+    }
+    if (masuNextMdlId >= 0) {
+        Hu3DModelKill(masuNextMdlId);
+        masuNextMdlId = HU3D_MODELID_NONE;
+    }
+    if (masuNextAnim != NULL) {
+        HuSprAnimKill(masuNextAnim);
+        masuNextAnim = NULL;
+    }
+}
+
+void mbMasuNextSet(s16 id)
+{
+    MASUNEXTWORK *work = masuNextWork;
+    int i;
+
+    if (masuNextId == id) {
+        return;
+    }
+    masuNextId = id;
+    if (!mbMasuDispCheck(id)) {
+        return;
+    }
+    for (i = 0; i < GW_PLAYER_MAX; i++, work++) {
+        if (work->masuId == 0) {
+            break;
+        }
+    }
+    work->masuId = id;
+    work->state = 0;
+    work->time = 0;
+    work->duration = 12;
+    work->angle = 0.0f;
+    work->playerNo = GwSystem.turnPlayerNo;
+    work->delay = 6;
+    work->alpha = 0;
+}
+
 void mbMasuNextDispSet(BOOL dispF)
 {
     masuNextDispF = dispF;
+}
+
+int mbev_MasuMasuStart(int playerNo)
+{
+    int result;
+    s16 id;
+    MASUNEXTWORK *work;
+    int i;
+
+    if (masuev_MasuEnd) {
+        mbPlayerColSnapPlayerSet(playerNo, FALSE);
+        result = masuev_MasuEnd(playerNo, GwPlayer[playerNo].masuId);
+        mbPlayerColSnapPlayerSet(playerNo, TRUE);
+    } else {
+        result = 0;
+    }
+    id = GwPlayer[playerNo].masuId;
+    work = masuNextWork;
+    if (masuNextId != id) {
+        masuNextId = id;
+        if (mbMasuDispCheck(id)) {
+            for (i = 0; i < GW_PLAYER_MAX; i++, work++) {
+                if (work->masuId == 0) {
+                    break;
+                }
+            }
+            work->masuId = id;
+            work->state = 0;
+            work->time = 0;
+            work->duration = 12;
+            work->angle = 0.0f;
+            work->playerNo = GwSystem.turnPlayerNo;
+            work->delay = 6;
+            work->alpha = 0;
+        }
+    }
+    return result;
+}
+
+int mbev_MasuMasuEnd(int id)
+{
+    int playerNo = GwSystem.turnPlayerNo;
+    int result;
+    MASUNEXTWORK *work;
+    int i;
+
+    if (masuev_MasuStart) {
+        mbPlayerColSnapPlayerSet(playerNo, FALSE);
+        result = masuev_MasuStart(playerNo, id);
+        mbPlayerColSnapPlayerSet(playerNo, TRUE);
+    } else {
+        result = 0;
+    }
+    work = masuNextWork;
+    if ((s16)masuNextId != (s16)id) {
+        masuNextId = id;
+        if (mbMasuDispCheck(id)) {
+            for (i = 0; i < GW_PLAYER_MAX; i++, work++) {
+                if (work->masuId == 0) {
+                    break;
+                }
+            }
+            work->masuId = id;
+            work->state = 0;
+            work->time = 0;
+            work->duration = 12;
+            work->angle = 0.0f;
+            work->playerNo = GwSystem.turnPlayerNo;
+            work->delay = 6;
+            work->alpha = 0;
+        }
+    }
+    return result;
+}
+
+static int ev_MasuHatena(int playerNo, s16 id)
+{
+    int result = TRUE;
+
+    if (masuev_HatenaHook) {
+        mbAudFXPlay(0x450);
+        omVibrate(playerNo, 20, 7, 3);
+        mbPlayerColSnapPlayerSet(playerNo, FALSE);
+        result = masuev_HatenaHook(playerNo, id);
+    }
+    return result;
 }
 
 #undef DATA_READ16
@@ -188,6 +581,49 @@ u32 mbMasuMAttrGet(s16 id)
 void mbMasuMAttrSet(s16 id, u32 attr)
 {
     masuData[masuLayer][id].mAttr = attr;
+}
+
+u32 mbev_MasuBitGet(u32 outMask, u32 inMask)
+{
+    u32 bitIn;
+    int i;
+    u32 result;
+    int bitOut;
+
+    outMask &= inMask;
+    result = 0;
+    bitOut = bitIn = 1;
+    for (i = 0; i < 32; i++) {
+        if (inMask & bitIn) {
+            if (outMask & bitIn) {
+                result |= bitOut;
+            }
+            bitOut <<= 1;
+        }
+        bitIn <<= 1;
+    }
+    return result;
+}
+
+u32 mbev_MasuAttrGet(int outMask, u32 inMask)
+{
+    u32 bitIn;
+    int i;
+    int bitOut;
+    u32 result;
+
+    bitIn = bitOut = 1;
+    result = 0;
+    for (i = 0; i < 32; i++) {
+        if (inMask & bitIn) {
+            if (outMask & bitOut) {
+                result |= bitIn;
+            }
+            bitOut <<= 1;
+        }
+        bitIn <<= 1;
+    }
+    return result;
 }
 
 int mbMasuTypeGet(s16 id)
@@ -280,6 +716,120 @@ void mbMasuPosSet(s16 id, float x, float y, float z)
 void mbMasuPosSetV(s16 id, HuVecF *pos)
 {
     mbMasuPosSet(id, pos->x, pos->y, pos->z);
+}
+
+#define MASU_CORNER_MAX 8
+
+typedef struct MasuCorner_s {
+    int no;
+    int order;
+} MASUCORNER;
+
+void mbMasuCornerPosGet(s16 id, int cornerNo, HuVecF *pos)
+{
+    MASU *masuP = mbMasuGet(id);
+    MASUCORNER cornerTbl[MASU_CORNER_MAX];
+    s16 linkTbl[MASU_LINK_MAX * 2];
+    int cornerNum[MASU_CORNER_MAX];
+    HuVecF posMasu;
+    HuVecF posLink;
+    HuVecF linkDir;
+    int i;
+    int j;
+    int linkNum;
+    static int cornerNoTbl[MASU_CORNER_MAX] = {
+        3, 1,
+        7, 5,
+        4, 2,
+        0, 6,
+    };
+
+    for (linkNum = 0, i = 0; i < masuP->linkNum; i++) {
+        s32 link = masuP->linkTbl[i];
+
+        linkTbl[linkNum++] = link;
+    }
+    linkNum += mbMasuLinkParentGet(id, &linkTbl[linkNum]);
+    for (i = 0; i < MASU_CORNER_MAX; i++) {
+        cornerNum[i] = 0;
+    }
+    {
+        MASU *masuPosP = &masuData[masuLayer][id];
+
+        if (!masuPosP->useMtxF) {
+            posMasu = masuPosP->pos;
+        } else {
+            posMasu.x = masuPosP->matrix[0][3];
+            posMasu.y = masuPosP->matrix[1][3];
+            posMasu.z = masuPosP->matrix[2][3];
+        }
+    }
+    for (i = 0; i < linkNum; i++) {
+        s32 cornerIdx;
+        s16 link = linkTbl[i];
+        MASU *linkP = &masuData[masuLayer][link];
+        float linkAngle;
+
+        if (!linkP->useMtxF) {
+            posLink = linkP->pos;
+        } else {
+            posLink.x = linkP->matrix[0][3];
+            posLink.y = linkP->matrix[1][3];
+            posLink.z = linkP->matrix[2][3];
+        }
+        VECSubtract(&posLink, &posMasu, &linkDir);
+        linkAngle = HuAtan(-linkDir.z, linkDir.x);
+        if (linkAngle < 0.0f) {
+            linkAngle += 360.0f;
+        }
+        cornerIdx = (s16)((linkAngle + 22.5f) / 45.0f);
+        cornerNum[cornerIdx]++;
+    }
+    for (i = 0; i < MASU_CORNER_MAX; i++) {
+        cornerTbl[i].no = cornerNoTbl[i];
+        cornerTbl[i].order = cornerNum[cornerTbl[i].no];
+    }
+    for (i = 0; i < MASU_CORNER_MAX - 1; i++) {
+        for (j = i; j < MASU_CORNER_MAX; j++) {
+            if (cornerTbl[j].order < cornerTbl[i].order) {
+                MASUCORNER temp = cornerTbl[i];
+
+                cornerTbl[i] = cornerTbl[j];
+                cornerTbl[j] = temp;
+            }
+        }
+    }
+    pos->x = mbCosDeg((cornerTbl[cornerNo].no * 360.0f) / 8.0f) * 100.0f;
+    pos->y = 0.0f;
+    pos->z = -mbSinDeg((cornerTbl[cornerNo].no * 360.0f) / 8.0f) * 100.0f;
+}
+
+#undef MASU_CORNER_MAX
+
+void mbMasuCornerRotPosGet(s16 id, int cornerNo, HuVecF *pos)
+{
+    HuVecF posMasu;
+    HuVecF posCorner;
+    HuVecF rot;
+    MASU *masuP;
+
+    mbMasuCornerPosGet(id, cornerNo, &posCorner);
+    masuP = &masuData[masuLayer][id];
+    if (!masuP->useMtxF) {
+        posMasu = masuP->pos;
+    } else {
+        posMasu.x = masuP->matrix[0][3];
+        posMasu.y = masuP->matrix[1][3];
+        posMasu.z = masuP->matrix[2][3];
+    }
+    mbMasuRotGet(id, &rot);
+    pos->x = ((posCorner.x * mbCosDeg(rot.z)) + posMasu.x
+        + (posCorner.y * mbSinDeg(rot.z)));
+    pos->y = (posCorner.z * mbSinDeg(-rot.x))
+        + (posMasu.y + (posCorner.x * mbSinDeg(rot.z))
+        + (posCorner.y * (mbCosDeg(rot.x) * mbCosDeg(rot.z))));
+    pos->z = ((posCorner.y * mbSinDeg(rot.x)) + posMasu.z
+        + (posCorner.z * mbCosDeg(rot.x)));
 }
 
 void mbMasuRotGet(s16 id, HuVecF *rot)
@@ -909,6 +1459,29 @@ int mbMasuFind_AttrMatchNumGet2(s16 id, u16 arg1, u16 arg2, BOOL hookF,
     return masuFindResultNum;
 }
 
+s16 mbMasuFind_MAttrNumGet(s16 id, u32 attr)
+{
+    s16 result;
+
+    if (id >= 0) {
+        MasuFind(id, MasuMAttrMatchCheck, attr, attr, FALSE, TRUE);
+        result = masuFindId;
+    } else {
+        MASU *masuP = &masuData[masuLayer][1];
+        int i;
+
+        for (i = 0; i < masuNum[masuLayer]; i++, masuP++) {
+            if ((masuP->mAttr & attr) == attr) {
+                result = i + 1;
+                goto done;
+            }
+        }
+        result = MASU_NULL;
+    }
+done:
+    return result;
+}
+
 int mbMasuFind_MAttrMatchListGet(s16 id, u32 arg1, u32 arg2, s16 *list)
 {
     return mbMasuFind_MAttrMatchListGet2(id, arg1, arg2, FALSE, TRUE, list);
@@ -955,6 +1528,40 @@ void mbev_MasuLinkTblHookSet(MASUPATHCHECKHOOK hook)
     masuev_LinkTblHook = hook;
 }
 
+int mbMasuPlayerCapMoveCheck(int playerNo, s16 id)
+{
+    int capPlayerNo = mbCapMasuPlayerGet(id);
+
+    if (capPlayerNo < 0) {
+        return 0;
+    }
+    if (mbCapMasuDispTypeGet(id) == 2) {
+        if (capPlayerNo == playerNo
+            || (GWTeamFGet() && capPlayerNo == mbPlayerTeamFind(playerNo))) {
+            return 1;
+        }
+        return -1;
+    }
+    return 0;
+}
+
+int mbMasuPlayerCapStopCheck(int playerNo, s16 id)
+{
+    int capPlayerNo = mbCapMasuPlayerGet(id);
+
+    if (capPlayerNo < 0) {
+        return 0;
+    }
+    if (mbCapMasuDispTypeGet(id) == 1) {
+        if (capPlayerNo == playerNo
+            || (GWTeamFGet() && capPlayerNo == mbPlayerTeamFind(playerNo))) {
+            return 1;
+        }
+        return -1;
+    }
+    return 0;
+}
+
 void mbMasuPlayerDispSet(BOOL dispF)
 {
     masuCapsuleDispF = dispF;
@@ -963,6 +1570,18 @@ void mbMasuPlayerDispSet(BOOL dispF)
 void mbMasuPlayerFadeSet(BOOL fadeF)
 {
     masuCapsuleFadeOnF = fadeF;
+}
+
+void mbMasuPlayerPrizeReset(int playerNo)
+{
+    GwPlayer[playerNo].plusMasuNum = 0;
+    GwPlayer[playerNo].minusMasuNum = 0;
+    GwPlayer[playerNo].capsuleMasuNum = 0;
+    GwPlayer[playerNo].hatenaMasuNum = 0;
+    GwPlayer[playerNo].koopaMasuNum = 0;
+    GwPlayer[playerNo].miracleMasuNum = 0;
+    GwPlayer[playerNo].kettouMasuNum = 0;
+    GwPlayer[playerNo].donkeyMasuNum = 0;
 }
 
 int mbMasuStub(void)

@@ -124,7 +124,7 @@ otherwise noted.
 | `msm/msmstream.c` | 99.487020%; 23/28 functions exact. `msmStreamDvdCallback` and `msmStreamDvdCallback2` are exact. `msmStreamData` is now target/source `0x2EC/0x2EC` at 99.759360% after recovering the target pause/linked-slot/ARAM-update control flow; `msmStreamSlotInit` is `0x224/0x224` at 99.635040% after recovering its three distinct size/offset lifetimes. Five functions still diverge, so the owner remains fallback-linked. |
 | `board/player.c` | Raw section pairing is 1.155%; mapped-function weighted score is 99.965%, but only 10/165 functions are currently exact. |
 | `board/audio.c` | 99.98862%; 46/49 functions exact. The remaining code differences are one compare-operand reversal in each of `mbMusBoardPlay` and `MusBoardFade`, plus twelve stack-slot offsets in `mbMusBoardFadeOut`; target/source `.text` are both `0x2BF0` and all 444 text relocations match. |
-| `board/masu.c` | Raw section pairing is 40.144%; mapped-function weighted score is 99.771%, with 89/119 functions exact. |
+| `board/masu.c` | Raw `.text` pairing is 64.42536%; mapped-function weighted score is 99.763774%, with 112/119 target functions represented and 103/119 exact. Wave 27 recovered 21 formerly absent functions and the real `0x1C` next-space work layout. Fourteen additions are fully exact; seven exact-size instruction streams retain only compiler-local constant/static-data relocation identities while the owner is incomplete. Seven large draw/event/color/value functions remain absent, so the owner stays fallback-linked. |
 | `board/branch.c` | 99.816%; 16/17 functions exact. `ev_Branch` is now target/source `0x8F0`/`0x8F0`; all 19 remaining differences are one `choice`/`choiceTime` register cycle, with no inserted, deleted, or replaced instructions. Whole-owner `.text` is `0x10E0`/`0x10E0` and all 210 relocations match; configured `.data` remains `0x18`/`0x12`. |
 | `board/effect.c` | 59.766%; 1/35 functions exact, target/source text sizes `0x3050`/`0x3074`, plus `.sdata` and `.sdata2` divergence. The restored FastCast header is not its blocker. |
 
@@ -292,6 +292,19 @@ offsets; the corrected declaration order reproduces every target offset and
 passes the final DOL gate. Source provenance, the rejected `board/audio.c`
 probes, and full proof are retained in
 [`docs/native_matching_wave26.md`](docs/native_matching_wave26.md).
+
+Wave 27 materially advances `board/masu.c` without promoting the owner.
+Twenty-one formerly absent functions now have clean C, including the
+lifecycle/display setup, next-space state, event-bit transforms, corner
+ranking/rotation, capsule ownership checks, and player prize reset. Fourteen
+new functions totaling `0xA28` bytes are fully exact. Seven more totaling
+`0xCAC` have target-identical sizes and instruction sequences; objdiff reports
+only compiler-local numeric-pool or static-table relocation identities caused
+by the still-incomplete owner. The source object now maps 112/119 functions
+and has 103 exact. The seven remaining absent functions are the large GX draw
+paths, event state machines, player-color logic, and mushroom-value routine;
+they were left unimplemented rather than guessed. Evidence is retained in
+[`docs/native_matching_wave27.md`](docs/native_matching_wave27.md).
 
 Runtime allocation-exception recovery now names the map-authenticated
 `std::__new_handler` global and the sibling-authenticated
