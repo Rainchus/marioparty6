@@ -321,14 +321,51 @@ config.libs = [
         "objects": [
             Object(Matching, "Runtime.PPCEABI.H/__va_arg.c"),
             Object(Matching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
-            Object(NonMatching, "Runtime.PPCEABI.H/New.cp"),
-            Object(NonMatching, "Runtime.PPCEABI.H/NewMore.cp"),
-            Object(NonMatching, "Runtime.PPCEABI.H/NMWException.cpp"),
+            Object(
+                NonMatching,
+                "Runtime.PPCEABI.H/New.cp",
+                extra_cflags=["-Cpp_exceptions on"],
+            ),
+            Object(
+                NonMatching,
+                "Runtime.PPCEABI.H/NewMore.cp",
+                extra_cflags=[
+                    "-Cpp_exceptions on",
+                    "-RTTI on",
+                    "-inline auto,deferred",
+                ],
+            ),
+            Object(
+                NonMatching,
+                "Runtime.PPCEABI.H/NMWException.cpp",
+                extra_cflags=["-Cpp_exceptions on", "-inline auto,deferred"],
+            ),
             Object(NonMatching, "Runtime.PPCEABI.H/ptmf.c"),
             Object(Matching, "Runtime.PPCEABI.H/runtime.c"),
             Object(Matching, "Runtime.PPCEABI.H/__init_cpp_exceptions.cpp"),
-            Object(NonMatching, "Runtime.PPCEABI.H/Gecko_ExceptionPPC.cpp"),
-            Object(NonMatching, "Runtime.PPCEABI.H/GCN_mem_alloc.c"),
+            Object(
+                NonMatching,
+                "Runtime.PPCEABI.H/Gecko_ExceptionPPC.cpp",
+                cflags=[
+                    (
+                        "-str reuse,readonly"
+                        if flag.startswith("-str ")
+                        else "-inline auto,deferred"
+                        if flag.startswith("-inline ")
+                        else flag
+                    )
+                    for flag in cflags_runtime
+                ],
+                extra_cflags=["-Cpp_exceptions on", "-RTTI on"],
+            ),
+            Object(
+                Matching,
+                "Runtime.PPCEABI.H/GCN_mem_alloc.c",
+                cflags=[
+                    "-str reuse,readonly" if flag.startswith("-str ") else flag
+                    for flag in cflags_runtime
+                ],
+            ),
             Object(Matching, "Runtime.PPCEABI.H/__mem.c"),
         ],
     },

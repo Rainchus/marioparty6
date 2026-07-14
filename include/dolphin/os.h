@@ -61,6 +61,12 @@ u32 OSUncachedToCached(void* ucaddr);
 #define OSRoundUp32B(v) (((u32)(v + 31) & ~31))
 #define OSRoundDown32B(x) (((u32)(x)) & ~31)
 
+#define OSRoundUp(x, align) (((x) + (align)-1) & (-(align)))
+#define OSRoundUpPtr(x, align) ((void*)((((u32)(x)) + (align)-1) & (~((align)-1))))
+
+#define OSRoundDown(x, align) ((x) & (-(align)))
+#define OSRoundDownPtr(x, align) ((void*)(((u32)(x)) & (~((align)-1))))
+
 void* OSGetArenaHi(void);
 void* OSGetArenaLo(void);
 void OSSetArenaHi(void* newHi);
