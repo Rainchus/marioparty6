@@ -20,15 +20,13 @@ extern void *heap_Calloc(void *heap, u32 count, u32 size);
 extern void heap_Free(void *heap, void *ptr);
 extern f32 _tosGetProfileFloat(void *block, u32 key, f32 defaultValue);
 
-void ProcessStationarity(TosBaseBlock *baseBlock, void **input)
+static void ProcessStationarity(
+    TosBaseBlock *baseBlock, void **input, s32 inputCount)
 {
 Stationarity *block = (Stationarity *)baseBlock;
-f32 incoming = 0.0f;
 f32 sample;
+f32 incoming = 0.0f;
 f32 delayed;
-f32 low;
-f32 high;
-f32 value;
 f32 *cursor;
 f32 *output;
 
@@ -69,25 +67,27 @@ output = qEnQueueOne(block->base.output->queue);
 block->queued--;
 if (delayed > 0.0f) {
     cursor = block->history;
-    low = *cursor;
-    high = low;
+    incoming = *cursor;
+    sample = incoming;
     while (++cursor < block->historyEnd) {
-        value = *cursor;
-        if (value < low) {
-            low = value;
+        f32 value = *cursor;
+
+        if (value < incoming) {
+            incoming = value;
         }
-        if (value > high) {
-            high = value;
+        if (value > sample) {
+            sample = value;
         }
     }
-    if (high - low >= block->threshold) {
+    if (!(sample - incoming < block->threshold)) {
         delayed *= 0.1f;
     }
 }
 *output = delayed;
 }
 
-u32 ControlStationarity(TosBaseBlock *baseBlock, u32 command)
+static u32 ControlStationarity(
+    TosBaseBlock *baseBlock, u32 command, void *argument, u32 argumentSize)
 {
 Stationarity *block = (Stationarity *)baseBlock;
 TosContext *context = baseBlock->context;
@@ -95,21 +95,21 @@ TosContext *context = baseBlock->context;
 switch ((u8)command) {
 case 1:
     block->drain = 1;
-    return 1;
+    break;
 case 255:
     heap_Free(context->heap, block->history);
     heap_Free(context->heap, block->delayed);
     tosBaseBlockDestruct(block);
-    return 1;
+    break;
 default:
     return 0;
 }
+return 1;
 }
 
-u32 InitStationarity(TosBaseBlock *baseBlock)
+static u32 InitStationarity(Stationarity *block)
 {
-Stationarity *block = (Stationarity *)baseBlock;
-TosContext *context = baseBlock->context;
+TosContext *context = block->base.context;
 u32 i;
 
 block->base.input[0].inputSize = 24;
@@ -133,10 +133,10 @@ block->delayedWrite = block->delayed;
 return 0;
 }
 
-void *ConstructStationarity(void *block, void *profile)
+void *ConstructStationarity(TosContext *context, u32 blockIndex)
 {
 return tosBaseBlockConstruct(
-    block, profile, 2, 1, (TosProcessFunction)ProcessStationarity,
+    context, blockIndex, 2, 1, (TosProcessFunction)ProcessStationarity,
     (TosInitFunction)InitStationarity,
     (TosControlFunction)ControlStationarity, sizeof(Stationarity));
 }

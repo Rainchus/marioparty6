@@ -24,7 +24,8 @@ u16 flushRemaining;
 extern void *heap_Calloc(void *heap, u32 count, u32 size);
 extern void heap_Free(void *heap, void *ptr);
 
-void ProcessDelayBlock(TosBaseBlock *baseBlock, void **input)
+static void ProcessDelayBlock(
+    TosBaseBlock *baseBlock, void **input, s32 inputCount)
 {
 DelayBlock *block = (DelayBlock *)baseBlock;
 void *source = *input;
@@ -68,7 +69,8 @@ if (source != NULL) {
 }
 }
 
-u32 ControlDelayBlock(TosBaseBlock *baseBlock, u32 command)
+static u32 ControlDelayBlock(
+    TosBaseBlock *baseBlock, u32 command, void *argument, u32 argumentSize)
 {
 DelayBlock *block = (DelayBlock *)baseBlock;
 u32 i;
@@ -100,7 +102,7 @@ default:
 return 1;
 }
 
-u32 InitDelayBlock(TosBaseBlock *baseBlock)
+static u32 InitDelayBlock(TosBaseBlock *baseBlock)
 {
 DelayBlock *block = (DelayBlock *)baseBlock;
 TosContext *context;
@@ -128,10 +130,10 @@ block->flushRemaining = 0;
 return 0;
 }
 
-void *ConstructDelayBlock(void *block, void *profile)
+void *ConstructDelayBlock(TosContext *context, u32 blockIndex)
 {
 return tosBaseBlockConstruct(
-    block, profile, 1, 1, (TosProcessFunction)ProcessDelayBlock,
+    context, blockIndex, 1, 1, (TosProcessFunction)ProcessDelayBlock,
     (TosInitFunction)InitDelayBlock, (TosControlFunction)ControlDelayBlock,
     sizeof(DelayBlock));
 }
