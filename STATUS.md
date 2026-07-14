@@ -11,12 +11,12 @@ This is an evidence snapshot, not a completion claim. It was last verified on
 - `cmp orig/GP6E01/sys/main.dol build/GP6E01/main.dol`: byte-identical
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 8.78% code and 26.99% data overall; 44.80% code
-  and 63.28% data in the DOL
-- Matching owners at that build: 271 of 895 overall, 262 of 396 in the DOL,
+- DTK progress at that build: 8.80% code and 26.99% data overall; 44.93% code
+  and 63.29% data in the DOL
+- Matching owners at that build: 273 of 895 overall, 264 of 396 in the DOL,
   and 9 of 499 in the REL modules
-- DOL policy split: 233 matching owners without the assembly exception, 29
-  matching owners admitted under the sibling-authentication exception, 133
+- DOL policy split: 234 matching owners without the assembly exception, 30
+  matching owners admitted under the sibling-authentication exception, 131
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
   awaiting target proof. These four numbers total all 396 DOL owners.
 
@@ -43,15 +43,15 @@ Assembly is never admitted merely because a C transcription did not match.
 Inline or standalone assembly is admitted only when an authenticated sibling
 project marks the same owner `Matching`, carries the corresponding instruction
 body/source shape, and the MP6 compile, object-byte, effective-relocation,
-linked-range, and container gates all pass. The current tree has 29 matching
+linked-range, and container gates all pass. The current tree has 30 matching
 exception owners:
 
 - 17 Dolphin SDK owners authenticated by Matching Mario Party 4 sources, with
   `mtx44vec` independently authenticated by Matching Mario Kart: Double Dash
 - `game/kerent.c`, `game/jmp.c`, and `game/malloc.c`, plus the authenticated
   `OSFastCast` closure used by matching Game/Board consumers
-- the DOL Runtime owner, `__init_cpp_exceptions`, and four low-level TRK
-  owners
+- the DOL Runtime owner, `__init_cpp_exceptions`, authenticated Runtime
+  `ptmf`, and four low-level TRK owners
 - the existing `GXLight` owner, whose paired-single `PushLight` helper is from
   Matching Pikmin 2 commit `46aecad6`
 - MusyX `CheapReverb/creverb.c` and `Chorus/chorus_fx.c`, whose three retained
@@ -96,7 +96,7 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/__exception.s` (`ASM-GATE-PENDING`) | [Mario Party 4 `src/TRK_MINNOW_DOLPHIN/__exception.s` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/TRK_MINNOW_DOLPHIN/__exception.s), `MatchingFor(USA,PAL)` | M4 authenticates the standalone `.init` exception-vector form and `0x1F34` size, but MP6 starts at a different address and has different vector/padding offsets. M5 has the MP6 bounds but is `NonMatching` with no source. A target-specific reconstruction and full gate are still required. |
 
-#### Bucket 2: `C-not-yet-matched` (133 current fallback owners)
+#### Bucket 2: `C-not-yet-matched` (131 current fallback owners)
 
 Twenty-two owners have current source candidates and are tagged `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
@@ -128,11 +128,10 @@ otherwise noted.
 | `board/branch.c` | 99.816%; 16/17 functions exact. `ev_Branch` is now target/source `0x8F0`/`0x8F0`; all 19 remaining differences are one `choice`/`choiceTime` register cycle, with no inserted, deleted, or replaced instructions. Whole-owner `.text` is `0x10E0`/`0x10E0` and all 210 relocations match; configured `.data` remains `0x18`/`0x12`. |
 | `board/effect.c` | 59.766%; 1/35 functions exact, target/source text sizes `0x3050`/`0x3074`, plus `.sdata` and `.sdata2` divergence. The restored FastCast header is not its blocker. |
 
-The other 111 owners are tagged `NO-SOURCE`. Each explicit brace group below
+The other 109 owners are tagged `NO-SOURCE`. Each explicit brace group below
 expands to the named owner files; the count audit is
-`1 + 3 + 2 + 17 + 1 + 65 + 22 = 111`.
+`3 + 2 + 17 + 65 + 22 = 109`.
 
-- `Runtime.PPCEABI.H/` (1): `ptmf.c`.
 - `MSL_C.PPCEABI.bare.H/` (3): `alloc.c`, `qsort.c`, and `e_exp.c`.
 - `TRK_MINNOW_DOLPHIN/` C owners (2): `targimpl.c`, `dolphin_trk.c`.
 - `musyx/runtime/` (17): `seq.c`, `synth.c`, `stream.c`, `synthdata.c`,
@@ -140,7 +139,6 @@ expands to the named owner files; the count audit is
   `snd_init.c`, `snd_midictrl.c`, `snd_service.c`, `hardware.c`,
   `dsp_import.c`, `hw_aramdma.c`, `hw_dolphin.c`, and
   `StdReverb/reverb.c`.
-- `OdemuExi2/DebuggerDriver.c` (1).
 - `gssdk_lib/` (65):
   - `gsapi/sid/sid.c` and
     `gsapi/{callbacks,ctxfuncs,extaudio,gsapi,mathusage,wrddata}.c`;
@@ -170,6 +168,7 @@ work.
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/targsupp.s` | [M5 `src/TRK_MINNOW_DOLPHIN/targsupp.s` at `e246f9d`](https://github.com/mariopartyrd/marioparty5/blob/e246f9d9850ff53ac684b971068fbf87fdcf6acb/src/TRK_MINNOW_DOLPHIN/targsupp.s), `Matching`; M4 carries the identical blob as `MatchingFor(USA,PAL)`. | **Admitted.** The donor blob is `0244131bd8219c6f5839ae2cda9254c2f28e005c`. Its four 8-byte `twui r0,0; blr` functions exactly fill the MP6 `0x20` target owner; source-object and final 137-file/hash/DOL gates pass. It is authentic standalone assembly, not decompiled C. |
 | `game/kerent.c` | [M4 `src/game/kerent.c` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/game/kerent.c), `MatchingFor(USA,PAL)`, authenticates a single `asm void _kerent` with `nofralloc` and `entry`/`b` pairs. | **Admitted.** `ae2977e` de-flipped it through blanket inline-assembly removal (`ASM-BLANKET-REMOVAL`), despite the written exception. The exact MP6 source was restored from `git show ae2977e^:src/game/kerent.c` (blob `bd5b7b9448a659e186d733e3bc3e13dc8291d6a2`). Target/source `.text` are `0x26A0` and 100% identical; each has 2,472 `R_PPC_REL24` relocations. The final 137-file/hash/DOL gate passes. It is an authenticated assembly jump table, not decompiled C. |
+| `Runtime.PPCEABI.H/ptmf.c` | [Mario Kart: Double Dash `libs/PowerPC_EABI_Support/src/Runtime/ptmf.c` at `8a91a6b`](https://github.com/doldecomp/mkdd/blob/8a91a6b4a32834dfb689fbdcf1dea8796be9c75f/libs/PowerPC_EABI_Support/src/Runtime/ptmf.c), configured `Matching`. | **Admitted.** The authenticated `__ptmf_test`, `__ptmf_cmpr`, and `__ptmf_scall` assembly bodies reproduce all `0x94` retained target text bytes with no relocations. Donor-only `__ptmf_scall4` (`0x28`) and `__ptmf_null` (`0xC`) are linker-stripped. The full 137-file/hash/DOL gate passes. This is authentic Runtime assembly and is excluded from clean-C totals. |
 | `dolphin/os/OSCache.c` | [M4 `src/dolphin/os/OSCache.c` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/dolphin/os/OSCache.c), `MatchingFor(USA,PAL)`. | **Restored after de-flip.** `93d9438` replaced the authentic bodies and de-flipped the owner while isolating assembly (`ASM-BLANKET-REMOVAL`). All 14 retained MP6 assembly bodies have same-name sibling bodies. Whole-file blobs differ because M4 carries linker-stripped helpers; the audited retained differences are ABI register/symbol spelling, and the MP6 object/effective-relocation/full-container gate passes. |
 | `dolphin/os/OSContext.c` | [M4 `src/dolphin/os/OSContext.c` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/dolphin/os/OSContext.c), `MatchingFor(USA,PAL)`. | **Restored after de-flip.** `93d9438` replaced the authentic bodies and de-flipped the owner while isolating assembly (`ASM-BLANKET-REMOVAL`). All nine retained MP6 assembly bodies have same-name sibling bodies. `OSLoadContext` differs textually only in target labels/operand aliases; object/effective-relocation/full-container proof passes. |
 | `game/jmp.c` | [M4 `src/game/jmp.c` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/game/jmp.c), `Matching`. | **Restored after de-flip.** `ae2977e` de-flipped the owner through blanket inline-assembly removal (`ASM-BLANKET-REMOVAL`). MP6 and M4 are the exact Git blob `8313bd8cb5c154bca116a9a75a518e8faa0a5856`; the owner contains C `gcsetjmp` plus authentic assembly `gclongjmp`, and passes the MP6 full gate. |
@@ -272,6 +271,17 @@ add `0x26C` linked code bytes, `0xF0` configured constant bytes, and 17
 relocations. Evidence and rejected donor probes are retained in
 [`docs/native_matching_wave28.md`](docs/native_matching_wave28.md).
 
+Wave 29 adds `OdemuExi2/DebuggerDriver.c` as Matching clean C and
+`Runtime.PPCEABI.H/ptmf.c` under the sibling-assembly exception. The Odemu
+owner recovers 14 retained functions, seven real local globals, `0xA80` text
+bytes, `0x20` configured small-data/BSS bytes, and 57 effective relocations
+under its authenticated `GC/1.2.5n` deferred-inline build shape. Six unused
+SDK helpers totaling `0x270` are linker-stripped. Runtime `ptmf` contributes
+three exact retained assembly routines totaling `0x94`; Matching MKDD
+authenticates their original source form, so none of those bytes enter the
+clean-C total. Evidence is retained in
+[`docs/native_matching_wave29.md`](docs/native_matching_wave29.md).
+
 Two MusyX owners are now Matching under the sibling-assembly exception:
 `CheapReverb/creverb.c` and `Chorus/chorus_fx.c`. Their nine retained functions
 contribute `0x1124` exact linked code bytes, `0x858` configured data bytes,
@@ -371,6 +381,13 @@ configured data/BSS bytes.
 - Runtime `GCN_mem_alloc` adds `0x170` exact code bytes and `0x78` configured
   constant bytes. The target's final seven constant bytes are documented
   linker-alignment padding, not fabricated source data.
+- `OdemuExi2/DebuggerDriver` adds `0xA80` exact clean-C code bytes, `0x20`
+  configured small-data/BSS bytes, 14 retained functions, seven named local
+  globals, and 57 effective relocations. Six authenticated unused SDK helpers
+  are linker-stripped from the exact owner range.
+- Runtime `ptmf` adds `0x94` exact retained code bytes under the Matching-MKDD
+  sibling exception. Its three `nofralloc` routines are authentic assembly,
+  so this owner is reported separately from clean C.
 - Six MusyX owners: `hw_memory`, `synth_ac`, `synth_dbtab`, `seq_api`,
   `creverb_fx`, and `reverb_fx`. These promote 1,392 code bytes and 2,976 data
   bytes and recover the `dspAttenuationTab`, `dspScale2IndexTab`,
@@ -428,7 +445,7 @@ configured data/BSS bytes.
   `synthFlags`, `vs`, and `gWriteBuf`. The address, definition, and target
   relocation ledger is retained in `docs/easy_ports_wave.md`.
 
-The 134 current DOL fallback owners and their causes are exhaustive in the
+The 132 current DOL fallback owners and their causes are exhaustive in the
 two-bucket ledger above. Three REL Runtime variants also remain `NonMatching`;
-they are outside this main-DOL-first taxonomy and are not included in the 133
+they are outside this main-DOL-first taxonomy and are not included in the 131
 C-work/1-assembly-policy remaining counts.
