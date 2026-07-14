@@ -1,13 +1,6 @@
-#include "types.h"
+#include "gssdk/mtx.h"
 
 #include <string.h>
-
-typedef struct FloatMatrix {
-    u32 rows;
-    u32 columns;
-    u32 elementCount;
-    f32 *values;
-} FloatMatrix;
 
 u32 QrPreMult(FloatMatrix *matrix, FloatMatrix *multipliers, FloatMatrix *vector)
 {

@@ -983,7 +983,7 @@ config.libs = [
         "cflags": cflags_game,
         "host": False,
         "objects": [
-            Object(NonMatching, "board/math.c"),
+            Object(NonMatching, "board/math.c", extra_cflags=["-O4,p"]),
             Object(Matching, "board/camera.c"),
             Object(NonMatching, "board/player.c"),
             Object(NonMatching, "board/snpc.c"),
