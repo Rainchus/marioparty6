@@ -120,9 +120,9 @@ otherwise noted.
 | `dolphin/mic/mic.c` | 56.653%; 0/41 functions exact. |
 | `dolphin/mic/m2s.c` | 78.721%; 1/14 functions exact. |
 | `msm/msmsys.c` | 99.734%; 18/23 functions exact. |
-| `msm/msmstream.c` | 97.29357%; 23/28 functions exact. `msmStreamDvdCallback` and `msmStreamDvdCallback2` are now exact; the owner remains fallback-linked because five functions still diverge. |
+| `msm/msmstream.c` | 99.487020%; 23/28 functions exact. `msmStreamDvdCallback` and `msmStreamDvdCallback2` are exact. `msmStreamData` is now target/source `0x2EC/0x2EC` at 99.759360% after recovering the target pause/linked-slot/ARAM-update control flow; `msmStreamSlotInit` is `0x224/0x224` at 99.635040% after recovering its three distinct size/offset lifetimes. Five functions still diverge, so the owner remains fallback-linked. |
 | `board/player.c` | Raw section pairing is 1.155%; mapped-function weighted score is 99.965%, but only 10/165 functions are currently exact. |
-| `board/object.c` | 99.754%; 77/80 functions exact. |
+| `board/object.c` | 99.812744%; 78/80 functions exact. `ObjManModelCreate` is now exact at `0x1C0`, including its caller-local day/night data-directory selection. The two motion-create functions remain four source bytes too large. |
 | `board/audio.c` | 99.98862%; 46/49 functions exact. The remaining code differences are one compare-operand reversal in each of `mbMusBoardPlay` and `MusBoardFade`, plus twelve stack-slot offsets in `mbMusBoardFadeOut`; target/source `.text` are both `0x2BF0` and all 444 text relocations match. |
 | `board/masu.c` | Raw section pairing is 40.144%; mapped-function weighted score is 99.771%, with 89/119 functions exact. |
 | `board/branch.c` | 99.816%; 16/17 functions exact. `ev_Branch` is now target/source `0x8F0`/`0x8F0`; all 19 remaining differences are one `choice`/`choiceTime` register cycle, with no inserted, deleted, or replaced instructions. Whole-owner `.text` is `0x10E0`/`0x10E0` and all 210 relocations match; configured `.data` remains `0x18`/`0x12`. |
@@ -270,11 +270,23 @@ unresolved donor-only symbol closure and fully removed; the prior
 candidate. Evidence is retained in
 [`docs/native_matching_wave22.md`](docs/native_matching_wave22.md).
 
+Function-level real-C recovery advanced two fallback owners without promoting
+them. `board/object.c::ObjManModelCreate` is now exact at `0x1C0`, moving that
+owner to 78/80 exact functions. `msm/msmstream.c::msmStreamData` now has the
+target pause, linked-slot, buffer-clear, and ARAM-update behavior and the exact
+`0x2EC` size; `msmStreamSlotInit` now expresses the target's distinct
+half-buffer/read-size/wrap-distance lifetimes. Those two stream functions are
+99.759360% and 99.635040% respectively, with only operand allocation
+differences remaining. Both owners stay `NonMatching`, and none of their
+fallback-linked bytes are counted as decompiled owners. Evidence and bounded
+rejected probes are retained in
+[`docs/native_matching_wave23.md`](docs/native_matching_wave23.md).
+
 ## Named DOL ownership
 
 The current snapshot descends from fork commit `353fa30`, which replaced every
 DOL `auto_*` blob with 121 named Runtime, MSL, MusyX, MetroTRK, and
-support-library owners. The pre-wave-22 `fork/main` tip was `34cdbd7`. Neither
+support-library owners. The pre-wave-23 `fork/main` tip was `310e5d0`. Neither
 `config/GP6E01/splits.txt` nor `configure.py` contains an `auto_*` owner.
 
 ## Native library recovery

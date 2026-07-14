@@ -210,6 +210,7 @@ static BOOL ObjManModelCreate(MBOBJMODEL *modelP, int dataNum, BOOL linkF)
 {
     MBOBJMODEL *linkP = NULL;
     void *data;
+    int readDataNum;
 
     modelP->linkNum = 0;
     if (linkF && modelP->charNo == CHARNO_NONE) {
@@ -225,7 +226,18 @@ static BOOL ObjManModelCreate(MBOBJMODEL *modelP, int dataNum, BOOL linkF)
 
     modelP->linkP = NULL;
     if (modelP->charNo == CHARNO_NONE) {
-        data = HuDataSelHeapReadNum(mbObjDataNumGet(dataNum), HU_MEMNUM_OVL, HEAP_MODEL);
+        if (!GwSystem.curTime) {
+            if (DIRNUM(dataNum) == dataDirNight) {
+                readDataNum = dataDirDay | FILENUM(dataNum);
+                goto read_data;
+            }
+        } else if (DIRNUM(dataNum) == dataDirDay) {
+            readDataNum = dataDirNight | FILENUM(dataNum);
+            goto read_data;
+        }
+        readDataNum = dataNum;
+read_data:
+        data = HuDataSelHeapReadNum(readDataNum, HU_MEMNUM_OVL, HEAP_MODEL);
         if (!data) {
             s32 modelRestMem = HuRestMemGet(HEAP_MODEL);
             s32 dvdRestMem = HuRestMemGet(HEAP_DVD);

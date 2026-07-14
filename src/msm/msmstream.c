@@ -879,6 +879,8 @@ static void msmStreamData(s32 streamNo) {
     void* dataPtr;
     MSM_STREAM_SLOT* slot;
     s32 off1;
+    s32 linkedStreamNo;
+    MSM_STREAM_SLOT* linkedSlot;
 
     slot = &StreamInfo.slot[streamNo];
     readSize = dataSize = slot->streamBufSize / 2;
@@ -906,15 +908,28 @@ static void msmStreamData(s32 streamNo) {
         if (DVDGetCommandBlockStatus(&slot->file.cb) != 0) {
             if (slot->updateAramF != TRUE) {
                 slot->updateAramF = TRUE;
-                sndStreamMixParameterEx(slot->stid, 0, 64, 64, 0, 0);
+                msmStreamPauseOn(streamNo, 0);
                 memset(slot->streamBuf, 0, slot->streamBufSize);
                 sndStreamARAMUpdate(slot->stid, 0, slot->streamFrq, 0, 0);
+                if (slot->slotL != -1) {
+                    linkedStreamNo = slot->slotL;
+                } else if (slot->slotR != -1) {
+                    linkedStreamNo = slot->slotR;
+                } else {
+                    linkedStreamNo = -1;
+                }
+                if (linkedStreamNo >= 0) {
+                    linkedSlot = &StreamInfo.slot[linkedStreamNo];
+                    if (linkedSlot->updateAramF != TRUE) {
+                        linkedSlot->updateAramF = TRUE;
+                        msmStreamPauseOn(linkedStreamNo, 0);
+                        linkedSlot->pauseLen = slot->pauseLen;
+                        memset(linkedSlot->streamBuf, 0, linkedSlot->streamBufSize);
+                        sndStreamARAMUpdate(linkedSlot->stid, 0, linkedSlot->streamFrq, 0, 0);
+                    }
+                }
             }
         } else {
-            if (slot->updateAramF == TRUE) {
-                slot->updateAramF = FALSE;
-                msmStreamUpdateBaseParam(slot);
-            }
             slot->streamPos += readSize;
             slot->readBusyF = 1;
             DVDReadAsyncPrio(&slot->file, dataPtr, readSize,
@@ -1114,6 +1129,7 @@ static u32 msmStreamUpdateFunc(void* buffer1, u32 len1, void* buffer2, u32 len2,
 static s32 msmStreamSlotInit(MSM_STREAM_SLOT *slot, MSM_STREAM_PACK* pack, STREAM_PARAM* param, s32 no) {
     MSM_STREAM *stream;
     u32 temp_r3;
+    u32 halfSize;
     s32 ret;
 
     stream = &pack->stream[no];
@@ -1152,12 +1168,13 @@ static s32 msmStreamSlotInit(MSM_STREAM_SLOT *slot, MSM_STREAM_PACK* pack, STREA
     slot->slotL = -1;
     slot->slotR = -1;
     slot->streamPos = param->sampleOfs;
-    ret = slot->streamBufSize / 2;
-    if ((temp_r3 = slot->loopLen - slot->streamPos) < slot->streamBufSize / 2) {
+    halfSize = slot->streamBufSize / 2;
+    ret = halfSize;
+    if ((temp_r3 = slot->loopLen - slot->streamPos) < halfSize) {
         if (slot->loopLen > slot->streamPos) {
             ret = temp_r3;
-            slot->streamReadSize = slot->streamBufSize / 2 - temp_r3;
-            slot->streamReadBuf = (void*) ((u32) slot->streamBuf + temp_r3);
+            slot->streamReadSize = halfSize - ret;
+            slot->streamReadBuf = (void*) ((u32) slot->streamBuf + ret);
             memset(slot->streamReadBuf, 0, slot->streamReadSize);
         } else {
             ret = 0;
