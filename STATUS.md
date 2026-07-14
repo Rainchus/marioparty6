@@ -114,7 +114,7 @@ otherwise noted.
 | `msm/msmstream.c` | 96.710%; 21/28 functions exact. |
 | `board/player.c` | Raw section pairing is 1.155%; mapped-function weighted score is 99.965%, but only 10/165 functions are currently exact. |
 | `board/object.c` | 99.754%; 77/80 functions exact. |
-| `board/audio.c` | 99.786%; 42/49 functions exact. |
+| `board/audio.c` | 99.98862%; 46/49 functions exact. The remaining code differences are one compare-operand reversal in each of `mbMusBoardPlay` and `MusBoardFade`, plus twelve stack-slot offsets in `mbMusBoardFadeOut`; target/source `.text` are both `0x2BF0` and all 444 text relocations match. |
 | `board/masu.c` | Raw section pairing is 40.144%; mapped-function weighted score is 99.771%, with 89/119 functions exact. |
 | `board/branch.c` | 99.816%; 16/17 functions exact. `ev_Branch` is now target/source `0x8F0`/`0x8F0`; all 19 remaining differences are one `choice`/`choiceTime` register cycle, with no inserted, deleted, or replaced instructions. Whole-owner `.text` is `0x10E0`/`0x10E0` and all 210 relocations match; configured `.data` remains `0x18`/`0x12`. |
 | `board/effect.c` | 59.766%; 1/35 functions exact, target/source text sizes `0x3050`/`0x3074`, plus `.sdata` and `.sdata2` divergence. The restored FastCast header is not its blocker. |
@@ -208,6 +208,16 @@ remaining `ev_Branch` differences are 19 operands in the coupled
 `choice`/`choiceTime` `r26`/`r27` assignment. No speculative declaration or
 scope rewrite is accepted without resolving that cycle. Full proof details
 are retained in [`docs/native_matching_wave17.md`](docs/native_matching_wave17.md).
+
+`board/audio.c` remains NonMatching, but four delayed-effect functions now
+have exact source: `mbAudFXPlay`, `mbAudFXPosPlay`, `mbAudFXEmitterPlay`, and
+`mbAudGuidePlay` (combined target/source code size `0x518`). The generic
+reconstructed helper did not preserve the target call-site lifetimes; spelling
+out the delayed queue paths and retaining the small position-copy helper makes
+all four instruction streams and their relocations exact. This function-level
+recovery is not counted as a matching owner. The object and rejected-probe
+evidence is retained in
+[`docs/native_matching_wave18.md`](docs/native_matching_wave18.md).
 
 ## Named DOL ownership
 

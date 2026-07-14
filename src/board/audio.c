@@ -144,44 +144,11 @@ static inline void AudFXObjPauseSet(int seNo, BOOL pauseF)
     }
 }
 
-static inline int AudFXPlay(int seId, int type, int pan, Vec *pos)
+static inline void AudFXPosSet(MBAUDFXDATA *audFx, Vec *pos)
 {
-    int seNo = MSM_SENO_NONE;
-
-    if (audFXDelay > 0) {
-        int delay = audFXDelay;
-        MBAUDFXDATA *audFx = &audFXData[0];
-        int i;
-
-        for (i = 0; i < MB_AUD_FX_DELAY_MAX; i++, audFx++) {
-            if (audFx->seId < 0) {
-                break;
-            }
-        }
-        if (i < MB_AUD_FX_DELAY_MAX) {
-            audFx->seId = (s16)seId;
-            audFx->delay = delay;
-            audFx->type = type;
-            audFx->pan = pan;
-            if (pos != NULL) {
-                audFx->pos = *pos;
-            }
-        }
-    } else {
-        switch (type) {
-            case MB_AUD_FX_TYPE_NORMAL:
-                seNo = HuAudFXPlay(seId);
-                break;
-            case MB_AUD_FX_TYPE_PAN:
-                seNo = HuAudFXPlayPan(seId, pan);
-                break;
-            case MB_AUD_FX_TYPE_EMITTER:
-                seNo = HuAudFXEmiterPlay(seId, pos);
-                break;
-        }
+    if (pos != NULL) {
+        audFx->pos = *pos;
     }
-    audFXDelay = 0;
-    return seNo;
 }
 
 void mbAudInit(void)
@@ -993,7 +960,30 @@ static void AudFXMainDestroy(void)
 
 int mbAudFXPlay(s16 seId)
 {
-    return AudFXPlay(seId, MB_AUD_FX_TYPE_NORMAL, 0, NULL);
+    int seNo = MSM_SENO_NONE;
+
+    if (audFXDelay > 0) {
+        int delay = audFXDelay;
+        MBAUDFXDATA *audFx = &audFXData[0];
+        int i;
+
+        for (i = 0; i < MB_AUD_FX_DELAY_MAX; i++, audFx++) {
+            if (audFx->seId < 0) {
+                break;
+            }
+        }
+        if (i < MB_AUD_FX_DELAY_MAX) {
+            audFx->seId = seId;
+            audFx->delay = delay;
+            audFx->type = MB_AUD_FX_TYPE_NORMAL;
+            audFx->pan = 0;
+            AudFXPosSet(audFx, NULL);
+        }
+    } else {
+        seNo = HuAudFXPlay(seId);
+    }
+    audFXDelay = 0;
+    return seNo;
 }
 
 void mbAudFXStop(int seNo)
@@ -1026,9 +1016,33 @@ void mbAudFXStopAll(int speed)
 
 int mbAudFXPosPlay(s16 seId, Vec *pos)
 {
-    int pan = mbAudFXPosPanGet(pos);
+    int pan;
+    int seNo = MSM_SENO_NONE;
 
-    return AudFXPlay(seId, MB_AUD_FX_TYPE_PAN, pan, NULL);
+    pan = mbAudFXPosPanGet(pos);
+
+    if (audFXDelay > 0) {
+        int delay = audFXDelay;
+        MBAUDFXDATA *audFx = &audFXData[0];
+        int i;
+
+        for (i = 0; i < MB_AUD_FX_DELAY_MAX; i++, audFx++) {
+            if (audFx->seId < 0) {
+                break;
+            }
+        }
+        if (i < MB_AUD_FX_DELAY_MAX) {
+            audFx->seId = seId;
+            audFx->delay = delay;
+            audFx->type = MB_AUD_FX_TYPE_PAN;
+            audFx->pan = pan;
+            AudFXPosSet(audFx, NULL);
+        }
+    } else {
+        seNo = HuAudFXPlayPan(seId, pan);
+    }
+    audFXDelay = 0;
+    return seNo;
 }
 
 u8 mbAudFXPosPanGet(Vec *pos)
@@ -1048,7 +1062,30 @@ u8 mbAudFXPosPanGet(Vec *pos)
 
 int mbAudFXEmitterPlay(int seId, Vec *pos)
 {
-    return AudFXPlay(seId, MB_AUD_FX_TYPE_EMITTER, 0, pos);
+    int seNo = MSM_SENO_NONE;
+
+    if (audFXDelay > 0) {
+        int delay = audFXDelay;
+        MBAUDFXDATA *audFx = &audFXData[0];
+        int i;
+
+        for (i = 0; i < MB_AUD_FX_DELAY_MAX; i++, audFx++) {
+            if (audFx->seId < 0) {
+                break;
+            }
+        }
+        if (i < MB_AUD_FX_DELAY_MAX) {
+            audFx->seId = (s16)seId;
+            audFx->delay = delay;
+            audFx->type = MB_AUD_FX_TYPE_EMITTER;
+            audFx->pan = 0;
+            AudFXPosSet(audFx, pos);
+        }
+    } else {
+        seNo = HuAudFXEmiterPlay(seId, pos);
+    }
+    audFXDelay = 0;
+    return seNo;
 }
 
 void mbAudFXVolSet(int seNo, s16 vol)
@@ -1075,11 +1112,14 @@ void mbAudFXDelaySet(int delay)
 
 int mbAudGuidePlay(s16 seId)
 {
+    int delay1;
+    int delay2;
+    BOOL partyF;
     int timeNo;
     int i;
 
     if (GwSystem.curTime) {
-        BOOL partyF = GwSystem.partyF;
+        partyF = GwSystem.partyF;
 
         if (partyF != FALSE) {
             goto time_one;
@@ -1097,7 +1137,59 @@ time_set:
         }
     }
     if (guideFxTbl[i][timeNo] != -1) {
-        return AudFXPlay((s16)guideFxTbl[i][timeNo], MB_AUD_FX_TYPE_NORMAL, 0, NULL);
+        int seNo;
+        s16 guideSeId = guideFxTbl[i][timeNo];
+
+        seNo = MSM_SENO_NONE;
+
+        if (audFXDelay > 0) {
+            MBAUDFXDATA *audFx;
+            int j;
+
+            delay1 = audFXDelay;
+            audFx = &audFXData[0];
+            for (j = 0; j < MB_AUD_FX_DELAY_MAX; j++, audFx++) {
+                if (audFx->seId < 0) {
+                    break;
+                }
+            }
+            if (j < MB_AUD_FX_DELAY_MAX) {
+                audFx->seId = guideSeId;
+                audFx->delay = delay1;
+                audFx->type = MB_AUD_FX_TYPE_NORMAL;
+                audFx->pan = 0;
+                AudFXPosSet(audFx, NULL);
+            }
+        } else {
+            seNo = HuAudFXPlay(guideSeId);
+        }
+        audFXDelay = 0;
+        return seNo;
+    } else {
+        int seNo = MSM_SENO_NONE;
+
+        if (audFXDelay > 0) {
+            MBAUDFXDATA *audFx;
+            int j;
+
+            delay2 = audFXDelay;
+            audFx = &audFXData[0];
+            for (j = 0; j < MB_AUD_FX_DELAY_MAX; j++, audFx++) {
+                if (audFx->seId < 0) {
+                    break;
+                }
+            }
+            if (j < MB_AUD_FX_DELAY_MAX) {
+                audFx->seId = seId;
+                audFx->delay = delay2;
+                audFx->type = MB_AUD_FX_TYPE_NORMAL;
+                audFx->pan = 0;
+                AudFXPosSet(audFx, NULL);
+            }
+        } else {
+            seNo = HuAudFXPlay(seId);
+        }
+        audFXDelay = 0;
+        return seNo;
     }
-    return AudFXPlay(seId, MB_AUD_FX_TYPE_NORMAL, 0, NULL);
 }
