@@ -11,12 +11,12 @@ This is an evidence snapshot, not a completion claim. It was last verified on
 - `cmp orig/GP6E01/sys/main.dol build/GP6E01/main.dol`: byte-identical
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 8.86% code and 28.07% data overall; 45.25% code
-  and 66.09% data in the DOL
-- Matching owners at that build: 291 of 895 overall, 282 of 396 in the DOL,
+- DTK progress at that build: 8.91% code and 28.16% data overall; 45.54% code
+  and 66.31% data in the DOL
+- Matching owners at that build: 292 of 895 overall, 283 of 396 in the DOL,
   and 9 of 499 in the REL modules
-- DOL policy split: 250 matching owners without the assembly exception, 32
-  matching owners admitted under the sibling-authentication exception, 113
+- DOL policy split: 250 matching owners without the assembly exception, 33
+  matching owners admitted under the sibling-authentication exception, 112
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
   awaiting target proof. These four numbers total all 396 DOL owners.
 
@@ -84,6 +84,17 @@ functions are byte-exact, but no complete owner is exact, so all five remain
 fallback-linked and `NonMatching`. Evidence is retained in
 [`docs/native_matching_wave37.md`](docs/native_matching_wave37.md).
 
+Wave 38 uses a recovery-first cadence: one source harvest, one batched object
+comparison, and one full gate. It materializes 112 board functions across
+`math.c`, `telop.c`, `coin.c`, `dice.c`, `single.c`, `star.c`, `tutorial.c`,
+and `wipe.c`, plus all 30 retained MetroTRK `targimpl.c` functions. Fifty-four
+board functions and all 30 retained MetroTRK functions are byte-exact. The
+board owners remain fallback-linked because each owner is incomplete.
+`targimpl.c` is Matching under the authenticated MP5 sibling exception after
+restoring the real support prototypes; its seven inline-assembly routines are
+reported separately from clean C. Evidence is retained in
+[`docs/native_matching_wave38.md`](docs/native_matching_wave38.md).
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -107,7 +118,7 @@ Assembly is never admitted merely because a C transcription did not match.
 Inline or standalone assembly is admitted only when an authenticated sibling
 project marks the same owner `Matching`, carries the corresponding instruction
 body/source shape, and the MP6 compile, object-byte, effective-relocation,
-linked-range, and container gates all pass. The current tree has 32 matching
+linked-range, and container gates all pass. The current tree has 33 matching
 exception owners:
 
 - 17 Dolphin SDK owners authenticated by Matching Mario Party 4 sources, with
@@ -115,7 +126,8 @@ exception owners:
 - `game/kerent.c`, `game/jmp.c`, and `game/malloc.c`, plus the authenticated
   `OSFastCast` closure used by matching Game/Board consumers
 - the DOL Runtime owner, `__init_cpp_exceptions`, authenticated Runtime
-  `ptmf`, and five low-level TRK owners, including `dolphin_trk`
+  `ptmf`, and six low-level or mixed TRK owners, including `dolphin_trk` and
+  `targimpl`
 - the existing `GXLight` owner, whose paired-single `PushLight` helper is from
   Matching Pikmin 2 commit `46aecad6`
 - MusyX `CheapReverb/creverb.c`, `Chorus/chorus_fx.c`, and `snd_service.c`,
@@ -161,9 +173,9 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/__exception.s` (`ASM-GATE-PENDING`) | [Mario Party 4 `src/TRK_MINNOW_DOLPHIN/__exception.s` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/TRK_MINNOW_DOLPHIN/__exception.s), `MatchingFor(USA,PAL)` | M4 authenticates the standalone `.init` exception-vector form and `0x1F34` size, but MP6 starts at a different address and has different vector/padding offsets. M5 has the MP6 bounds but is `NonMatching` with no source. A target-specific reconstruction and full gate are still required. |
 
-#### Bucket 2: `C-not-yet-matched` (113 current fallback owners)
+#### Bucket 2: `C-not-yet-matched` (112 current fallback owners)
 
-Forty-five owners have current source candidates and are tagged
+Fifty-one owners have current source candidates and are tagged
 `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-15; percentages are raw `.text` scores unless
@@ -180,8 +192,14 @@ otherwise noted.
 | `MSL_C.PPCEABI.bare.H/qsort.c` | Matching Super Mario Strikers commit `795ee483` authenticates the MSL heapsort. Target/source are `0x170/0x16C` at 98.260870%; the target retains `li 2; mullw` where the donor compiler emits `slwi`. GC/2.7 was byte-neutral and authenticated multiplication spellings did not close the difference, so the real source is retained without forcing a match. |
 | `MSL_C.PPCEABI.bare.H/e_exp.c` | Matching Pikmin 2 commit `46aecad6` authenticates the fdlibm source. All `.rodata 0x30`, `.sdata2 0x78`, and 21 relocations match. `__ieee754_exp` remains target/source `0x21C/0x224` at 91.592590%, so exact constants do not justify promotion. |
 | `board/board.c` | 99.583%; 31/35 functions exact; `mbObjectSetup`, `mbMain`, `mbNextTime`, and `mbSaveInit` diverge. |
-| `board/math.c` | Matching MP5 source shape plus MP6 instructions and MP7 parity recover 22 pure-C math, projection, Bezier, Hermite, and angle routines. The target-proven owner override `-O4,p` makes 19/22 functions exact-size; the recovered target/source range is `.text 0xFAC/0xF80`. No recovered function is byte-exact yet, and four target routines plus the earlier/later owner closure remain absent, so the owner stays fallback-linked. |
-| `board/telop.c` | Eight authenticated pad, taunt, language, and board-directory routines plus their real tables are recovered. `mbTauntInit` (`0x80`) is exact; the recovered target/source range is `.text 0x640/0x62C`, `mbBoardDataNumGet` is exact-size `0xE0` at 99.285710%, and `mbBoardDataDirRead` is target/source `0x248/0x240` at 97.534250%. The large telop/time/taunt execution closure remains absent. |
+| `board/math.c` | Matching MP5 source shape plus MP6 instructions and MP7 parity now recover 51/56 target functions: lifecycle, trigonometry, matrix construction/concatenation, projection, Bezier, Hermite, distance, and angle routines. Target/source `.text` are `0x2A44/0x2230`; `mbMathClose` is exact. `mbRandMod` and the cull/object tail remain absent rather than using unproven ownership. |
+| `board/telop.c` | Sixteen pad, taunt, language, board-directory, telop-check, and time-display routines plus their real tables/globals are recovered. Target/source `.text` are `0x329C/0x8E0`; 6/16 mapped functions are exact, including five wave-38 additions. The large telop/time/taunt OM execution closure remains absent. |
+| `board/coin.c` | Twenty-two allocation, lifecycle, transform, alpha, display, layer, and motion routines are recovered. The target proves the `0x40` public object, its caller-work tail used by `board/last5.c`, the `0x1144` 64-slot bank, and the `0x160` model/bank owner. Target/source `.text` are `0x4550/0xF44`; 5/22 mapped functions are exact. The renderer/effect/display closure remains absent. |
+| `board/dice.c` | Six layout-free result/process/hook accessors and the exact five-slot owner arrays are recovered from MP6 target data plus Matching MP5 `sai.c`/`sai.h` shape. Target/source `.text` are `0x6390/0x130`; none of the six is byte-exact yet. Dice work and the state-machine closure remain absent. |
+| `board/single.c` | The complete four-word minigame-unlock set and all seven bitset operations are recovered. Target/source `.text` are `0x98F0/0x2B4`; `mbSingleMgUnlockInit`, `mbSingleMgUnlockCheckAny`, and `mbSingleMgUnlockNumGet` are exact. The rest of the large single-mode owner remains absent. |
+| `board/star.c` | Sixteen layout-free callback/global setters, Num/Flag/Next accessors, empty legacy entry points, and the no-random result are recovered and exact. Target/source `.text` are `0x5C00/0xDC`. Object wrappers were rejected because a real complete `STARWORK` prefix is not yet recovered. |
+| `board/tutorial.c` | The real `0x14` call work (`scene`, `callNum`, `result`, `stat`, and `mode`), guide/process globals, exit flags, and ten accessors are recovered. `mbTutorialMultiCall` and `mbTutorialCall` prove the count field. All ten mapped functions are exact; target/source `.text` are `0x2C34/0x80`. |
+| `board/wipe.c` | The create/wait functions and all twelve fixed-time/caller-time fade, white-fade, and dissolve wrappers are recovered. All 14 mapped functions are exact; target/source `.text` are `0x3664/0x6DC`. The special-wipe and state-machine remainder is still absent. |
 | `dolphin/os/OS.c` | 59.719%; 0/14 functions exact. |
 | `dolphin/os/OSExec.c` | 80.972%; 2/8 functions exact. |
 | `dolphin/os/OSMemory.c` | 52.707%; 4/8 functions exact. |
@@ -217,11 +235,10 @@ otherwise noted.
 | `gssdk_lib/asrpho/common/ctxdata/langdata.c` | The real `LanguageDataV2` prefix and code-book layouts support 36 exact field/pointer accessors. The target's `0x13C` language-method object and the code-book method slots consumed by `vq1500.c` are now typed in the shared header. `_langGetpErgodicPenalty` is `0x64` at 77.040000%; the deeper packed-layout functions and virtual-table source closure remain unrecovered. |
 | `gssdk_lib/asrpho/common/tos/mqueue.c` | The target queue/list/reader prefix and three routines are recovered. `qQueueNbrElements` (`0x20`) is exact; `qDeQueueOne` (`0x50`) is 89.500000% and `qQueueConstruct` (`0x8C`) is 84.200000%. The remaining queue control, enqueue, reset, resize, and destruction routines are absent, so the owner remains fallback-linked. |
 
-The other 68 owners are tagged `NO-SOURCE`. Each explicit brace group below
+The other 61 owners are tagged `NO-SOURCE`. Each explicit brace group below
 expands to the named owner files; the count audit is
-`1 + 14 + 33 + 20 = 68`.
+`14 + 33 + 14 = 61`.
 
-- `TRK_MINNOW_DOLPHIN/` C owner (1): `targimpl.c`.
 - `musyx/runtime/` (14): `seq.c`, `synth.c`, `stream.c`, `synthdata.c`,
   `synthmacros.c`, `synthvoice.c`, `s_data.c`, `hw_dspctrl.c`, `snd3d.c`,
   `snd_midictrl.c`, `hardware.c`, `dsp_import.c`, `hw_aramdma.c`, and
@@ -234,14 +251,13 @@ expands to the named owner files; the count audit is
   - `asrpho/common/blocks/flblocks/{acne,gender,mel,smoother,specsub,vad,window}.c`;
   - `asrpho/common/blocks/flfxblks/{dist16,pitchco,shs_vuv,slidhist,subsamp,trigglr,voicing}.c`;
   - `asrpho/common/tos/tinyos.c`;
-- `board/` (20): `snpc.c`, `scroll.c`, `coin.c`, `star.c`,
-  `dice.c`, `opening.c`, `tutorial.c`, `capselect.c`, `capmove.c`,
+- `board/` (14): `snpc.c`, `scroll.c`, `opening.c`, `capselect.c`, `capmove.c`,
   `capthrow.c`, `captrap.c`, `capspecial.c`, `capsule.c`, `capevent.c`,
-  `shopevent.c`, `mgcall.c`, `config.c`, `last5.c`, `wipe.c`, and `single.c`.
+  `shopevent.c`, `mgcall.c`, `config.c`, and `last5.c`.
 
-Mixed C/assembly owners such as `TRK_MINNOW_DOLPHIN/targimpl.c` remain in the
-C bucket: authenticating one assembly routine would not complete their C
-work.
+Mixed C/assembly owners stay in the C bucket until all retained C and assembly
+passes the appropriate proof. `TRK_MINNOW_DOLPHIN/targimpl.c` no longer appears
+here because all 30 retained functions and the linked owner passed that gate.
 
 ### Applied sibling-exception decisions
 
@@ -249,6 +265,7 @@ work.
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/targsupp.s` | [M5 `src/TRK_MINNOW_DOLPHIN/targsupp.s` at `e246f9d`](https://github.com/mariopartyrd/marioparty5/blob/e246f9d9850ff53ac684b971068fbf87fdcf6acb/src/TRK_MINNOW_DOLPHIN/targsupp.s), `Matching`; M4 carries the identical blob as `MatchingFor(USA,PAL)`. | **Admitted.** The donor blob is `0244131bd8219c6f5839ae2cda9254c2f28e005c`. Its four 8-byte `twui r0,0; blr` functions exactly fill the MP6 `0x20` target owner; source-object and final 137-file/hash/DOL gates pass. It is authentic standalone assembly, not decompiled C. |
 | `TRK_MINNOW_DOLPHIN/dolphin_trk.c` | [M5 `src/TRK_MINNOW_DOLPHIN/dolphin_trk.c` at `e246f9d`](https://github.com/mariopartyrd/marioparty5/blob/e246f9d9850ff53ac684b971068fbf87fdcf6acb/src/TRK_MINNOW_DOLPHIN/dolphin_trk.c), configured `Matching`. | **Admitted.** The retained `0x104` `.init` and `0x140` `.text` ranges reproduce all five target functions; donor-only out-of-line copies of `__TRK_copy_vectors` (`0x104`) and `TRK_copy_vector` (`0x90`) are linker-stripped after their logic is inlined into `__TRK_reset`. The semantic `TRK_ISR_OFFSETS` and `lc_base` globals plus target alignment tails are named and the full 137-file/hash/DOL gate passes. `InitMetroTRK` is authentic sibling assembly, so the mixed owner is excluded from clean-C totals. |
+| `TRK_MINNOW_DOLPHIN/targimpl.c` | [M5 `src/TRK_MINNOW_DOLPHIN/targimpl.c` at `e246f9d`](https://github.com/mariopartyrd/marioparty5/blob/e246f9d9850ff53ac684b971068fbf87fdcf6acb/src/TRK_MINNOW_DOLPHIN/targimpl.c), configured `Matching`; M4 carries byte-identical source. | **Admitted.** Restoring the real Matching-sibling support prototypes supplies the target's two missing `u8` coercions and makes `TRKTargetSupportRequest` exact at `0x208`. All 30 retained functions and target `.text 0x1894` map at 100%; `.rodata 0x88` and `.data 0x30` are exact. Eight sibling-authentic helper emissions are linker-stripped exactly as in M4/M5, and the final 137-file/hash/DOL gate passes. Seven inline-assembly routines are authenticated by the Matching sibling, so this mixed owner is excluded from clean-C totals. |
 | `musyx/runtime/snd_service.c` | [M5 `src/musyx/runtime/snd_service.c` at `e246f9d`](https://github.com/mariopartyrd/marioparty5/blob/e246f9d9850ff53ac684b971068fbf87fdcf6acb/src/musyx/runtime/snd_service.c), configured `Matching`. | **Admitted.** All eight retained routines fill the exact MP6 `0x2D4` linked text range. The two additional source-object lower-half relocations in `sndSqrt` resolve to the target immediates; the linked owner and final DOL are byte-identical. `sndSintab`, `last_rnd`, `sqrtConsts`, `_sinConsts`, and `i2fMagic` recover the semantic data closure without source padding. `sndSqrt` and `sndCos` are authenticated sibling assembly, so the mixed owner is excluded from clean-C totals. |
 | `game/kerent.c` | [M4 `src/game/kerent.c` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/game/kerent.c), `MatchingFor(USA,PAL)`, authenticates a single `asm void _kerent` with `nofralloc` and `entry`/`b` pairs. | **Admitted.** `ae2977e` de-flipped it through blanket inline-assembly removal (`ASM-BLANKET-REMOVAL`), despite the written exception. The exact MP6 source was restored from `git show ae2977e^:src/game/kerent.c` (blob `bd5b7b9448a659e186d733e3bc3e13dc8291d6a2`). Target/source `.text` are `0x26A0` and 100% identical; each has 2,472 `R_PPC_REL24` relocations. The final 137-file/hash/DOL gate passes. It is an authenticated assembly jump table, not decompiled C. |
 | `Runtime.PPCEABI.H/ptmf.c` | [Mario Kart: Double Dash `libs/PowerPC_EABI_Support/src/Runtime/ptmf.c` at `8a91a6b`](https://github.com/doldecomp/mkdd/blob/8a91a6b4a32834dfb689fbdcf1dea8796be9c75f/libs/PowerPC_EABI_Support/src/Runtime/ptmf.c), configured `Matching`. | **Admitted.** The authenticated `__ptmf_test`, `__ptmf_cmpr`, and `__ptmf_scall` assembly bodies reproduce all `0x94` retained target text bytes with no relocations. Donor-only `__ptmf_scall4` (`0x28`) and `__ptmf_null` (`0xC`) are linker-stripped. The full 137-file/hash/DOL gate passes. This is authentic Runtime assembly and is excluded from clean-C totals. |
@@ -384,9 +401,12 @@ functions and `0x2D4` text bytes. Its six C routines plus authenticated
 assembly `sndSqrt`/`sndCos`, five real data symbols, and target-proven
 inter-owner alignment reproduce the exact linked range. Together the owners
 add `0x518` linked code bytes and `0x898` configured data/BSS bytes, but no
-clean-C owner. The close `targimpl.c` donor was rejected at 29/30 exact
-functions and fully removed. Evidence is retained in
-[`docs/native_matching_wave30.md`](docs/native_matching_wave30.md).
+clean-C owner. The initial `targimpl.c` probe was correctly rejected at 29/30
+exact functions and removed. Wave 38 later recovered the missing support
+prototypes, closed the final function, and admitted the owner through the full
+exception gate. The original rejection is retained in
+[`docs/native_matching_wave30.md`](docs/native_matching_wave30.md); the resolved
+proof is in [`docs/native_matching_wave38.md`](docs/native_matching_wave38.md).
 
 Wave 23 advanced two fallback owners at function level. `board/object.c` has
 since passed the complete object and DOL gates and is reported below as
@@ -531,18 +551,18 @@ configured data/BSS bytes.
   bytes, 2,264 configured data/BSS bytes, 179 retained functions, and 770
   target relocations match. Each inline-assembly owner is also `Matching` in
   an authenticated MP4 or MKDD sibling.
-- Thirty Runtime, MSL, TRK, MusyX, and stub owners contribute 29,740 code
-  bytes, 14,332 configured data/BSS bytes, 120 retained functions, and 827
+- Thirty-one Runtime, MSL, TRK, MusyX, and stub owners contribute 36,032 code
+  bytes, 15,924 configured data/BSS bytes, 150 retained functions, and 1,067
   target relocations. This includes the DOL Runtime owner,
-  `__init_cpp_exceptions`; four low-level and five clean-C TRK owners; 14 MSL
-  owners; three MusyX synth owners; and the AmcExi2 and Odemu stubs. Target
+  `__init_cpp_exceptions`; five low-level/mixed and five clean-C TRK owners;
+  14 MSL owners; three MusyX synth owners; and the AmcExi2 and Odemu stubs. Target
   object order is preserved for the exception init/fini and AmcExi2 functions.
   Relocations also recover real ownership for
   `__ctype_map`, `__lower_map`, `synthVoice`, the aux callback and MIDI globals,
   `synthFlags`, `vs`, and `gWriteBuf`. The address, definition, and target
   relocation ledger is retained in `docs/easy_ports_wave.md`.
 
-The 114 current DOL fallback owners and their causes are exhaustive in the
+The 113 current DOL fallback owners and their causes are exhaustive in the
 two-bucket ledger above. Three REL Runtime variants also remain `NonMatching`;
-they are outside this main-DOL-first taxonomy and are not included in the 113
+they are outside this main-DOL-first taxonomy and are not included in the 112
 C-work/1-assembly-policy remaining counts.

@@ -3,6 +3,7 @@
 
 #include "game/armem.h"
 #include "game/data.h"
+#include "game/sprite.h"
 #include "game/flag.h"
 #include "game/pad.h"
 
@@ -15,6 +16,22 @@ typedef struct TauntWork_s {
     unsigned killF : 1;
 } TAUNT_WORK;
 
+typedef struct TelopTimeChangeWork_s {
+    unsigned killF : 1;
+    unsigned completeF : 1;
+} TELOP_TIME_CHANGE_WORK;
+
+static float telopTimeBaseTPLvlTbl[8] = {
+    1.0f,
+    1.0f,
+    1.0f,
+    1.0f,
+    1.0f,
+    0.0f,
+    0.0f,
+    0.0f,
+};
+
 static s32 tauntSeNo[GW_PLAYER_MAX] = {
     MSM_SENO_NONE,
     MSM_SENO_NONE,
@@ -22,9 +39,72 @@ static s32 tauntSeNo[GW_PLAYER_MAX] = {
     MSM_SENO_NONE,
 };
 
+static OMOBJ *telopOMObj;
+static OMOBJ *telopTimeOMObj;
 static OMOBJ *tauntOMObj;
+static OMOBJ *telopTimeChangeOMObj;
 
 static void TauntOMExec(OMOBJ *obj);
+void mbTelopTimeDispSet(s16 grpId, BOOL dispF);
+
+BOOL mbTelopCheck(void)
+{
+    return telopOMObj == NULL;
+}
+
+static void TelopTimePauseHook(BOOL dispF)
+{
+    if (telopTimeOMObj != NULL) {
+        mbTelopTimeDispSet(telopTimeOMObj->mdlId[0], dispF);
+    }
+}
+
+void mbTelopTimeSprKill(s16 grpId)
+{
+    HuSprGrpKill(grpId);
+}
+
+void mbTelopTimeStarSet(s16 grpId, s32 starNum)
+{
+    s32 emptyNum = 3 - starNum;
+    s32 i;
+
+    for (i = 0; i < 3; i++) {
+        s32 bank = 0;
+
+        if (GwSystem.nextTime) {
+            bank += 2;
+        }
+        if (i < emptyNum) {
+            bank++;
+        }
+        HuSprBankSet(grpId, i + 2, bank);
+        HuSprBankSet(grpId, i + 5, bank);
+        HuSprTPLvlSet(grpId, i + 5, 0.0f);
+    }
+}
+
+void mbTelopTimeTPLvlSet(s16 grpId, float tpLvl)
+{
+    s32 i;
+
+    for (i = 0; i < 8; i++) {
+        HuSprTPLvlSet(grpId, i, tpLvl * telopTimeBaseTPLvlTbl[i]);
+    }
+}
+
+void mbTelopTimeDispSet(s16 grpId, BOOL dispF)
+{
+    s32 i;
+
+    for (i = 0; i < 8; i++) {
+        if (dispF) {
+            HuSprDispOn(grpId, i);
+        } else {
+            HuSprDispOff(grpId, i);
+        }
+    }
+}
 
 s8 mbPadStkXGet(s32 playerNo)
 {
@@ -181,4 +261,23 @@ void mbBoardDataDirRead(void)
         while (HuARDMACheck()) {
         }
     }
+}
+
+void mbTelopTimeChangeKill(void)
+{
+    if (telopTimeChangeOMObj != NULL) {
+        TELOP_TIME_CHANGE_WORK *work = omObjGetWork(telopTimeChangeOMObj, TELOP_TIME_CHANGE_WORK);
+        work->killF = TRUE;
+    }
+}
+
+BOOL mbTelopTimeChangeCheck(void)
+{
+    TELOP_TIME_CHANGE_WORK *work;
+
+    if (telopTimeChangeOMObj == NULL) {
+        return FALSE;
+    }
+    work = omObjGetWork(telopTimeChangeOMObj, TELOP_TIME_CHANGE_WORK);
+    return work->completeF == FALSE;
 }
