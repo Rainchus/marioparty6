@@ -9,6 +9,7 @@
 #include "game/gamework.h"
 #include "game/mgdata.h"
 #include "game/object.h"
+#include "game/pad.h"
 #include "game/sprite.h"
 #include "game/wipe.h"
 #include "game/window.h"
@@ -108,6 +109,7 @@ extern void HuAudSStreamFadeOut(int streamNo, s32 speed);
 extern s32 HuMCInit(s16 mountResult);
 extern s32 HuMCMount(s32 chan);
 extern void HuMCClose(void);
+extern void HuMCMicSet(s32 flag);
 extern void HuMCListenerKill(void);
 extern void HuMCContextKill(s16 context);
 extern s16 HuMCContextCreate(char *path);
@@ -1454,9 +1456,9 @@ void fn_1_6DFC(void)
 
 inline void fn_1_6DFC(void);
 
-BOOL fn_1_6E54(void)
+s16 fn_1_6E54(void)
 {
-    BOOL result = TRUE;
+    s16 result = TRUE;
 
     if (GwCommon.mic != 1) {
         return FALSE;
@@ -2411,6 +2413,207 @@ s16 fn_1_B804(void)
     HuAudFXPlayPan(0x3B0, 0x50);
     fn_1_23E0(1, 0xA0001, 1);
     return fn_1_22E8(2);
+}
+
+inline s16 fn_1_B804(void);
+
+s16 fn_1_BAB4(void)
+{
+    s16 index;
+    s16 inputDelay;
+    s16 result;
+    s16 previousColumn;
+
+    inputDelay = 10;
+    result = 0;
+    previousColumn = 1;
+
+restart:
+    HuPrcVSleep();
+    index = lbl_1_bss_1A30[1] + (3 * lbl_1_bss_1A30[2]);
+    lbl_1_bss_1A30[0] = lbl_1_data_70[index];
+    fn_1_FEC(index);
+    fn_1_9160(&lbl_1_data_28[index]);
+    fn_1_25F8(0x10002);
+    fn_1_23E0(1, 0xA0002 + lbl_1_bss_1A30[0], 0);
+    fn_1_8D44();
+    lbl_1_bss_3E = 1;
+
+    for (;;) {
+        HuPrcVSleep();
+        fn_1_75A4(0);
+        index = lbl_1_bss_1A30[1] + (3 * lbl_1_bss_1A30[2]);
+        lbl_1_bss_1A30[0] = lbl_1_data_70[index];
+        fn_1_FEC(index);
+        fn_1_90FC(&lbl_1_data_28[index]);
+        fn_1_8D44();
+
+        if (lbl_1_bss_1A30[1] == 0) {
+            if (previousColumn != lbl_1_bss_1A30[1]) {
+                previousColumn = lbl_1_bss_1A30[1];
+                Hu3DMotionShiftSet(lbl_1_bss_14->mdlId[0],
+                    lbl_1_bss_14->mtnId[3], 0.0f, 5.0f,
+                    HU3D_MOTATTR_LOOP);
+                Hu3DMotionShiftSet(lbl_1_bss_18->mdlId[0],
+                    lbl_1_bss_18->mtnId[2], 0.0f, 15.0f,
+                    HU3D_MOTATTR_LOOP);
+                Hu3DMotionShiftStartEndSet(
+                    lbl_1_bss_18->mdlId[0], 20.0f, 100.0f);
+            }
+            fn_1_23E0(1, 0xA0002 + lbl_1_bss_1A30[0], 0);
+        } else if (lbl_1_bss_1A30[1] == 2) {
+            if (previousColumn != lbl_1_bss_1A30[1]) {
+                previousColumn = lbl_1_bss_1A30[1];
+                Hu3DMotionShiftSet(lbl_1_bss_14->mdlId[0],
+                    lbl_1_bss_14->mtnId[2], 0.0f, 15.0f,
+                    HU3D_MOTATTR_LOOP);
+                Hu3DMotionShiftSet(lbl_1_bss_18->mdlId[0],
+                    lbl_1_bss_18->mtnId[3], 0.0f, 5.0f,
+                    HU3D_MOTATTR_LOOP);
+                Hu3DMotionShiftStartEndSet(
+                    lbl_1_bss_14->mdlId[0], 20.0f, 100.0f);
+            }
+            fn_1_23E0(1, 0xA0002 + lbl_1_bss_1A30[0], 0);
+        } else {
+            if (previousColumn != lbl_1_bss_1A30[1]) {
+                previousColumn = lbl_1_bss_1A30[1];
+                Hu3DMotionShiftSet(lbl_1_bss_14->mdlId[0],
+                    lbl_1_bss_14->mtnId[0], 0.0f, 15.0f,
+                    HU3D_MOTATTR_LOOP);
+                Hu3DMotionShiftSet(lbl_1_bss_18->mdlId[0],
+                    lbl_1_bss_18->mtnId[0], 0.0f, 15.0f,
+                    HU3D_MOTATTR_LOOP);
+            }
+            fn_1_23E0(1, 0xA0002 + lbl_1_bss_1A30[0], 0);
+        }
+
+        if (++inputDelay < 5) {
+            continue;
+        }
+        inputDelay = 11;
+
+        if (HuPadDStkRep[0] & PAD_BUTTON_LEFT) {
+            if (lbl_1_bss_1A30[1] > 0) {
+                HuAudFXPlay(0);
+                lbl_1_bss_1A30[1]--;
+                inputDelay = 0;
+            } else if (lbl_1_bss_1A30[2] == 0) {
+                HuAudFXPlay(0);
+                lbl_1_bss_1A30[2] = 1;
+                inputDelay = 0;
+            }
+        } else if (HuPadDStkRep[0] & PAD_BUTTON_RIGHT) {
+            if (lbl_1_bss_1A30[1] < 2) {
+                HuAudFXPlay(0);
+                lbl_1_bss_1A30[1]++;
+                inputDelay = 0;
+            } else if (lbl_1_bss_1A30[2] == 0) {
+                HuAudFXPlay(0);
+                lbl_1_bss_1A30[2] = 1;
+                inputDelay = 0;
+            }
+        } else if (HuPadDStkRep[0] & PAD_BUTTON_DOWN) {
+            if (lbl_1_bss_1A30[2] < 1) {
+                HuAudFXPlay(0);
+                lbl_1_bss_1A30[2]++;
+                inputDelay = 0;
+            }
+        } else if (HuPadDStkRep[0] & PAD_BUTTON_UP) {
+            if (lbl_1_bss_1A30[2] > 0) {
+                HuAudFXPlay(0);
+                lbl_1_bss_1A30[2]--;
+                inputDelay = 0;
+            }
+        } else if (HuPadBtnDown[0] & PAD_BUTTON_A) {
+            if (lbl_1_bss_1A30[0] == 0 || lbl_1_bss_1A30[0] == 1) {
+                if (GwCommon.mic == 1 && !fn_1_6E54()) {
+                    OSReport(lbl_1_data_308);
+                    HuMCMicSet(0);
+                }
+                HuAudFXPlay(2);
+                if (lbl_1_bss_1A30[0] == 0 || lbl_1_bss_1A30[0] == 5) {
+                    HuAudFXPlayPan(0x3B6, 0x30);
+                    HuAudFXPlayPan(0x3AE, 0x50);
+                } else if (lbl_1_bss_1A30[0] == 1
+                    || lbl_1_bss_1A30[0] == 3) {
+                    HuAudFXPlay(0x3B6);
+                } else {
+                    HuAudFXPlay(0x3AE);
+                }
+                result = 1;
+                break;
+            }
+
+            if (lbl_1_bss_1A30[0] == 3) {
+                if (GwCommon.mic == 2) {
+                    HuAudFXPlay(2);
+                    HuAudFXPlay(0x3B6);
+                    result = 1;
+                    break;
+                }
+                if (GwCommon.mic == 0) {
+                    HuAudFXPlay(4);
+                    fn_1_23E0(1, 0xA0009, 1);
+                    fn_1_2288();
+                    fn_1_21DC();
+                } else if (!fn_1_6E54()) {
+                    OSReport(lbl_1_data_333);
+                    HuAudFXPlay(4);
+                    fn_1_23E0(1, 0xA0008, 1);
+                    fn_1_2288();
+                    fn_1_21DC();
+                } else {
+                    HuAudFXPlay(2);
+                    HuAudFXPlay(0x3B6);
+                    result = 1;
+                    break;
+                }
+            } else {
+                HuAudFXPlay(2);
+                if (lbl_1_bss_1A30[0] == 0 || lbl_1_bss_1A30[0] == 5) {
+                    HuAudFXPlayPan(0x3B6, 0x30);
+                    HuAudFXPlayPan(0x3AE, 0x50);
+                } else if (lbl_1_bss_1A30[0] == 1
+                    || lbl_1_bss_1A30[0] == 3) {
+                    HuAudFXPlay(0x3B6);
+                } else {
+                    HuAudFXPlay(0x3AE);
+                }
+                result = 1;
+                break;
+            }
+        } else if (HuPadBtnDown[0] & PAD_BUTTON_B) {
+            HuAudFXPlay(3);
+            result = -1;
+            break;
+        }
+
+        index = lbl_1_bss_1A30[1] + (3 * lbl_1_bss_1A30[2]);
+        lbl_1_bss_1A30[0] = lbl_1_data_70[index];
+        fn_1_8D44();
+    }
+
+    lbl_1_bss_3E = 0;
+    if (result == -1) {
+        previousColumn = -1;
+        Hu3DMotionShiftSet(lbl_1_bss_14->mdlId[0],
+            lbl_1_bss_14->mtnId[0], 0.0f, 30.0f, HU3D_MOTATTR_LOOP);
+        Hu3DMotionShiftSet(lbl_1_bss_18->mdlId[0],
+            lbl_1_bss_18->mtnId[0], 0.0f, 30.0f, HU3D_MOTATTR_LOOP);
+        fn_1_75A4(-1);
+    }
+    fn_1_FEC(-1);
+    fn_1_927C();
+    fn_1_8E38();
+    fn_1_277C();
+
+    if (result == -1) {
+        if (fn_1_B804()) {
+            goto restart;
+        }
+        result = -1;
+    }
+    return result;
 }
 
 void fn_1_E1FC(void)
