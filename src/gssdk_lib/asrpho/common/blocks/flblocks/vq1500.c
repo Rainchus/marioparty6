@@ -75,51 +75,59 @@ static u8 GetLabel(VqCodeBook *codeBook, f32 *input)
     f32 minimum;
     f32 distance;
     f32 difference;
-    f32 *vector;
-    f32 *inputValue;
-    u32 *indices;
     u8 label;
     s32 i;
     s32 j;
 
     minimum = FLT_MAX;
     label = 0;
-    for (i = 0; i < codeBook->firstCodeBookSize; i++) {
-        vector = codeBook->firstCodeBook + i * codeBook->dimension;
-        inputValue = input;
-        difference = *inputValue++ - *vector++;
-        distance = difference * difference;
-        for (j = 1; j < codeBook->dimension; j++) {
+    {
+        f32 *vector;
+        f32 *inputValue;
+
+        for (i = 0; i < codeBook->firstCodeBookSize; i++) {
+            vector = codeBook->firstCodeBook + i * codeBook->dimension;
+            inputValue = input;
             difference = *inputValue++ - *vector++;
-            distance += difference * difference;
-            if (distance > minimum) {
-                break;
+            distance = difference * difference;
+            for (j = 1; j < codeBook->dimension; j++) {
+                difference = *inputValue++ - *vector++;
+                distance += difference * difference;
+                if (distance > minimum) {
+                    break;
+                }
             }
-        }
-        if (distance < minimum) {
-            minimum = distance;
-            label = i;
+            if (distance < minimum) {
+                minimum = distance;
+                label = i;
+            }
         }
     }
 
-    indices = codeBook->secondCodeBookIndices +
-              label * codeBook->secondSearchCount;
-    minimum = FLT_MAX;
-    for (i = 0; i < codeBook->secondSearchCount; i++) {
-        vector = codeBook->secondCodeBook + *indices++;
-        inputValue = input;
-        difference = *inputValue++ - *vector++;
-        distance = difference * difference;
-        for (j = 1; j < codeBook->dimension; j++) {
+    {
+        u32 *indices;
+        f32 *vector;
+        f32 *inputValue;
+
+        indices = codeBook->secondCodeBookIndices +
+                  codeBook->secondSearchCount * label;
+        minimum = FLT_MAX;
+        for (i = 0; i < codeBook->secondSearchCount; i++) {
+            vector = codeBook->secondCodeBook + *indices++;
+            inputValue = input;
             difference = *inputValue++ - *vector++;
-            distance += difference * difference;
-            if (distance > minimum) {
-                break;
+            distance = difference * difference;
+            for (j = 1; j < codeBook->dimension; j++) {
+                difference = *inputValue++ - *vector++;
+                distance += difference * difference;
+                if (distance > minimum) {
+                    break;
+                }
             }
-        }
-        if (distance < minimum) {
-            minimum = distance;
-            label = *(u32 *)vector;
+            if (distance < minimum) {
+                minimum = distance;
+                label = *(u32 *)vector;
+            }
         }
     }
     return label;

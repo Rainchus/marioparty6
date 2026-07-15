@@ -67,9 +67,9 @@ f32 LogAdd(f32 value1, f32 value2)
 
     if (value1 > value2) {
         difference = value2 - value1;
-        return value1 + 2.0 * HLnOnePlusExpHFloat(difference * 0.5);
+        return value1 + 2.0 * HLnOnePlusExpHFloat(difference / 2.0);
     }
 
     difference = value1 - value2;
-    return value2 + 2.0 * HLnOnePlusExpHFloat(difference * 0.5);
+    return value2 + 2.0 * HLnOnePlusExpHFloat(difference / 2.0);
 }

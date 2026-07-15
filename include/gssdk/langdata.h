@@ -56,9 +56,12 @@ struct LanguageData {
     u32 (*getSecondCdbSize)(CodeBookData *codeBook);
     u32 (*getCompStart)(CodeBookData *codeBook);
     u32 (*getNbrGastone)(CodeBookData *codeBook);
-    LanguageDataMethod reserved88[7];
+    u32 *(*getpWarpFactors)(LanguageData *language);
+    LanguageDataMethod reserved8C[6];
     CodeBookData *(*getpCodeBook)(LanguageData *language, u32 index);
-    LanguageDataMethod reservedA8[16];
+    LanguageDataMethod reservedA8[10];
+    BOOL (*checkBitField)(LanguageData *language, u32 bitField);
+    LanguageDataMethod reservedD4[5];
     f32 *(*getpFirstCdb)(CodeBookData *codeBook);
     u32 *(*getpIndexInSecCdb)(CodeBookData *codeBook);
     f32 *(*getpSecondCdb)(CodeBookData *codeBook);
