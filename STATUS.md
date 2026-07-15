@@ -157,6 +157,14 @@ The remaining algorithm and control functions still diverge, so both owners
 remain `NonMatching` and fallback-linked. Evidence is retained in
 [`docs/native_matching_wave44.md`](docs/native_matching_wave44.md).
 
+Wave 45 recovers the complete five-function GSSDK `trigglr.c` owner against
+the already-proven `0x19C` `TriggerLR` layout. The source now expresses the
+speech-trigger state machine, queue behavior, session transfer, sensitivity
+profile, and lifecycle without assembly or opaque storage. `ConstructTriggerLR`
+is byte-exact; the other four functions and whole object still diverge, so the
+owner remains `NonMatching` and fallback-linked. Evidence is retained in
+[`docs/native_matching_wave45.md`](docs/native_matching_wave45.md).
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -237,7 +245,7 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 
 #### Bucket 2: `C-not-yet-matched` (111 current fallback owners)
 
-Eighty-five owners have current source candidates and are tagged
+Eighty-six owners have current source candidates and are tagged
 `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-15; percentages are raw `.text` scores unless
@@ -317,6 +325,7 @@ otherwise noted.
 | `gssdk_lib/asrpho/common/blocks/flfxblks/slidhist.c` | The complete histogram stage and its dynamic session payload recover all eight retained functions. `SlidingHistogram_Clear`, `SlidingHistogram_Free`, `SlidingHistogram_sizeof_SessionData`, and `SlidingHistogram_GetSessionData` are exact; `SlidingHistogram_PutSessionData` is exact-size `0xE4` at 99.912280%. Whole target/source `.text` is `0x53C/0x538` at 95.713430%, and `.sdata2 0x28` is exact. |
 | `gssdk_lib/asrpho/common/blocks/flfxblks/subsamp.c` | The complete subsampler stage recovers all five functions and the target's 23-double impulse-response initializer. `Subsampler_Process` (`0x170`) and `Subsampler_Free` (`0xB0`) are exact; check/reset/init are 92.430380%-99.459460%. Whole target/source `.text` is `0x6E8/0x6E8` at 97.031680%, while `.rodata 0xB8` and `.sdata2 0x18` are exact. |
 | `gssdk_lib/asrpho/common/blocks/flfxblks/voicing.c` | The complete voicing stage recovers all six retained functions against the shared typed `TriggerLR`. `Voicing_Free` (`0x78`) is exact; add/maintain/max/reset/init range from 66.503310% to 97.000000%. Whole target/source `.text` is `0x878/0x910` at 84.142070%, and target `.sdata2 0x40` remains 82.352940%. |
+| `gssdk_lib/asrpho/common/blocks/flfxblks/trigglr.c` | The complete target-derived speech-trigger block recovers all five retained functions against the shared `0x19C` `TriggerLR`, including its state machine, queue controls, dynamic session transfer, sensitivity mapping, and lifecycle. `ConstructTriggerLR` (`0x44`) is exact. `TriggerLR_FindSpeech` is `0x6E4/0x6B8` at 85.267570%, `ProcessTriggerLR` is `0x1AC/0x198` at 86.158880%, `ControlTriggerLR` is exact-size `0x430` at 65.037315%, and `InitTriggerLR` is `0x3C0/0x3B8` at 87.937500%. Whole target/source `.text` is `0x10C4/0x107C` at 81.134200%; target/source `.sdata2` is `0x40/0x3C` at 96.774190%. |
 | `gssdk_lib/asrpho/common/blocks/exev_dp.c` | The target-derived `0x6C` block and `0x18` context-information layout recover all six extra-event dynamic-programming functions. MP7 target-binary parity confirms the core Viterbi and DP shapes, and the MP6 `convert.c` consumer establishes the shared context fields. `ProcessExtraEventDP` and `ConstructExtraEventDp` are exact; whole target/source `.text` are `0x4D8/0x54C` at 72.774190%, so the larger control closure remains real C work. |
 | `gssdk_lib/asrpho/common/blocks/flblocks/dctlift.c` | The complete target-derived `0x3C` DCT-lift block recovers its matrix process, coefficient generation, profile fields, and lifecycle. `ControlDCTLift` and `ConstructDCTLift` are exact; `ProcessDCTLift` is `0x1E4/0x1E4` at 98.950420% and `InitDCTLift` is `0x1FC/0x200` at 85.968506%. Whole `.text` is `0x484/0x488` at 93.394460%; `.sdata2 0x38` and all 27 relocations align. |
 | `gssdk_lib/asrpho/common/blocks/flblocks/logexp.c` | The target-derived two-function owner restores its typed 353-float lookup table. `HLnOnePlusExpHFloat` (`0x90`), semantic `.rodata 0x584`, and `.sdata2 0x48` are exact. `LogAdd` is `0x138/0x138` at 99.743590%, with four floating-point operand-register differences; target/source `.text` are both `0x1C8`, and the target's `.rodata 0x588` includes a four-byte alignment tail. |
@@ -331,19 +340,19 @@ otherwise noted.
 | `gssdk_lib/asrpho/common/ctxdata/langdata.c` | The real `LanguageDataV2` prefix and code-book layouts support 36 exact field/pointer accessors. The target's `0x13C` language-method object and the code-book method slots consumed by `vq1500.c` are now typed in the shared header. `_langGetpErgodicPenalty` is `0x64` at 77.040000%; the deeper packed-layout functions and virtual-table source closure remain unrecovered. |
 | `gssdk_lib/asrpho/common/tos/mqueue.c` | The target queue/list/reader prefix and three routines are recovered. `qQueueNbrElements` (`0x20`) is exact; `qDeQueueOne` (`0x50`) is 89.500000% and `qQueueConstruct` (`0x8C`) is 84.200000%. The remaining queue control, enqueue, reset, resize, and destruction routines are absent, so the owner remains fallback-linked. |
 
-The other 26 owners are tagged `NO-SOURCE`. Each explicit brace group below
-expands to the named owner files; the count audit is `1 + 25 = 26`.
+The other 25 owners are tagged `NO-SOURCE`. Each explicit brace group below
+expands to the named owner files; the count audit is `1 + 24 = 25`.
 
 - `musyx/runtime/` (1): `dsp_import.c`. The authenticated donor is a DSP
   firmware byte array, so it is preserved as reference evidence rather than
   counted as clean source recovery.
-- `gssdk_lib/` (25):
+- `gssdk_lib/` (24):
   - `gsapi/gsapi.c`;
   - `asrpho/asrspi.c` and
     `asrpho/rec1600/{convert,creasp,creaspch,creaspt,creatree,crsptrch,spi1600,train,userword}.c`;
   - `asrpho/common/blocks/{dpgenuw,dpscruw,isoword,nbestdp,pitchdp}.c`;
   - `asrpho/common/blocks/flblocks/{acne,gender,specsub,vad}.c`;
-  - `asrpho/common/blocks/flfxblks/{dist16,pitchco,shs_vuv,trigglr}.c`;
+  - `asrpho/common/blocks/flfxblks/{dist16,pitchco,shs_vuv}.c`;
   - `asrpho/common/tos/tinyos.c`.
 
 Mixed C/assembly owners stay in the C bucket until all retained C and assembly
