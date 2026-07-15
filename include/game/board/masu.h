@@ -59,7 +59,7 @@ void mbMasuTypeSet(s16 id, int type);
 void mbMasuTypeChange(u16 oldType, u16 newType);
 BOOL mbMasuDispCheck(s16 id);
 void mbMasuCapsuleReset(void);
-s16 mbMasuCapsuleGet(s16 id);
+int mbMasuCapsuleGet(s16 id);
 void mbMasuCapsuleSet(s16 id, int capsuleNo);
 void mbMasuPosGet(s16 id, HuVecF *pos);
 void mbMasuPosSet(s16 id, float x, float y, float z);

@@ -389,6 +389,19 @@ serialized build and explicit DTK checksum both report `137 files OK`; the
 rebuilt and original `main.dol` compare byte-identical, and the final build
 leaves `config/GP6E01/symbols.txt` unchanged.
 
+Wave 62 advances the engine-core `board/masu.c` owner from 103/119 to 115/119
+strict-exact functions. Restoring the target translation-unit data order,
+the source-authentic math-header suppression, MP5-backed draw declaration
+order, event switch shapes, typed capsule interfaces, and real party/team
+boolean lifetimes closes twelve functions without padding or instruction
+forcing. Target/source `.text` are now `0x5DC8/0x5DB0` at 99.614460% in both
+strict and data-value comparison; `.data 0x128` and `.sdata2 0x90` are exact.
+`MasuDraw`, `MasuFind`, `mbMasuPlayerColorSet`, and
+`mbMasuPKinokoValueGet` remain divergent, so `masu.c` stays `NonMatching` and
+does not change the clean-C target ledger. Evidence is retained in
+[`docs/native_matching_wave62.md`](docs/native_matching_wave62.md). This was
+an object-only WIP slice; no full-DOL gate or Matching promotion is claimed.
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -532,7 +545,7 @@ otherwise noted.
 | `msm/msmstream.c` | 99.487020%; 23/28 functions exact. `msmStreamDvdCallback` and `msmStreamDvdCallback2` are exact. `msmStreamData` is now target/source `0x2EC/0x2EC` at 99.759360% after recovering the target pause/linked-slot/ARAM-update control flow; `msmStreamSlotInit` is `0x224/0x224` at 99.635040% after recovering its three distinct size/offset lifetimes. Five functions still diverge, so the owner remains fallback-linked. |
 | `board/player.c` | The target-proven `0x50` `MBPLAYERWORK` names `masuMoveF` at `0x0A` and `moveProc` at `0x48`, while exact `.bss 0x140` retains the four-player bank. Full-turn execution, player-view setup, metal/Biri-Q teardown, dice-type lookup, and the exact 110-byte tag-name table raise coverage to 129 mapped/105 strict-exact/116 data-value-exact functions. `mbPlayerClose`, model-ID lookup, attribute setters, and motion lifetimes are corrected from target register evidence; Matching Mario Party 5 `include/game/gamework.h` at `e246f9d9` authenticates the `GWPlayerGet` inline shape used by the corresponding Player paths. Target/source `.text` are `0xBEB0/0x484C`, at 37.015240% strict and 37.092266% data-value. `mbPlayerTagNameMesGet` and `mbPlayerDiceTypeGet` are data-value exact; `mbPlayerMatClone` improves to 94.100000% data-value. Thirty-six target functions, including the remaining movement/render/state-machine closure, remain unpaired. |
 | `board/audio.c` | 99.995735%; 48/49 functions exact. Recovering the unsigned board-number field and the Matching `board/camera.c` `BoardNoGet` inline makes `mbMusBoardPlay` (`0x12C`) and `MusBoardFade` (`0x1AC`) exact. Only `mbMusBoardFadeOut` remains: target/source are both `0x3F0` at 99.952380%, with twelve stack-slot operand differences. Whole target/source `.text` remain `0x2BF0/0x2BF0`, and all 444 text relocations match. |
-| `board/masu.c` | All 119 target functions are represented after recovering the two GX draw paths, three space/event transitions, player-color logic, and bounded PKinoko route search with its real two-byte result entry and shared `MBPLAYERWORK::masuNext` owner. Target/source `.text` are `0x5DC8/0x5DD4`, at 96.772575% strict and 96.905030% data-value; 103/119 functions are strict-exact and 110/119 are data-value-exact. Target/source `.rodata 0x40`, `.data 0x128`, `.bss 0x700`, and `.sdata 0x10` have exact sizes; `.sbss 0x78/0x74` covers the named values plus target alignment tail. The seven new functions score 72.373240%-96.662740%; sixteen strict-divergent functions remain, so the source-complete owner stays fallback-linked. |
+| `board/masu.c` | All 119 target functions are represented. Wave 62 closes twelve more strict residuals by recovering the authentic data-definition order, math-header suppression, shared draw-local layout, atlas expression, event CFGs, party/team conditions, and capsule return types. Target/source `.text` are `0x5DC8/0x5DB0`, at 99.614460% in both strict and data-value modes; 115/119 functions are exact. `.rodata 0x40`, `.data 0x128`, `.bss 0x700`, `.sdata 0x10`, and `.sdata2 0x90` are exact. `.sbss 0x78/0x74` covers the named values plus the target alignment tail. The four remaining functions are `MasuDraw` (`0xB54/0xB54`, 99.484140%), `MasuFind` (`0x62C/0x62C`, 99.154430%), `mbMasuPlayerColorSet` (`0x260/0x260`, 99.868420%), and `mbMasuPKinokoValueGet` (`0x7EC/0x7D4`, 96.871796%). The owner remains fallback-linked and excluded from clean-C totals. |
 | `board/effect.c` | 59.766%; 1/35 functions exact, target/source text sizes `0x3050`/`0x3074`, plus `.sdata` and `.sdata2` divergence. The restored FastCast header is not its blocker. |
 | `gssdk_lib/asrpho/common/blocks/fft_maye.c` | The complete target-derived Mayer fast-Hartley and real-FFT pair is recovered, including both exact `0x40` trigonometric tables. Whole target/source `.text` is `0x8F0/0x8BC` at 79.104900%; `fht` is `0x73C/0x75C` at 85.051834% and `realfft` is `0x1B4/0x160` at 53.844036%. `.rodata 0x80` is exact, while target `.sdata2 0x18` remains 71.428570%. |
 | `gssdk_lib/asrpho/common/blocks/fftmod.c` | The complete target-derived `0x4C` FFT block recovers its power/amplitude modes, queue processing, control, initialization, and construction. `ControlFFTMod` (`0xA4`) is exact. Whole target/source `.text` is `0xC84/0xC78` at 93.288390%; the other functions range from 80.234180% to 97.250000%, and target `.sdata2 0x48` is 80.000000%. |
