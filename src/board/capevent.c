@@ -1,4 +1,9 @@
 #include "game/gamework.h"
+#include "game/memory.h"
+#include "game/object.h"
+#include "game/board/player.h"
+#include "game/process.h"
+#include "game/board/window.h"
 
 #include "humath.h"
 
@@ -7,13 +12,114 @@
 
 typedef void (*CAPSULE_HOOK)(int, int, int, BOOL, BOOL, BOOL);
 
+static HUPROCESS *ev_CapBonusCoinProc[GW_PLAYER_MAX];
+static OMOBJ *ev_CapEffExplodeOMObj[8];
+static OMOBJ *ev_CapEffBoostOMObj[8];
+static OMOBJ *ev_CapEffSnowOMObj[8];
+static OMOBJ *ev_CapEffGlowOMObj[8];
+static OMOBJ *ev_CapEffRingOMObj[8];
+static OMOBJ *ev_CapEffCoinOMObj[8];
+static OMOBJ *ev_CapEffCoinManOMObj[8];
+static OMOBJ *ev_CapEffStarManOMObj[8];
+static OMOBJ *ev_CapEffCapLoseOMObj[8];
+static OMOBJ *ev_CapEffRayOMObj[8];
+static OMOBJ *ev_CapEffMasuHitOMObj[8];
+static OMOBJ *ev_CapEffMoveOMObj[GW_PLAYER_MAX];
+
+typedef struct CapBonusCoinWork {
+    int playerNo;
+} CAPBONUSCOINWORK;
+
+typedef struct CapEffBoostWork {
+    u8 _unk00[4];
+    int time;
+} CAPEFFBOOSTWORK;
+
+typedef struct CapEffDispWork {
+    u8 _unk00[4];
+    int dispF;
+} CAPEFFDISPWORK;
+
+typedef struct CapEffRingWork {
+    u8 _unk00[0xC];
+    int dispF;
+} CAPEFFRINGWORK;
+
+typedef struct CapEffCoinWork {
+    u8 _unk00[8];
+    int activeF;
+    u8 _unk0C[0x14];
+    float maxY;
+    u8 _unk24[0x38];
+    int glowF;
+} CAPEFFCOINWORK;
+
+typedef struct CapEffMoveWork {
+    u8 _unk00[4];
+    int state;
+    u8 _unk08[0x10];
+    int minYF;
+    float minY;
+    float vel;
+    u8 _unk24[0xC];
+    HuVecF moveDir;
+} CAPEFFMOVEWORK;
+
+typedef struct CapEffRayWork {
+    u8 _unk00[4];
+    int objIdx;
+} CAPEFFRAYWORK;
+
+typedef struct CapEffMasuHitWork {
+    u8 _unk00[8];
+    int objIdx;
+} CAPEFFMASUHITWORK;
+
+typedef struct CapCoinManWork {
+    u8 _unk00[4];
+    int activeF;
+    u8 _unk08[0x34];
+} CAPCOINMANWORK;
+
+typedef struct CapStarManWork {
+    u8 _unk00[4];
+    int activeF;
+    u8 _unk08[0x34];
+} CAPSTARMANWORK;
+
+typedef struct CapEffCapLoseWork {
+    u8 _unk00[4];
+    int activeF;
+    u8 _unk08[0x2C];
+} CAPEFFCAPLOSEWORK;
+
 static int kettouCoinLose = 10;
 static int kettouOppCoinLose = 5;
 static int capsuleEventMasu = -1;
 static int capsuleEventPlayer = -1;
 static int capsuleEventPrevMasu = -1;
 static int capsuleEventPrevPlayer = -1;
+static GXColor ev_CapsuleRandomColorTbl[7] = {
+    { 255, 127, 127, 255 },
+    { 255, 127, 64, 255 },
+    { 255, 255, 127, 255 },
+    { 127, 255, 127, 255 },
+    { 127, 127, 255, 255 },
+    { 64, 64, 255, 255 },
+    { 255, 127, 255, 255 }
+};
 static CAPSULE_HOOK capsuleHook;
+static int capsuleChoice;
+
+static void ev_CapCoinAdd(OMOBJ *obj, int playerNo, int coinNum, BOOL highF,
+    void (*hook)(void));
+static void ev_CapComChoiceHook(void);
+void mbev_CapBonusCoinCall(int playerNo, int capsuleNo, int coinNum,
+    BOOL waitF);
+void mbev_CapPlayerSquishVoiceSet(int *playerNo, int masuId, BOOL voiceF);
+BOOL mbev_CapCullCheck(int playerNo, int masuId);
+int mbev_CapPlayerComSelSameGet(int playerNo, int selection, BOOL sameF);
+void mbev_CapBiriQMetalShock(void *workP);
 
 void MBCapsuleStub5(void)
 {
@@ -328,4 +434,519 @@ void mbev_CapBezierNormGetV(float t, float *a, float *b, float *c, float *out)
         *out++ = 0;
         *out++ = 1;
     }
+}
+
+void mbev_CapCircuitCallKettou(void)
+{
+}
+
+void mbev_CapRandomBonusCoin(int playerNo, int capsuleNo, BOOL waitF)
+{
+    mbev_CapBonusCoinCall(playerNo, capsuleNo, -1, waitF);
+}
+
+BOOL mbev_CapBonusCoinCheck(int playerNo)
+{
+    if (ev_CapBonusCoinProc[playerNo] != NULL) {
+        return FALSE;
+    } else {
+        return TRUE;
+    }
+}
+
+void mbev_CapNull(void)
+{
+    void *workP = HuPrcCurrentGet()->property;
+
+    HuPrcEnd();
+}
+
+void mbev_CapPlayerMoveObjInit(void)
+{
+    int i;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        ev_CapEffMoveOMObj[i] = NULL;
+    }
+}
+
+void mbev_CapPlayerMoveObjClose(int playerNo)
+{
+    ev_CapEffMoveOMObj[playerNo] = NULL;
+}
+
+void mbev_CapPlayerMoveObjKill(void)
+{
+    int i;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        ev_CapEffMoveOMObj[i] = NULL;
+    }
+}
+
+void mbev_CapCoinAdd(
+    OMOBJ *obj, int playerNo, int coinNum, BOOL highF)
+{
+    ev_CapCoinAdd(obj, playerNo, coinNum, highF, NULL);
+}
+
+void mbev_CapPlayerSquishSet(int *playerNo, int masuId)
+{
+    mbev_CapPlayerSquishVoiceSet(playerNo, masuId, FALSE);
+}
+
+BOOL mbev_CapCullPlayerCheck(int playerNo)
+{
+    return mbev_CapCullCheck(playerNo, 0);
+}
+
+int mbev_CapPlayerMasuNumGet(int masuId)
+{
+    int i;
+    int count;
+
+    i = 0;
+    count = 0;
+    for (; i < GW_PLAYER_MAX; i++) {
+        if (masuId == GwPlayer[i].masuId) {
+            count++;
+        }
+    }
+    return count;
+}
+
+int mbev_CapPlayerNoSearch(int playerNo)
+{
+    int i;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        if (i != playerNo) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int mbev_CapPlayerComSelGet(int playerNo, int selection)
+{
+    return mbev_CapPlayerComSelSameGet(playerNo, selection, FALSE);
+}
+
+void mbev_CapChoiceSet(int choice)
+{
+    capsuleChoice = choice;
+    mbWinTopComKeyHookSet(ev_CapComChoiceHook);
+}
+
+void mbev_CapVecChase(
+    float weight, HuVecF *src, HuVecF *target, HuVecF *out)
+{
+    HuVecF delta;
+
+    PSVECSubtract(target, src, &delta);
+    PSVECScale(&delta, &delta, weight);
+    PSVECAdd(src, &delta, out);
+}
+
+void mbev_CapEffBoostKill(OMOBJ *obj)
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffBoostOMObj[i] == obj) {
+            break;
+        }
+    }
+    ev_CapEffBoostOMObj[i] = (OMOBJ *)-1;
+}
+
+int mbev_CapEffBoostTimeGet(OMOBJ *obj)
+{
+    int i;
+    CAPEFFBOOSTWORK *workP;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffBoostOMObj[i] == obj) {
+            break;
+        }
+    }
+    workP = omObjGetDataAs(obj, CAPEFFBOOSTWORK);
+    return workP->time;
+}
+
+void mbev_CapEffSnowKill(OMOBJ *obj)
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffSnowOMObj[i] == obj) {
+            break;
+        }
+    }
+    ev_CapEffSnowOMObj[i] = (OMOBJ *)-1;
+}
+
+int mbev_CapEffSnowDispGet(OMOBJ *obj)
+{
+    int i;
+    CAPEFFDISPWORK *workP;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffSnowOMObj[i] == obj) {
+            break;
+        }
+    }
+    workP = omObjGetDataAs(obj, CAPEFFDISPWORK);
+    return workP->dispF;
+}
+
+void mbev_CapEffGlowKill(OMOBJ *obj)
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffGlowOMObj[i] == obj) {
+            break;
+        }
+    }
+    ev_CapEffGlowOMObj[i] = (OMOBJ *)-1;
+}
+
+int mbev_CapEffGlowDispGet(OMOBJ *obj)
+{
+    int i;
+    CAPEFFDISPWORK *workP;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffGlowOMObj[i] == obj) {
+            break;
+        }
+    }
+    workP = omObjGetDataAs(obj, CAPEFFDISPWORK);
+    return workP->dispF;
+}
+
+void mbev_CapEffRingKill(OMOBJ *obj)
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffRingOMObj[i] == obj) {
+            break;
+        }
+    }
+    ev_CapEffRingOMObj[i] = (OMOBJ *)-1;
+}
+
+int mbev_CapEffRingDispGet(OMOBJ *obj)
+{
+    int i;
+    CAPEFFRINGWORK *workP;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffRingOMObj[i] == obj) {
+            break;
+        }
+    }
+    workP = omObjGetDataAs(obj, CAPEFFRINGWORK);
+    return workP->dispF;
+}
+
+void mbev_CapEffExplodeKill(OMOBJ *obj)
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffExplodeOMObj[i] == obj) {
+            break;
+        }
+    }
+    ev_CapEffExplodeOMObj[i] = (OMOBJ *)-1;
+}
+
+void mbev_CapEffCoinKill(OMOBJ *obj)
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffCoinOMObj[i] == obj) {
+            break;
+        }
+    }
+    ev_CapEffCoinOMObj[i] = (OMOBJ *)-1;
+}
+
+void mbev_CapCoinManKill(OMOBJ *obj)
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffCoinManOMObj[i] == obj) {
+            break;
+        }
+    }
+    ev_CapEffCoinManOMObj[i] = (OMOBJ *)-1;
+}
+
+void mbev_CapStarManKill(OMOBJ *obj)
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffStarManOMObj[i] == obj) {
+            break;
+        }
+    }
+    ev_CapEffStarManOMObj[i] = (OMOBJ *)-1;
+}
+
+void mbev_CapEffCapLoseKill(OMOBJ *obj)
+{
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffCapLoseOMObj[i] == obj) {
+            break;
+        }
+    }
+    ev_CapEffCapLoseOMObj[i] = (OMOBJ *)-1;
+}
+
+int mbev_CapEffCoinNumGet(OMOBJ *obj)
+{
+    int i;
+    CAPEFFCOINWORK *workP;
+    int objIdx;
+    int count;
+
+    count = 0;
+    for (objIdx = 0; objIdx < 8; objIdx++) {
+        if (ev_CapEffCoinOMObj[objIdx] == obj) {
+            break;
+        }
+    }
+    workP = omObjGetDataAs(obj, CAPEFFCOINWORK);
+    for (i = 0; i < 128; i++, workP++) {
+        if (workP->activeF) {
+            count++;
+        }
+    }
+    return count;
+}
+
+int mbev_CapCoinManNumGet(OMOBJ *obj)
+{
+    CAPCOINMANWORK *workP;
+    int objIdx;
+    int i;
+    int count;
+
+    for (objIdx = 0; objIdx < 8; objIdx++) {
+        if (ev_CapEffCoinManOMObj[objIdx] == obj) {
+            break;
+        }
+    }
+    workP = omObjGetDataAs(obj, CAPCOINMANWORK);
+    i = 0;
+    count = 0;
+    for (; i < 64; i++, workP++) {
+        if (workP->activeF) {
+            count++;
+        }
+    }
+    return count;
+}
+
+int mbev_CapStarManNumGet(OMOBJ *obj)
+{
+    CAPSTARMANWORK *workP;
+    int objIdx;
+    int i;
+    int count;
+
+    for (objIdx = 0; objIdx < 8; objIdx++) {
+        if (ev_CapEffStarManOMObj[objIdx] == obj) {
+            break;
+        }
+    }
+    workP = omObjGetDataAs(obj, CAPSTARMANWORK);
+    i = 0;
+    count = 0;
+    for (; i < 8; i++, workP++) {
+        if (workP->activeF) {
+            count++;
+        }
+    }
+    return count;
+}
+
+int mbev_CapEffCapLoseNumGet(OMOBJ *obj)
+{
+    CAPEFFCAPLOSEWORK *workP;
+    int objIdx;
+    int i;
+    int count;
+
+    for (objIdx = 0; objIdx < 8; objIdx++) {
+        if (ev_CapEffCapLoseOMObj[objIdx] == obj) {
+            break;
+        }
+    }
+    workP = omObjGetDataAs(obj, CAPEFFCAPLOSEWORK);
+    i = 0;
+    count = 0;
+    for (; i < 6; i++, workP++) {
+        if (workP->activeF) {
+            count++;
+        }
+    }
+    return count;
+}
+
+static void ev_CapBiriQMetalShockDestroy(void)
+{
+    void *workP = HuPrcCurrentGet()->property;
+
+    HuMemDirectFree(workP);
+}
+
+static void ev_CapBiriQMetalShock(void)
+{
+    void *workP = HuPrcCurrentGet()->property;
+
+    mbev_CapBiriQMetalShock(workP);
+    HuPrcEnd();
+}
+
+static void ev_CapEffOpenKill(void)
+{
+    HUPROCESS *process = HuPrcCurrentGet();
+    void *workP = process->property;
+
+    HuMemDirectFree(workP);
+}
+
+static void ev_CapBonusCoinKill(void)
+{
+    HUPROCESS *process = HuPrcCurrentGet();
+    CAPBONUSCOINWORK *workP = process->property;
+
+    ev_CapBonusCoinProc[workP->playerNo] = NULL;
+    HuMemDirectFree(workP);
+}
+
+void mbev_CapPlayerMoveMinYSet(int playerNo, float minY)
+{
+    CAPEFFMOVEWORK *workP;
+    OMOBJ *obj = ev_CapEffMoveOMObj[playerNo];
+
+    if (obj != NULL) {
+        workP = omObjGetDataAs(obj, CAPEFFMOVEWORK);
+        workP->minY = minY;
+        workP->minYF = FALSE;
+    }
+}
+
+void mbev_CapPlayerMoveVelSet(int playerNo, float vel, HuVecF *moveDir)
+{
+    CAPEFFMOVEWORK *workP;
+    OMOBJ *obj = ev_CapEffMoveOMObj[playerNo];
+
+    if (obj != NULL) {
+        workP = omObjGetDataAs(obj, CAPEFFMOVEWORK);
+        workP->vel = vel;
+        workP->moveDir = *moveDir;
+    }
+}
+
+BOOL mbev_CapEffCoinMaxYSet(OMOBJ *obj, int coinNo, float maxY)
+{
+    CAPEFFCOINWORK *workP;
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffCoinOMObj[i] == obj) {
+            break;
+        }
+    }
+    workP = omObjGetDataAs(obj, CAPEFFCOINWORK);
+    workP = &workP[coinNo];
+    workP->maxY = maxY;
+    return TRUE;
+}
+
+BOOL mbev_CapPlayerMoveObjCheck(int playerNo)
+{
+    OMOBJ *obj = ev_CapEffMoveOMObj[playerNo];
+    CAPEFFMOVEWORK *workP;
+
+    if (obj == NULL) {
+        return TRUE;
+    }
+    workP = omObjGetDataAs(obj, CAPEFFMOVEWORK);
+    if (workP->state >= 1) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+void mbev_CapEffRayKill(OMOBJ *obj)
+{
+    int i;
+    CAPEFFRAYWORK *workP;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffRayOMObj[i] == obj) {
+            break;
+        }
+    }
+    workP = omObjGetDataAs(obj, CAPEFFRAYWORK);
+    ev_CapEffRayOMObj[workP->objIdx] = (OMOBJ *)-1;
+}
+
+void mbev_CapEffMasuHitKill(OMOBJ *obj)
+{
+    int i;
+    CAPEFFMASUHITWORK *workP;
+
+    for (i = 0; i < 8; i++) {
+        if (ev_CapEffMasuHitOMObj[i] == obj) {
+            break;
+        }
+    }
+    workP = omObjGetDataAs(obj, CAPEFFMASUHITWORK);
+    ev_CapEffMasuHitOMObj[workP->objIdx] = (OMOBJ *)-1;
+}
+
+void mbev_CapEffCoinGlowSet(OMOBJ *obj, BOOL glowF)
+{
+    CAPEFFCOINWORK *workP;
+    int objIdx;
+    int i;
+
+    for (objIdx = 0; objIdx < 8; objIdx++) {
+        if (ev_CapEffCoinOMObj[objIdx] == obj) {
+            break;
+        }
+    }
+    workP = omObjGetDataAs(obj, CAPEFFCOINWORK);
+    for (i = 0; i < 128; i++, workP++) {
+        workP->glowF = glowF;
+    }
+}
+
+void mbev_CapPlayerRotate(int playerNo, float angle)
+{
+    mbPlayerRotateStart(playerNo, angle, 15);
+    while (mbPlayerRotateCheck(playerNo) == FALSE) {
+        HuPrcVSleep();
+    }
+}
+
+void mbev_CapEffColorSet(GXColor *color, int colorNo)
+{
+    if (colorNo < 0) {
+        colorNo *= -1;
+    }
+    *color = ev_CapsuleRandomColorTbl[colorNo % 7];
 }

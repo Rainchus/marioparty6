@@ -848,7 +848,7 @@ config.libs = [
     },
     {
         "lib": "sdk_mic",
-        "mw_version": config.linker_version,
+        "mw_version": "GC/1.2.5n",
         "cflags": cflags_sdk_mic,
         "host": False,
         "objects": [

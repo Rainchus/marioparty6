@@ -1,9 +1,11 @@
 /* player.o has no weak sqrtf constants in .sdata2. */
 #define _MATH_H
 #include "dolphin/math.h"
+#include "dolphin/os.h"
 
 #include "game/board/audio.h"
 #include "game/board/camera.h"
+#include "game/board/effect.h"
 #include "game/board/main.h"
 #include "game/board/masu.h"
 #include "game/board/object.h"
@@ -52,9 +54,15 @@ static void PlayerMetalKill(int playerNo);
 static void PlayerBiriQKill(int playerNo);
 static void PlayerMove(void);
 static void PlayerTurn(int playerNo);
+static BOOL PlayerViewSet(
+    int playerNo, BOOL intrF, BOOL waitF, BOOL carF);
 static void MasuCoinExec(int playerNo, int coinNum);
 void mbDiceNumKill(int playerNo);
 void mbDiceObjHit(int playerNo);
+void mbObjMetalKill(MBMODELID modelId);
+void mbObjBiriQKill(MBMODELID modelId);
+BOOL mbWipeSpecialStatGet(void);
+void mbWipeFadeIn(void);
 
 void mbPlayerClose(void)
 {
@@ -63,7 +71,9 @@ void mbPlayerClose(void)
 
     workP = &playerWork[0];
     for (i = 0; i < GW_PLAYER_MAX; i++, workP++) {
-        GW_PLAYER *playerP = &GwPlayer[i];
+        GW_PLAYER *playerP;
+
+        playerP = GWPlayerGet(i);
 
         if (workP->objId != MB_MODEL_NONE) {
             PlayerMetalKill(i);
@@ -111,6 +121,32 @@ void mbPlayerMoveHookSet(int playerNo, MBPLAYERMOVEHOOK hook)
     playerWork[playerNo].moveHook = hook;
 }
 
+void mbTurnExec(BOOL intrF)
+{
+    int playerNo;
+
+    turnIntrF = intrF;
+    blackoutF = FALSE;
+    playerNo = GwSystem.turnPlayerNo;
+    for (; playerNo < GW_PLAYER_MAX; playerNo++) {
+        int orderNo;
+        int i;
+
+        GwSystem.turnPlayerNo = playerNo;
+        orderNo = 1;
+        GwPlayer[playerNo].orderNo = 0;
+        for (i = 0; i < GW_PLAYER_MAX; i++) {
+            if (playerNo != i) {
+                GwPlayer[i].orderNo = orderNo++;
+            }
+            mbPlayerMotionSet(i, 1, HU3D_MOTATTR_LOOP);
+            GwPlayer[i].masuIdNext = GwPlayer[i].masuId;
+        }
+        PlayerTurn(playerNo);
+        turnIntrF = FALSE;
+    }
+}
+
 void mbSingleTurnExec(BOOL intrF)
 {
     turnIntrF = intrF;
@@ -120,6 +156,54 @@ void mbSingleTurnExec(BOOL intrF)
     mbPlayerMotionSet(0, 1, HU3D_MOTATTR_LOOP);
     PlayerTurn(0);
     turnIntrF = FALSE;
+}
+
+static BOOL PlayerViewSet(
+    int playerNo, BOOL intrF, BOOL waitF, BOOL carF)
+{
+    BOOL wipeF = mbWipeSpecialStatGet();
+
+    if (intrF || wipeF) {
+        if (!wipeF) {
+            mbCameraPlayerViewSet(playerNo,
+                carF ? MB_CAMERA_VIEW_WALK : MB_CAMERA_VIEW_ZOOMIN);
+        } else {
+            mbCameraPlayerViewSetFast(playerNo,
+                carF ? MB_CAMERA_VIEW_WALK : MB_CAMERA_VIEW_ZOOMIN);
+        }
+        if (waitF) {
+            mbCameraMoveWait();
+        }
+        if (carF && GwPlayer[playerNo].moveNum != 0) {
+            mbMoveNumCreate(playerNo, TRUE);
+        }
+        if (wipeF) {
+            mbWipeFadeIn();
+        }
+        intrF = FALSE;
+    }
+    return intrF;
+}
+
+int mbPlayerDiceTypeGet(int diceNo)
+{
+    int diceTypeTbl[7][2] = {
+        { 0, 0 },
+        { 1, 1 },
+        { 2, 2 },
+        { 3, 14 },
+        { 4, 0 },
+        { 5, 4 },
+        { 6, 3 }
+    };
+    int i;
+
+    for (i = 0; i < 7; i++) {
+        if (diceNo == diceTypeTbl[i][0]) {
+            return diceTypeTbl[i][1];
+        }
+    }
+    return 0;
 }
 
 static void PlayerMoveDestroy(void)
@@ -385,6 +469,21 @@ typedef struct PlayerBiriQWork {
 
 static void PlayerBiriQEffectSet(int playerNo, BOOL effectF);
 
+static void PlayerMetalKill(int playerNo)
+{
+    OMOBJ *objP = playerWork[playerNo].metalObj;
+
+    if (objP != NULL) {
+        PLAYERMETALWORK *workP = omObjGetWork(objP, PLAYERMETALWORK);
+
+        workP->killF = TRUE;
+        playerWork[playerNo].metalObj = NULL;
+        mbObjMetalKill(mbPlayerObjIDGet(playerNo));
+        mbParticleKill(objP->mdlId[0]);
+        objP->mdlId[0] = -1;
+    }
+}
+
 void mbPlayerEffectSet(int playerNo, BOOL effectF)
 {
     OMOBJ *objP = playerWork[playerNo].metalObj;
@@ -421,6 +520,27 @@ static void PlayerBiriQFlashSet(int playerNo)
     }
 }
 
+static void PlayerBiriQKill(int playerNo)
+{
+    OMOBJ *objP = playerWork[playerNo].biriQObj;
+
+    if (objP != NULL) {
+        PLAYERBIRIQWORK *workP = omObjGetWork(objP, PLAYERBIRIQWORK);
+
+        workP->killF = TRUE;
+        playerWork[playerNo].biriQObj = NULL;
+        mbObjBiriQKill(mbPlayerObjIDGet(playerNo));
+        if (objP->mdlId[0] >= 0) {
+            mbParticleKill(objP->mdlId[0]);
+            objP->mdlId[0] = -1;
+        }
+        if (objP->mdlId[1] >= 0) {
+            mbParticleKill(objP->mdlId[1]);
+            objP->mdlId[1] = -1;
+        }
+    }
+}
+
 static void PlayerBiriQEffectSet(int playerNo, BOOL effectF)
 {
     OMOBJ *objP = playerWork[playerNo].biriQObj;
@@ -454,8 +574,9 @@ void mbPlayerMatClone(int playerNo)
     HU3D_MODELID modelId = mbObjModelIDGet(mbPlayerObjIDGet(playerNo));
     HU3D_MODEL *modelP = &Hu3DData[modelId];
     HSF_DATA *hsf = modelP->hsf;
-    HSF_MATERIAL *matP = HuMemDirectMallocNum(
-        HEAP_HEAP, hsf->materialNum * sizeof(HSF_MATERIAL), HU_MEMNUM_OVL);
+    int size = hsf->materialNum * sizeof(HSF_MATERIAL);
+    HSF_MATERIAL *matP =
+        HuMemDirectMallocNum(HEAP_HEAP, size, HU_MEMNUM_OVL);
 
     memcpy(matP, hsf->material, hsf->materialNum * sizeof(HSF_MATERIAL));
     playerWork[playerNo].matCopy = matP;
@@ -502,6 +623,41 @@ char *mbPlayerNameGet(int playerNo)
     return nameTbl[GwPlayer[playerNo].charNo];
 }
 
+static s8 tagIdTbl[110] = {
+    -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+    -1, -1, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+    -1, -1, -1, 19, 20, 21, 22, 23, 24, 25, 26,
+    -1, -1, -1, -1, 27, 28, 29, 30, 31, 32, 33,
+    -1, -1, -1, -1, -1, 34, 35, 36, 37, 38, 39,
+    -1, -1, -1, -1, -1, -1, 40, 41, 42, 43, 44,
+    -1, -1, -1, -1, -1, -1, -1, 45, 46, 47, 48,
+    -1, -1, -1, -1, -1, -1, -1, -1, 49, 50, 51,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, 52, 53,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 54
+};
+
+u32 mbPlayerTagNameMesGet(int teamNo)
+{
+    int charNo1;
+    int charNo2;
+    int temp;
+    int tagId;
+
+    charNo1 = GwPlayer[mbPlayerTeamFindPlayer(teamNo, 0)].charNo;
+    charNo2 = GwPlayer[mbPlayerTeamFindPlayer(teamNo, 1)].charNo;
+    if (charNo1 > charNo2) {
+        temp = charNo1;
+        charNo1 = charNo2;
+        charNo2 = temp;
+    }
+    tagId = tagIdTbl[(charNo1 * 11) + charNo2];
+    OSReport("%d:%d->%d\n", charNo1, charNo2, tagId);
+    if (tagId == -1) {
+        return 0x30037;
+    }
+    return 0x30000 + tagId;
+}
+
 void mbPlayerAmbSet(int playerNo, float ambR, float ambG, float ambB)
 {
     mbObjAmbSet(mbPlayerObjIDGet(playerNo), ambR, ambG, ambB);
@@ -514,7 +670,7 @@ MBMODELID mbPlayerObjIDGet(int playerNo)
 
 HU3D_MODELID mbPlayerModelIDGet(int playerNo)
 {
-    return mbObjModelIDGet(mbPlayerObjIDGet(playerNo));
+    return mbObjModelIDGet(playerWork[playerNo].objId);
 }
 
 BOOL mbPlayerAllComCheck(void)
@@ -713,9 +869,9 @@ void mbPlayerScaleGet(int playerNo, HuVecF *scale)
 
 void mbPlayerMotionSet(int playerNo, int motNo, u32 attr)
 {
-    GW_PLAYER *playerP = &GwPlayer[playerNo];
+    GW_PLAYER *playerP;
 
-    (void)(motNo == -1);
+    playerP = GWPlayerGet(playerNo);
     if (motNo == playerWork[playerNo].motNo) {
         return;
     }
@@ -736,9 +892,9 @@ int mbPlayerMotionGet(int playerNo)
 void mbPlayerMotionShiftSet(int playerNo, int motNo, float start, float end,
     u32 attr)
 {
-    GW_PLAYER *playerP = &GwPlayer[playerNo];
+    GW_PLAYER *playerP;
 
-    (void)(motNo == -1);
+    playerP = GWPlayerGet(playerNo);
     if (motNo == playerWork[playerNo].motNo) {
         return;
     }
@@ -789,12 +945,16 @@ void mbPlayerMotionStartEndSet(int playerNo, float start, float end)
 
 void mbPlayerAttrSet(int playerNo, u32 attr)
 {
-    mbObjAttrSet(mbPlayerObjIDGet(playerNo), attr);
+    MBMODELID modelId = mbPlayerObjIDGet(playerNo);
+
+    mbObjAttrSet(modelId, attr);
 }
 
 void mbPlayerAttrReset(int playerNo, u32 attr)
 {
-    mbObjAttrReset(mbPlayerObjIDGet(playerNo), attr);
+    MBMODELID modelId = mbPlayerObjIDGet(playerNo);
+
+    mbObjAttrReset(modelId, attr);
 }
 
 void mbPlayerMotionVoiceOnSet(int playerNo, int motNo, BOOL voiceOnF)

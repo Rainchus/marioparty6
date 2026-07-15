@@ -175,6 +175,11 @@ extern GW_SYSTEM GwSystem;
 extern GW_PLAYER GwPlayer[GW_PLAYER_MAX];
 extern GW_PLAYER_CONF GwPlayerConf[GW_PLAYER_MAX];
 
+static inline GW_PLAYER *GWPlayerGet(int playerNo)
+{
+    return &GwPlayer[playerNo];
+}
+
 extern u32 GwSinglePrizeFlag[2];
 extern s16 GwMgNightF;
 

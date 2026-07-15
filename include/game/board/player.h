@@ -50,6 +50,7 @@ MBPLAYERWORK *mbPlayerWorkGet(int playerNo);
 void mbPlayerStartTurnHookSet(int playerNo, MBPLAYERTURNHOOK hook);
 void mbPlayerEndTurnHookSet(int playerNo, MBPLAYERTURNHOOK hook);
 void mbPlayerMoveHookSet(int playerNo, MBPLAYERMOVEHOOK hook);
+void mbTurnExec(BOOL intrF);
 void mbSingleTurnExec(BOOL intrF);
 void mbPlayerAmbSet(int playerNo, float ambR, float ambG, float ambB);
 MBMODELID mbPlayerObjIDGet(int playerNo);
@@ -87,6 +88,8 @@ BOOL mbPlayerRotateCheckAll(void);
 void mbPlayerMatClone(int playerNo);
 u32 mbPlayerNameMesGet(int playerNo);
 char *mbPlayerNameGet(int playerNo);
+u32 mbPlayerTagNameMesGet(int teamNo);
+int mbPlayerDiceTypeGet(int diceNo);
 void mbPlayerMotionSet(int playerNo, int motNo, u32 attr);
 int mbPlayerMotionGet(int playerNo);
 void mbPlayerMotionShiftSet(int playerNo, int motNo, float start, float end,

@@ -176,7 +176,6 @@ BOOL M2SSetMode(s32 mode) {
 }
 
 BOOL M2SSetPrerecordSamples(s32 milliseconds) {
-    M2SControlBlock* cb;
     BOOL enabled;
     s32 ring_size;
     s32 sample_rate;
@@ -187,8 +186,7 @@ BOOL M2SSetPrerecordSamples(s32 milliseconds) {
     }
 
     enabled = OSDisableInterrupts();
-    cb = &__M2SBlock[__M2SChannel];
-    if (cb->is_active) {
+    if (__M2SBlock[__M2SChannel].is_active) {
         OSRestoreInterrupts(enabled);
         return FALSE;
     }
@@ -204,7 +202,7 @@ BOOL M2SSetPrerecordSamples(s32 milliseconds) {
         OSRestoreInterrupts(enabled);
         return FALSE;
     }
-    if (milliseconds < 0 || milliseconds > max_milliseconds) {
+    if (milliseconds < 0 || max_milliseconds < milliseconds) {
         OSRestoreInterrupts(enabled);
         return FALSE;
     }
@@ -405,6 +403,8 @@ s32 M2SGetSamplesLeft(void) {
 
 void M2SAdvanceBuffer(s32 samples) {
     M2SControlBlock* cb;
+    s16* source;
+    s16* debug_buffer;
 
     if (!__init || !__open) {
         return;
@@ -426,19 +426,24 @@ void M2SAdvanceBuffer(s32 samples) {
 
     cb->sample_index = MICUpdateIndex(__M2SChannel, cb->sample_index, samples);
 
-    if (__M2SDebug.buffer != NULL) {
+    debug_buffer = __M2SDebug.buffer;
+    if (debug_buffer != NULL) {
+        s32 i;
         s32 index = __M2SDebug.index;
+        s32 debug_samples = __M2SDebug.samples;
+        s16* destination;
 
-        if (samples > 0 && index < __M2SDebug.samples) {
-            s16* source = __M2SBuffer;
-            s16* destination = &__M2SDebug.buffer[index];
+        source = __M2SBuffer;
+        destination = &debug_buffer[index];
 
-            do {
-                *destination++ = *source++;
-                index++;
-            } while (--samples);
-            __M2SDebug.index = index;
+        for (i = 0; i < samples; i++) {
+            if (index >= debug_samples) {
+                break;
+            }
+            *destination++ = *source++;
+            index++;
         }
+        __M2SDebug.index = index;
     }
 
     if (!cb->calibrated) {

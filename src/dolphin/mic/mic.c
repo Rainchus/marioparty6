@@ -111,35 +111,46 @@ void MICInit(void) {
 }
 
 s32 MICProbeEx(s32 chan) {
-    s32 result = MIC_RESULT_FATAL_ERROR;
+    BOOL enabled;
+    s32 probe;
+    s32 result;
 
-    if (chan >= 0 && chan < 2) {
-        BOOL enabled = OSDisableInterrupts();
-        s32 probe = EXIProbeEx(chan);
+    if (chan < 0 || chan >= 2) {
+        return MIC_RESULT_FATAL_ERROR;
+    }
 
-        if (probe == -1) {
-            result = MIC_RESULT_NOCARD;
-        } else if (probe == 0) {
+    enabled = OSDisableInterrupts();
+    probe = EXIProbeEx(chan);
+
+    if (probe == -1) {
+        result = MIC_RESULT_NOCARD;
+    } else if (probe == 0) {
+        result = MIC_RESULT_BUSY;
+    } else if (__MICBlock[chan].is_attached) {
+        result = MIC_RESULT_READY;
+    } else if (EXIGetState(chan) & EXI_STATE_ATTACHED) {
+        result = MIC_RESULT_WRONGDEVICE;
+    } else {
+        BOOL id_matches;
+        u32 id;
+
+        if (!EXIGetID(chan, 0, &id)) {
             result = MIC_RESULT_BUSY;
-        } else if (__MICBlock[chan].is_attached) {
-            result = MIC_RESULT_READY;
-        } else if (EXIGetState(chan) & EXI_STATE_ATTACHED) {
-            result = MIC_RESULT_WRONGDEVICE;
         } else {
-            u32 id;
-
-            if (!EXIGetID(chan, 0, &id)) {
-                result = MIC_RESULT_BUSY;
-            } else if (id == MIC_EXI_ID) {
+            if (id == MIC_EXI_ID) {
+                id_matches = TRUE;
+            } else {
+                id_matches = FALSE;
+            }
+            if (id_matches) {
                 result = MIC_RESULT_READY;
             } else {
                 result = MIC_RESULT_WRONGDEVICE;
             }
         }
-
-        OSRestoreInterrupts(enabled);
     }
 
+    OSRestoreInterrupts(enabled);
     return result;
 }
 
@@ -221,41 +232,43 @@ s32 MICUnmount(s32 chan) {
 }
 
 s32 MICGetRingbuffsize(s32 chan, s32* size) {
-    s32 result = MIC_RESULT_FATAL_ERROR;
+    MICControlBlock* cb;
+    BOOL enabled;
 
-    if (__init && chan >= 0 && chan < 2 && size != NULL) {
-        MICControlBlock* cb = &__MICBlock[chan];
-        BOOL enabled = OSDisableInterrupts();
-
-        if (cb->is_attached) {
-            *size = cb->buff_ring_size;
-            result = MIC_RESULT_READY;
-        } else {
-            result = MIC_RESULT_NOCARD;
-        }
-        OSRestoreInterrupts(enabled);
+    if (!__init || chan < 0 || chan >= 2 || size == NULL) {
+        return MIC_RESULT_FATAL_ERROR;
     }
 
-    return result;
+    cb = &__MICBlock[chan];
+    enabled = OSDisableInterrupts();
+    if (!cb->is_attached) {
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_NOCARD;
+    }
+
+    *size = cb->buff_ring_size;
+    OSRestoreInterrupts(enabled);
+    return MIC_RESULT_READY;
 }
 
 s32 MICGetSampleRate(s32 chan, s32* rate) {
-    s32 result = MIC_RESULT_FATAL_ERROR;
+    MICControlBlock* cb;
+    BOOL enabled;
 
-    if (__init && chan >= 0 && chan < 2 && rate != NULL) {
-        MICControlBlock* cb = &__MICBlock[chan];
-        BOOL enabled = OSDisableInterrupts();
-
-        if (cb->is_attached) {
-            *rate = cb->sample_rate;
-            result = MIC_RESULT_READY;
-        } else {
-            result = MIC_RESULT_NOCARD;
-        }
-        OSRestoreInterrupts(enabled);
+    if (!__init || chan < 0 || chan >= 2 || rate == NULL) {
+        return MIC_RESULT_FATAL_ERROR;
     }
 
-    return result;
+    cb = &__MICBlock[chan];
+    enabled = OSDisableInterrupts();
+    if (!cb->is_attached) {
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_NOCARD;
+    }
+
+    *rate = cb->sample_rate;
+    OSRestoreInterrupts(enabled);
+    return MIC_RESULT_READY;
 }
 
 s32 MICSetGain(s32 chan, s32 gain) {
@@ -290,41 +303,43 @@ s32 MICSetGainAsync(s32 chan, s32 gain, MICCallback callback) {
 }
 
 s32 MICGetButton(s32 chan, u32* button) {
-    s32 result = MIC_RESULT_FATAL_ERROR;
+    MICControlBlock* cb;
+    BOOL enabled;
 
-    if (__init && chan >= 0 && chan < 2 && button != NULL) {
-        MICControlBlock* cb = &__MICBlock[chan];
-        BOOL enabled = OSDisableInterrupts();
-
-        if (cb->is_attached) {
-            *button = cb->button;
-            result = MIC_RESULT_READY;
-        } else {
-            result = MIC_RESULT_NOCARD;
-        }
-        OSRestoreInterrupts(enabled);
+    if (!__init || chan < 0 || chan >= 2 || button == NULL) {
+        return MIC_RESULT_FATAL_ERROR;
     }
 
-    return result;
+    cb = &__MICBlock[chan];
+    enabled = OSDisableInterrupts();
+    if (!cb->is_attached) {
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_NOCARD;
+    }
+
+    *button = cb->button;
+    OSRestoreInterrupts(enabled);
+    return MIC_RESULT_READY;
 }
 
 s32 MICGetDeviceID(s32 chan, u32* id) {
-    s32 result = MIC_RESULT_FATAL_ERROR;
+    MICControlBlock* cb;
+    BOOL enabled;
 
-    if (__init && chan >= 0 && chan < 2 && id != NULL) {
-        MICControlBlock* cb = &__MICBlock[chan];
-        BOOL enabled = OSDisableInterrupts();
-
-        if (cb->is_attached) {
-            *id = (cb->last_status & 0x10) >> 4;
-            result = MIC_RESULT_READY;
-        } else {
-            result = MIC_RESULT_NOCARD;
-        }
-        OSRestoreInterrupts(enabled);
+    if (!__init || chan < 0 || chan >= 2 || id == NULL) {
+        return MIC_RESULT_FATAL_ERROR;
     }
 
-    return result;
+    cb = &__MICBlock[chan];
+    enabled = OSDisableInterrupts();
+    if (!cb->is_attached) {
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_NOCARD;
+    }
+
+    *id = (cb->last_status & 0x10) >> 4;
+    OSRestoreInterrupts(enabled);
+    return MIC_RESULT_READY;
 }
 
 s32 MICStart(s32 chan) {
@@ -395,105 +410,127 @@ s32 MICStopAsync(s32 chan, MICCallback callback) {
 }
 
 s32 MICGetCurrentTop(s32 chan) {
-    s32 result = MIC_RESULT_BUSY;
+    MICControlBlock* cb;
+    BOOL enabled;
+    s32 result;
 
-    if (__init && chan >= 0 && chan < 2) {
-        MICControlBlock* cb = &__MICBlock[chan];
-        BOOL enabled = OSDisableInterrupts();
-
-        if (cb->is_attached) {
-            result = cb->buff_ring_cur >> 1;
-        }
-        OSRestoreInterrupts(enabled);
+    if (!__init || chan < 0 || chan >= 2) {
+        return MIC_RESULT_BUSY;
     }
 
+    cb = &__MICBlock[chan];
+    enabled = OSDisableInterrupts();
+    if (!cb->is_attached) {
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_BUSY;
+    }
+
+    result = cb->buff_ring_cur >> 1;
+    OSRestoreInterrupts(enabled);
     return result;
 }
 
 s32 MICUpdateIndex(s32 chan, s32 index, s32 samples) {
-    s32 result = MIC_RESULT_BUSY;
+    MICControlBlock* cb;
+    BOOL enabled;
+    s32 samples_in_ring;
 
-    if (__init && chan >= 0 && chan < 2 && index >= 0 && samples >= 0) {
-        MICControlBlock* cb = &__MICBlock[chan];
-        BOOL enabled = OSDisableInterrupts();
-
-        if (cb->is_attached) {
-            s32 samples_in_ring = cb->buff_ring_size >> 1;
-            s32 requested = index + samples;
-
-            result = requested < samples_in_ring ? requested : requested - samples_in_ring;
-        }
-        OSRestoreInterrupts(enabled);
+    if (!__init || chan < 0 || chan >= 2 || index < 0 || samples < 0) {
+        return MIC_RESULT_BUSY;
     }
 
-    return result;
+    cb = &__MICBlock[chan];
+    enabled = OSDisableInterrupts();
+    if (!cb->is_attached) {
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_BUSY;
+    }
+
+    index += samples;
+    samples_in_ring = cb->buff_ring_size >> 1;
+    if (index >= samples_in_ring) {
+        index -= samples_in_ring;
+    }
+
+    OSRestoreInterrupts(enabled);
+    return index;
 }
 
 s32 MICGetSamplesLeft(s32 chan, s32 index) {
-    s32 result = MIC_RESULT_BUSY;
+    MICControlBlock* cb;
+    BOOL enabled;
+    s32 current;
+    s32 result;
 
-    if (__init && chan >= 0 && chan < 2 && index >= 0) {
-        MICControlBlock* cb = &__MICBlock[chan];
-        BOOL enabled = OSDisableInterrupts();
-
-        if (cb->is_attached) {
-            s32 samples_in_ring = cb->buff_ring_size >> 1;
-            s32 current = cb->buff_ring_cur >> 1;
-
-            if (current < index) {
-                result = samples_in_ring - (index - current);
-            } else {
-                result = current - index;
-            }
-        }
-        OSRestoreInterrupts(enabled);
+    if (!__init || chan < 0 || chan >= 2 || index < 0) {
+        return MIC_RESULT_BUSY;
     }
 
+    cb = &__MICBlock[chan];
+    enabled = OSDisableInterrupts();
+    if (!cb->is_attached) {
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_BUSY;
+    }
+
+    current = cb->buff_ring_cur >> 1;
+    if (current >= index) {
+        result = current - index;
+    } else {
+        result = (cb->buff_ring_size >> 1) - (index - current);
+    }
+
+    OSRestoreInterrupts(enabled);
     return result;
 }
 
 s32 MICGetSamples(s32 chan, s16* buffer, s32 index, s32 samples) {
-    s32 result = MIC_RESULT_BUSY;
+    MICControlBlock* cb;
+    BOOL enabled;
+    s16* destination;
+    s32 i;
 
-    if (__init && chan >= 0 && chan < 2 && buffer != NULL && index >= 0 && samples >= 0) {
-        MICControlBlock* cb = &__MICBlock[chan];
-        BOOL enabled = OSDisableInterrupts();
-
-        if (cb->is_attached) {
-            s32 i;
-            s32 byte_index = index * sizeof(s16);
-
-            result = 0;
-            for (i = 0; i < samples; i++) {
-                if (byte_index >= cb->buff_ring_size) {
-                    byte_index = 0;
-                }
-                if (byte_index == cb->buff_ring_cur) {
-                    break;
-                }
-                *buffer++ = *(s16*)((u8*)cb->buff_ring_base + byte_index);
-                byte_index += sizeof(s16);
-                result++;
-            }
-        }
-        OSRestoreInterrupts(enabled);
+    if (!__init || chan < 0 || chan >= 2 || buffer == NULL || index < 0 ||
+        samples < 0) {
+        return MIC_RESULT_BUSY;
     }
 
-    return result;
+    cb = &__MICBlock[chan];
+    enabled = OSDisableInterrupts();
+    if (!cb->is_attached) {
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_BUSY;
+    }
+
+    destination = buffer;
+    index *= sizeof(s16);
+    for (i = 0; i < samples; i++) {
+        if (index >= cb->buff_ring_size) {
+            index = 0;
+        }
+        if (index == cb->buff_ring_cur) {
+            break;
+        }
+        *destination++ = *(s16*)((u8*)cb->buff_ring_base + index);
+        index += sizeof(s16);
+    }
+
+    OSRestoreInterrupts(enabled);
+    return i;
 }
 
 BOOL MICIsActive(s32 chan) {
-    if (__init && chan >= 0 && chan < 2) {
-        return __MICBlock[chan].is_active;
+    if (!__init || chan < 0 || chan >= 2) {
+        return FALSE;
     }
-    return FALSE;
+    return __MICBlock[chan].is_active;
 }
 
 BOOL MICIsAttached(s32 chan) {
-    if (__init && chan >= 0 && chan < 2) {
-        return __MICBlock[chan].is_attached;
+    if (!__init || chan < 0 || chan >= 2) {
+        return FALSE;
     }
-    return FALSE;
+    return __MICBlock[chan].is_attached;
 }
 
 static s32 __MICDoMount(s32 chan) {
@@ -545,6 +582,7 @@ static s32 __MICDoMount(s32 chan) {
 
 static void __MICDoUnmount(s32 chan, s32 result) {
     MICControlBlock* cb = &__MICBlock[chan];
+    MICCallback callback;
     BOOL enabled = OSDisableInterrupts();
 
     if (cb->is_attached) {
@@ -558,8 +596,8 @@ static void __MICDoUnmount(s32 chan, s32 result) {
     }
     OSRestoreInterrupts(enabled);
 
-    if (cb->attach_callback) {
-        MICCallback callback = cb->attach_callback;
+    callback = cb->attach_callback;
+    if (callback) {
         cb->attach_callback = NULL;
         callback(chan, result);
     }
@@ -590,7 +628,8 @@ static void __MICMountCallback(s32 chan, s32 result) {
 }
 
 static void __MICSetCallback(s32 chan, s32 result) {
-    u32 status = __MICBlock[chan].status;
+    MICControlBlock* cb = &__MICBlock[chan];
+    u32 status = cb->status;
 
     if (__MICRawWriteStatus(chan, status) >= MIC_RESULT_READY) {
         __MICUpdateStatus(chan, status, FALSE);
@@ -893,7 +932,9 @@ static s32 __MICGetControlBlock(s32 chan, BOOL skip_active_check, MICControlBloc
 static void __MICPutControlBlock(MICControlBlock* micblock, s32 result) {
     BOOL enabled = OSDisableInterrupts();
 
-    if (micblock->is_attached || micblock->result_code == MIC_RESULT_BUSY) {
+    if (micblock->is_attached) {
+        micblock->result_code = result;
+    } else if (micblock->result_code == MIC_RESULT_BUSY) {
         micblock->result_code = result;
     }
     OSRestoreInterrupts(enabled);
