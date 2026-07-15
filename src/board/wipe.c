@@ -3,6 +3,23 @@
 
 extern BOOL mbTutorialExitReqGet(void);
 
+typedef struct WipeSpecialData_s {
+    BOOL active;
+    int state;
+    int stat;
+    s16 fadeType;
+    s16 time;
+    s16 duration;
+    s16 masuModelId[3];
+    s16 hookModelId;
+    u32 texSize;
+    void *texData;
+    void *work;
+    int type;
+} WIPE_SPECIAL_DATA;
+
+static WIPE_SPECIAL_DATA wipeSpecialData;
+
 void mbWipeCreate(s16 mode, s16 type, s16 time)
 {
     if (!_CheckFlag(FLAG_BOARD_TUTORIAL) || !mbTutorialExitReqGet()) {
@@ -221,4 +238,21 @@ void mbWipeDissolveFadeInTime(int time)
             HuPrcVSleep();
         }
     }
+}
+
+BOOL mbWipeSpecialCheck(void)
+{
+    return wipeSpecialData.active | WipeCheck();
+}
+
+void mbWipeSpecialWait(void)
+{
+    while (wipeSpecialData.active | WipeCheck()) {
+        HuPrcVSleep();
+    }
+}
+
+BOOL mbWipeSpecialStatGet(void)
+{
+    return wipeSpecialData.stat | WipeCheckIn();
 }

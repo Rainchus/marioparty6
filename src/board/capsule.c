@@ -4,6 +4,8 @@
 
 #define CAPSULE_OBJ_COLOR_MAX 128
 
+typedef void (*CAPSULE_THROW_HOOK)(BOOL startF);
+
 typedef struct CapsuleObjColor_s {
     s16 flag;
     MBMODELID mdlId;
@@ -15,10 +17,20 @@ typedef struct CapsuleObjColor_s {
 } CAPSULE_OBJ_COLOR;
 
 static HUPROCESS *capsulePlayerThrowProc;
+static CAPSULE_THROW_HOOK capsuleThrowHook;
 static int capsuleUseEffMode[4];
 static HuVecF capsuleUseEffPos[4];
 static s16 capsuleNum[33][2];
 static CAPSULE_OBJ_COLOR capsuleObjColorData[CAPSULE_OBJ_COLOR_MAX];
+
+void MBCapsuleStub1(void)
+{
+}
+
+BOOL MBCapsuleStub2(void)
+{
+    return FALSE;
+}
 
 int mbCapEffUseModeGet(int playerNo)
 {
@@ -37,6 +49,15 @@ BOOL mbCapEffUsePosGet(int playerNo, HuVecF *pos)
 BOOL mbCapPlayerThrowCheck(void)
 {
     return capsulePlayerThrowProc == NULL;
+}
+
+void mbCapThrowHookSet(CAPSULE_THROW_HOOK hook)
+{
+    capsuleThrowHook = hook;
+}
+
+void mbCapAutoThrowEnd(void)
+{
 }
 
 void mbCapNumInc(int capsuleNo, int mode)

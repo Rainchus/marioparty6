@@ -48,9 +48,25 @@ static int PackArgs(void* addr, s32 argc, char** argv) {
   return TRUE;
 }
 
-static void Run(void* entryPoint) {
-  ICFlashInvalidate();
-  ((void (*)(void))entryPoint)();
+static asm void Run(register void* entryPoint) {
+  nofralloc
+
+  mflr r0
+  stw r0, 4(r1)
+  stwu r1, -0x18(r1)
+  stw r31, 0x14(r1)
+  mr r31, entryPoint
+  bl ICFlashInvalidate
+  sync
+  isync
+  mtlr r31
+  blr
+
+  lwz r0, 0x1c(r1)
+  lwz r31, 0x14(r1)
+  addi r1, r1, 0x18
+  mtlr r0
+  blr
 }
 
 static void StartDol(const OSExecParams* params, void* entry) {

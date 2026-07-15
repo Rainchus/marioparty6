@@ -13,6 +13,18 @@ static int capsuleEventPrevMasu = -1;
 static int capsuleEventPrevPlayer = -1;
 static CAPSULE_HOOK capsuleHook;
 
+void MBCapsuleStub5(void)
+{
+}
+
+void MBCapsuleStub6(void)
+{
+}
+
+void MBCapsuleStub7(void)
+{
+}
+
 void mbev_CapMoveMasuSet(int playerNo, int masuId)
 {
     capsuleEventPlayer = playerNo;
@@ -23,6 +35,41 @@ void mbev_CapStopMasuSet(int playerNo, int masuId)
 {
     capsuleEventPrevPlayer = playerNo;
     capsuleEventPrevMasu = masuId;
+}
+
+void mbev_CapVsEndCall(void)
+{
+}
+
+void mbev_CapKillerCall(void)
+{
+}
+
+void mbev_CapKillerMultiCall(void)
+{
+}
+
+void MBCapsuleStub11(void)
+{
+}
+
+void MBCapsuleStub12(void)
+{
+}
+
+BOOL mbev_CapKillerMoveCheck(int playerNo)
+{
+    return TRUE;
+}
+
+BOOL mbev_CapKillerMoveCheckAll(void)
+{
+    return TRUE;
+}
+
+int mbev_CapCapGet(void)
+{
+    return -1;
 }
 
 int mbev_CapBankCoinGet(void)
@@ -48,6 +95,14 @@ int mbev_CapKettouCoinLoseGet2(void)
 int mbev_CapKettouOppCoinLoseGet2(void)
 {
     return kettouOppCoinLose;
+}
+
+void mbev_CapOpeningAdd(int capsuleNum)
+{
+}
+
+void mbev_CapKoopaAdd(void)
+{
 }
 
 void mbev_CapBubbleHookSet(CAPSULE_HOOK hook)
@@ -79,4 +134,20 @@ void mbev_CapBubbleHookCallStory(int eventType, int type, int modelId)
 void mbev_CapBankCoinInit(void)
 {
     GwSystem.bankCoin = 0;
+}
+
+void mbev_CapNullKill(void)
+{
+}
+
+void mbev_CapDebugCamKlll(void)
+{
+}
+
+void mbev_CapDebugWarpKill(void)
+{
+}
+
+void mbev_CapDebugPosSelectKill(void)
+{
 }

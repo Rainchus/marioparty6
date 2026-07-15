@@ -530,7 +530,8 @@ static void EXTIntrruptHandler(__OSInterrupt interrupt, OSContext* context) {
 void EXIInit(void) {
   u32 id;
 
-  while ((REG(0, 3) & 1) || (REG(1, 3) & 1) || (REG(2, 3) & 1)) {
+  while (((REG(0, 3) & 1) == 1) || ((REG(1, 3) & 1) == 1) ||
+         ((REG(2, 3) & 1) == 1)) {
   }
 
   __OSMaskInterrupts(OS_INTERRUPTMASK_EXI);
@@ -612,7 +613,9 @@ BOOL EXIUnlock(s32 chan) {
 }
 
 u32 EXIGetState(s32 chan) {
-  return Ecb[chan].state;
+  EXIControl* exi = &Ecb[chan];
+
+  return exi->state;
 }
 
 static void UnlockedHandler(s32 chan, OSContext* context) {

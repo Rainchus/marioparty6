@@ -17,6 +17,7 @@ static s32 configPadDisable;
 static s32 pauseDispCopyModelId;
 static s32 pauseDispCopyCounter;
 static void *pauseDispCopyFb;
+static BOOL pauseGuideKillF;
 
 static void PauseDispCopyDraw(HU3D_MODEL *modelP, Mtx *mtx);
 static BOOL GWStorySingleCheck(void);
@@ -117,6 +118,11 @@ static void PauseDispCopyDraw(HU3D_MODEL *modelP, Mtx *mtx)
 void mbConfigPadDisableSet(BOOL disableF)
 {
     configPadDisable = disableF;
+}
+
+void mbPauseGuideKill(void)
+{
+    pauseGuideKillF = TRUE;
 }
 
 static BOOL GWStorySingleCheck(void)

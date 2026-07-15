@@ -3,6 +3,8 @@
 #include <string.h>
 
 static u32 singleMgUnlock[4];
+static int singleTeamChar = -1;
+static int miniKoopaType;
 
 void mbSingleMgUnlockInit(void)
 {
@@ -86,4 +88,26 @@ int mbSingleMgUnlockNumGet(void)
         }
     }
     return num;
+}
+
+void mbSinglePrizeFlagReset(int flag)
+{
+    if (flag <= 63) {
+        GwSinglePrizeFlag[flag >> 5] &= ~(1 << (flag & 0x1F));
+    }
+}
+
+int mbSingleOppCharGet(void)
+{
+    return miniKoopaType + 11;
+}
+
+void mbSingleTeamCharSet(int character)
+{
+    singleTeamChar = character;
+}
+
+int mbSingleTeamCharGet(void)
+{
+    return singleTeamChar;
 }

@@ -11,12 +11,12 @@ This is an evidence snapshot, not a completion claim. It was last verified on
 - `cmp orig/GP6E01/sys/main.dol build/GP6E01/main.dol`: byte-identical
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 9.10% code and 31.30% data overall; 46.65% code
+- DTK progress at that build: 9.12% code and 31.30% data overall; 46.76% code
   and 74.41% data in the DOL
-- Matching owners at that build: 299 of 895 overall, 290 of 396 in the DOL,
+- Matching owners at that build: 300 of 895 overall, 291 of 396 in the DOL,
   and 9 of 499 in the REL modules
-- DOL policy split: 252 matching owners without the assembly exception, 38
-  matching owners admitted under the sibling-authentication exception, 105
+- DOL policy split: 252 matching owners without the assembly exception, 39
+  matching owners admitted under the source-authentication exception, 104
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
   awaiting target proof. These four numbers total all 396 DOL owners.
 
@@ -240,6 +240,17 @@ counts. The same batch recovers the target `mbMain` cycle joins in
 remains fallback-linked. Evidence is retained in
 [`docs/native_matching_wave52.md`](docs/native_matching_wave52.md).
 
+Wave 53 admits `dolphin/os/OSExec.c` under the authenticated-vendor form of
+the assembly exception. The 100%-complete dolsdk2004 source authenticates the
+target-identical `Run` body; restoring it makes all eight retained functions
+and their effective relocations exact, while the linked gate proves that
+source-only helpers and split padding do not enter the MP6 owner. The same
+batch improves `EXIBios.c` and recovers 39 target-backed Board utility
+functions across seven owners, 28 of them byte-exact, with no prior mapped
+function regressing. Those incomplete owners remain fallback-linked. Evidence
+is retained in
+[`docs/native_matching_wave53.md`](docs/native_matching_wave53.md).
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -260,14 +271,17 @@ still-fallback-linked `board/board.c`.
 ## Assembly fallback boundary
 
 Assembly is never admitted merely because a C transcription did not match.
-Inline or standalone assembly is admitted only when an authenticated sibling
-project marks the same owner `Matching`, carries the corresponding instruction
-body/source shape, and the MP6 compile, object-byte, effective-relocation,
-linked-range, and container gates all pass. The current tree has 37 matching
-exception owners:
+Inline or standalone assembly is admitted only when an authenticated Matching
+sibling carries the corresponding body/source shape, or an independently
+complete vendor-library decompilation authenticates the exact target routine.
+The vendor route additionally requires direct instruction identity. In both
+cases the MP6 compile, object-byte, effective-relocation, linked-range, and
+container gates must all pass. The current tree has 39 matching exception
+owners:
 
-- 21 Dolphin SDK owners authenticated by Matching Mario Party 4 sources, with
-  `mtx44vec` independently authenticated by Matching Mario Kart: Double Dash
+- 23 Dolphin SDK owners authenticated by Matching Mario Party 4 sources or
+  complete dolsdk2004 source, with `mtx44vec` independently authenticated by
+  Matching Mario Kart: Double Dash
 - `game/kerent.c`, `game/jmp.c`, and `game/malloc.c`, plus the authenticated
   `OSFastCast` closure used by matching Game/Board consumers
 - the DOL Runtime owner, `__init_cpp_exceptions`, authenticated Runtime
@@ -298,7 +312,7 @@ from the target linked range.
 Every current DOL fallback owner is in exactly one bucket:
 
 - `original-was-asm`: the complete authentic owner was assembly. It is a
-  policy/proof decision, recoverable only through the sibling-authentication
+  policy/proof decision, recoverable only through the source-authentication
   exception above, and can never be counted as decompiled C.
 - `C-not-yet-matched`: the owner is C or has a real C portion. Missing source,
   mixed C/assembly, or a divergent compiled object remains genuine
@@ -318,9 +332,9 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/__exception.s` (`ASM-GATE-PENDING`) | [Mario Party 4 `src/TRK_MINNOW_DOLPHIN/__exception.s` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/TRK_MINNOW_DOLPHIN/__exception.s), `MatchingFor(USA,PAL)` | M4 authenticates the standalone `.init` exception-vector form and `0x1F34` size, but MP6 starts at a different address and has different vector/padding offsets. M5 has the MP6 bounds but is `NonMatching` with no source. A target-specific reconstruction and full gate are still required. |
 
-#### Bucket 2: `C-not-yet-matched` (105 current fallback owners)
+#### Bucket 2: `C-not-yet-matched` (104 current fallback owners)
 
-Eighty-nine owners have current source candidates and are tagged
+Eighty-eight owners have current source candidates and are tagged
 `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-15; percentages are raw `.text` scores unless
@@ -340,14 +354,14 @@ otherwise noted.
 | `board/math.c` | Matching MP5 source shape plus MP6 instructions and MP7 parity now recover 51/56 target functions: lifecycle, trigonometry, matrix construction/concatenation, projection, Bezier, Hermite, distance, and angle routines. Target/source `.text` are `0x2A44/0x2230`; `mbMathClose` is exact. `mbRandMod` and the cull/object tail remain absent rather than using unproven ownership. |
 | `board/telop.c` | Sixteen pad, taunt, language, board-directory, telop-check, and time-display routines plus their real tables/globals are recovered. Target/source `.text` are `0x329C/0x8E0`; 6/16 mapped functions are exact, including five wave-38 additions. The large telop/time/taunt OM execution closure remains absent. |
 | `board/coin.c` | Twenty-two allocation, lifecycle, transform, alpha, display, layer, and motion routines are recovered. The target proves the `0x40` public object, its caller-work tail used by `board/last5.c`, the `0x1144` 64-slot bank, and the `0x160` model/bank owner. Target/source `.text` are `0x4550/0xF44`; 5/22 mapped functions are exact. The renderer/effect/display closure remains absent. |
-| `board/dice.c` | Six layout-free result/process/hook accessors and the exact five-slot owner arrays are recovered from MP6 target data plus Matching MP5 `sai.c`/`sai.h` shape. Target/source `.text` are `0x6390/0x130`; none of the six is byte-exact yet. Dice work and the state-machine closure remain absent. |
-| `board/single.c` | The complete four-word minigame-unlock set and all seven bitset operations are recovered. Target/source `.text` are `0x98F0/0x2B4`; `mbSingleMgUnlockInit`, `mbSingleMgUnlockCheckAny`, and `mbSingleMgUnlockNumGet` are exact. The rest of the large single-mode owner remains absent. |
-| `board/star.c` | Sixteen layout-free callback/global setters, Num/Flag/Next accessors, empty legacy entry points, and the no-random result are recovered and exact. Target/source `.text` are `0x5C00/0xDC`. Object wrappers were rejected because a real complete `STARWORK` prefix is not yet recovered. |
+| `board/dice.c` | Fifteen target-backed functions now recover result/process/hook accessors, the exact five-slot owner arrays, three exact 21-byte max-value tables, table getters, and the semantic special-NPC number overlay on `OMOBJ` work. Matching MP5 `sai.c` authenticates the table/getter family; MP6 disassembly and data prove the MP6 values and bitfield accesses. Target/source `.text` are `0x6390/0x254`; 1/15 mapped functions is exact, up from 0/6, with no prior regression. Dice work and the state-machine closure remain absent. |
+| `board/single.c` | The complete four-word minigame-unlock set, all seven bitset operations, prize reset, opponent-character lookup, and team-character state are recovered. Target/source `.text` are `0x98F0/0x304`; 6/11 mapped functions are exact, up from 3/7. The rest of the large single-mode owner remains absent. |
+| `board/star.c` | Seventeen layout-free callback/global setters, Num/Flag/Next accessors, empty legacy entry points, the no-display stub, and the no-random result are recovered and exact. Target/source `.text` are `0x5C00/0xE0`. Object wrappers were rejected because a real complete `STARWORK` prefix is not yet recovered. |
 | `board/tutorial.c` | The real `0x14` call work (`scene`, `callNum`, `result`, `stat`, and `mode`), guide/process globals, exit flags, and ten accessors are recovered. `mbTutorialMultiCall` and `mbTutorialCall` prove the count field. All ten mapped functions are exact; target/source `.text` are `0x2C34/0x80`. |
-| `board/wipe.c` | The create/wait functions and all twelve fixed-time/caller-time fade, white-fade, and dissolve wrappers are recovered. All 14 mapped functions are exact; target/source `.text` are `0x3664/0x6DC`. The special-wipe and state-machine remainder is still absent. |
+| `board/wipe.c` | The create/wait functions, all twelve fixed-time/caller-time fade, white-fade, and dissolve wrappers, and the special-wipe check/wait/status tail are recovered. The new tail proves the semantic `0x2C` `WIPE_SPECIAL_DATA` layout. Target/source `.text` are `0x3664/0x788`; 15/17 mapped functions are exact, up from 14/14, and no prior function regresses. The special-wipe renderer/state-machine remainder is still absent. |
 | `board/capselect.c` | Eighteen result, story/type, capsule lookup/count, callback, and map-capsule object routines are recovered with the target-proven four-player result/model/type arrays and 16-entry map-object table. Target/source `.text` are `0x3460/0x32C`; 16/18 functions are exact. `mbCapSelectShrinkCheck` is 68.333336% and `CapSelectCapsuleGet` is 97.558136%. The selection state machines and unresolved `0x28` map-object work remain absent. |
-| `board/capsule.c` | Twenty-nine retained target functions recover the four-player effect state, `s16 capsuleNum[33][2]`, packed space-capsule/player helpers, and the real `0x2C` `CAPSULE_OBJ_COLOR` over 128 entries. Target/source `.text` are `0x146CC/0x1130`; 18/29 mapped functions are exact. The compiler also retains the sibling-authenticated out-of-line search helper, which has no named target pairing. `mbCapObjColorCreate` is omitted because the capsule-data field at `0x1C` is not yet semantically closed. |
-| `board/config.c` | Matching MP5 pause-copy shape plus MP6 instructions recover the framebuffer/model/counter globals, four-player display state, framebuffer create/kill/draw path, pad-disable setter, and story-mode helper. Target/source `.text` are `0x63BC/0x560`; `mbPauseDispCopyCreate`, `mbPauseDispCopyKill`, `PauseDispCopyDraw`, and `mbConfigPadDisableSet` are exact. `GWStorySingleCheck` is 72.272730%; the pause panel/guide/config state machines remain absent. |
+| `board/capsule.c` | Thirty-three retained target functions recover the four-player effect state, `s16 capsuleNum[33][2]`, packed space-capsule/player helpers, the real `0x2C` `CAPSULE_OBJ_COLOR` over 128 entries, capsule stubs, the typed throw hook, and the auto-throw tail. Target/source `.text` are `0x146CC/0x1148`; 22/33 mapped functions are exact, up from 18/29. The compiler also retains the sibling-authenticated out-of-line search helper, which has no named target pairing. `mbCapObjColorCreate` is omitted because the capsule-data field at `0x1C` is not yet semantically closed. |
+| `board/config.c` | Matching MP5 pause-copy shape plus MP6 instructions recover the framebuffer/model/counter globals, four-player display state, framebuffer create/kill/draw path, pad-disable setter, pause-guide kill state, and story-mode helper. Target/source `.text` are `0x63BC/0x56C`; 5/6 mapped functions are exact, up from 4/5. `GWStorySingleCheck` remains 72.272730%; the pause panel/guide/config state machines remain absent. |
 | `board/last5.c` | The target-derived stable rank/order routine and 40-coin effect recover `0x658` retained target text plus the real `LAST5COINWORK { s16 delay; float velocity; }` overlay on public `MBCOINOBJ` caller work. Target/source `.text` are `0x2458/0x614`; the two functions are 99.266050% and 89.601070%. The roulette work still has unproven fields and is omitted. |
 | `board/opening.c` | Fourteen curve, party wrapper, pad-delay, view/camera, hook, guide, and restore routines recover the real vectors, hook types, process pointer, pad-delay array, and initialized guide model ID. Target/source `.text` are `0x2B14/0x3D4`; 12/14 functions are exact. Only `mbev_Opening` (82.722220%) and `mbev_OpeningParty` (94.500000%) diverge; the large party/single events remain absent. |
 | `board/scroll.c` | Nine lifecycle, star-space, map-view, camera, and hook routines recover the typed `HSF_FACE *` collision owner, map model/animation state, camera vectors/zoom, and callback types. Target/source `.text` are `0x3E4C/0x27C`; 7/9 functions are exact. `ScrollKill` is 80.208336% and `mbMapCameraSet` is 87.692310%; collision construction and map rendering remain absent. |
@@ -357,7 +371,7 @@ otherwise noted.
 | `board/capthrow.c` | Eight named capsule-throw kill callbacks are recovered from their complete target ranges. Every target/source function is `0x4/0x4` and byte-exact; target/source whole `.text` are `0x8CB0/0x20`. The throw event bodies remain absent. |
 | `board/captrap.c` | Five named capsule-trap kill callbacks are recovered from their complete target ranges. Every target/source function is `0x4/0x4` and byte-exact; target/source whole `.text` are `0x6A40/0x14`. The trap event bodies remain absent. |
 | `board/capspecial.c` | Thirteen target-backed functions recover the exact `0x28` `TERESA_FADE_WORK`, Teresa steal state, Miracle lifecycle hooks, and Koopa dice/motion hooks. Target/source `.text` are `0xE744/0x1E8`; 9/13 mapped functions are exact. Fade kill/object/setter and Koopa motion remain 88.214290%-92.826090%; the large special-capsule state machines remain absent. |
-| `board/capevent.c` | Eleven move/stop, bank, duel-coin, and bubble-hook routines are exact, with the target's `10`/`5` duel defaults, four `-1` sentinels, and six-argument hook. Target/source `.text` are `0x14EFC/0x178`; the other 226 retained event functions remain absent. |
+| `board/capevent.c` | Twenty-eight move/stop, bank, duel-coin, bubble-hook, capsule-result, opening/Koopa, and kill/stub routines are exact, with the target's `10`/`5` duel defaults, four `-1` sentinels, six-argument hook, constant-return helpers, and authentic empty bodies. Target/source `.text` are `0x14EFC/0x1C8`; mapped/exact coverage rises from 11/11 to 28/28. The other 209 retained event functions remain absent. |
 | `board/mgcall.c` | Twelve functions recover the exact `0x10` `MGLISTWORK`, `.bss 0xD8` history/status/list closure, `.rodata 0x70` status tables, and `.data 0x48` pointer/size tables. Target/source `.text` are `0x75FC/0x3DC`; 8/12 mapped functions are exact. Init/focus-kill are 99.965515%/99.875000%, while data-close/battle-message are 87.307690%/89.000000%; the roulette/UI executors remain absent. |
 | `musyx/runtime/synth.c` | The real job queue, controller destinations, voice/fader state, and 41 functions are materialized. Five target helpers and thirteen storage roots now have their same-version names, including `do_voice_portamento`, `StartLayer`, `StartKeymap`, the two precision handlers, `synthTicksPerSecond`, both auxiliary-controller banks, and the real one-byte/eight-byte `synthIdleWaitActive`/`synthRealTime` split. Target/source `.text` are `0x349C/0x433C`; all 27 target functions pair and 21 are exact. Six functions remain divergent, including size differences in `synthStartSound` and `synthFXStart`, and source BSS is four bytes shorter. |
 | `musyx/runtime/stream.c` | Twenty-two functions restore 64 `STREAM_INFO` records and exact `.bss 0x1900`. `SetHWMix`, `GetPrivateIndex`, `CheckOutputMode`, `SetupVolumeAndPan`, and the stream ID/delay roots are now named from exact size/order/call evidence. Target/source `.text` are `0x3C04/0x4728`; all 18 target functions pair and 13 are exact. Five functions still diverge; `sndStreamFrq` remains structurally different at 70.902435%. |
@@ -371,8 +385,7 @@ otherwise noted.
 | `musyx/runtime/hardware.c` | Fifty-five hardware/voice/studio/stream functions restore real callback and state ownership. Target/source `.text` are `0x1094/0x1130`; 15/41 mapped functions are exact and 26 remain 93.775510%-99.829270%. Target/source `.rodata` are both `0x100`. |
 | `musyx/runtime/hw_aramdma.c` | Fourteen active Dolphin functions restore typed ARAM transfer jobs, stream buffers, queues, and callbacks. Target/source `.text` are `0xCE0/0xCF4`; 7/11 mapped functions are exact. Init/store/remove/stream allocation are 73.500000%-98.594600%, and three helpers remain unpaired. |
 | `musyx/runtime/StdReverb/reverb.c` | The typed delay-line/reverb owner compiles nine functions; create/callback/free are exact, target/source `.text` are `0xD38/0x1058`, and `.data 0x20` is exact. M4 `147b165` configures the owner `MatchingFor(USA,PAL)` from pinned [upstream MusyX `reverb.c` at `adc8df9`](https://github.com/AxioDL/musyx/blob/adc8df9a959f1e37f71bdf3155e229f9f87ad166/src/musyx/runtime/StdReverb/reverb.c), authenticating both inline-assembly bodies. Donor `DoCrossTalk` is `0x190` versus the remaining target placeholder's `0x184`; the mixed owner stays `NonMatching`, fallback-linked, and excluded from clean-C totals. |
-| `dolphin/os/OSExec.c` | 80.972%; 2/8 functions exact. |
-| `dolphin/exi/EXIBios.c` | 68.572%; 1/23 functions exact. |
+| `dolphin/exi/EXIBios.c` | Target/source `.text` are `0x19DC/0x2100` at 68.775220%, with 1/23 functions exact and 187/219 relocations. Restoring the dolsdk2004 `== 1` busy-wait tests makes `EXIInit` exact-size `0x1D4` and improves it from 71.410255% to 74.196580%; the M4/dolsdk controller-local shape improves exact-size `EXIGetState` from 62.500000% to 64.166664%. The vendor Makefile's `-O3,p` override was byte-neutral for this target and was rejected. |
 | `dolphin/mic/mic.c` | 56.653%; 0/41 functions exact. |
 | `dolphin/mic/m2s.c` | 78.721%; 1/14 functions exact. |
 | `msm/msmsys.c` | 99.734%; 18/23 functions exact. |
@@ -436,9 +449,9 @@ Mixed C/assembly owners stay in the C bucket until all retained C and assembly
 passes the appropriate proof. `TRK_MINNOW_DOLPHIN/targimpl.c` no longer appears
 here because all 30 retained functions and the linked owner passed that gate.
 
-### Applied sibling-exception decisions
+### Applied source-authentication exception decisions
 
-| MP6 owner | Sibling authentication | Decision and MP6 proof |
+| MP6 owner | Source authentication | Decision and MP6 proof |
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/targsupp.s` | [M5 `src/TRK_MINNOW_DOLPHIN/targsupp.s` at `e246f9d`](https://github.com/mariopartyrd/marioparty5/blob/e246f9d9850ff53ac684b971068fbf87fdcf6acb/src/TRK_MINNOW_DOLPHIN/targsupp.s), `Matching`; M4 carries the identical blob as `MatchingFor(USA,PAL)`. | **Admitted.** The donor blob is `0244131bd8219c6f5839ae2cda9254c2f28e005c`. Its four 8-byte `twui r0,0; blr` functions exactly fill the MP6 `0x20` target owner; source-object and final 137-file/hash/DOL gates pass. It is authentic standalone assembly, not decompiled C. |
 | `TRK_MINNOW_DOLPHIN/dolphin_trk.c` | [M5 `src/TRK_MINNOW_DOLPHIN/dolphin_trk.c` at `e246f9d`](https://github.com/mariopartyrd/marioparty5/blob/e246f9d9850ff53ac684b971068fbf87fdcf6acb/src/TRK_MINNOW_DOLPHIN/dolphin_trk.c), configured `Matching`. | **Admitted.** The retained `0x104` `.init` and `0x140` `.text` ranges reproduce all five target functions; donor-only out-of-line copies of `__TRK_copy_vectors` (`0x104`) and `TRK_copy_vector` (`0x90`) are linker-stripped after their logic is inlined into `__TRK_reset`. The semantic `TRK_ISR_OFFSETS` and `lc_base` globals plus target alignment tails are named and the full 137-file/hash/DOL gate passes. `InitMetroTRK` is authentic sibling assembly, so the mixed owner is excluded from clean-C totals. |
@@ -453,6 +466,7 @@ here because all 30 retained functions and the linked owner passed that gate.
 | `dolphin/os/__start.c` | [M4 `src/dolphin/os/__start.c` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/dolphin/os/__start.c), `MatchingFor(USA,PAL)`. | **Admitted.** The sibling authenticates `__start` and `__init_registers` and the surrounding startup source family. All seven retained MP6 functions are exact. Target/source `.init` is `0x300/0x38C`; source-only copy/BSS helpers total `0x8C` with three extra relocations and are linker-stripped. All 30 retained relocations, linked startup range, and full gate pass. This is authentic startup assembly, not clean C. |
 | `dolphin/gx/GXTransform.c` | [M4 `src/dolphin/gx/GXTransform.c` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/dolphin/gx/GXTransform.c), `MatchingFor(USA,PAL)`. | **Admitted.** The sibling authenticates the paired-single projection/copy/matrix FIFO helpers. All 16 retained MP6 functions, `.text 0x72C`, `.sdata2 0x10`, and 31 retained relocations match exactly. Six helpers plus `__GXSetProjection` total `0x10C` of source-only text; their bodies inline into the retained functions and the out-of-line copies are linker-stripped. The linked owner and full gate pass. The paired-single helpers are authentic assembly and excluded from clean-C totals. |
 | `dolphin/os/OS.c` | [M4 `src/dolphin/os/OS.c` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/dolphin/os/OS.c), `MatchingFor(USA,PAL)`. | **Admitted.** The sibling authenticates the FPR, vector, default-exception, paired-single, and init assembly family. Twelve of 14 retained functions are raw-object exact. `OSInit` (`0x4E0`, 97.500000%) and `OSExceptionInit` (`0x280`, 98.500000%) retain the target instructions and addends; objdiff names target `@1` versus compiler-created `OS.c ...data.0`, both at `.data+0`. Data bytes match through `0x1F6`, the target has one tail byte, and `.sdata 0x10` is exact. Target/source `.text` are `0xACC/0xC2C` with 166/191 relocations because sibling-authentic source-only helpers are linker-stripped. The effective linked owner and 137-file/hash/DOL gate pass. This mixed owner is excluded from clean-C totals. |
+| `dolphin/os/OSExec.c` | [dolsdk2004 `src/os/OSExec.c` at `2328b416`](https://github.com/doldecomp/dolsdk2004/blob/2328b4164b1a98422a2255d83ce9a5a7548990cc/src/os/OSExec.c); that complete vendor decompilation reports the OS library 100%. | **Admitted.** The vendor source authenticates `Run` as a `0x3C` `nofralloc` body with cache invalidation, `sync`/`isync`, entry transfer, and its unreachable epilogue; all 15 instructions are byte-identical to MP6. Restoring it also recovers the target inlining/call shape, making all eight retained functions and effective relocations exact. Target/source `.text` are `0x960/0xD28` with 90/129 total relocations because authentic helpers are emitted only on the source side and linker-stripped. `.data` is `0x10/0xB` and `.sdata` is `0x8/0x3`, each semantic string plus target split padding; `.sbss 0x8` is exact. The linked owner and 137-file/hash/DOL gate pass. This mixed owner is excluded from clean-C totals. |
 | `game/jmp.c` | [M4 `src/game/jmp.c` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/game/jmp.c), `Matching`. | **Restored after de-flip.** `ae2977e` de-flipped the owner through blanket inline-assembly removal (`ASM-BLANKET-REMOVAL`). MP6 and M4 are the exact Git blob `8313bd8cb5c154bca116a9a75a518e8faa0a5856`; the owner contains C `gcsetjmp` plus authentic assembly `gclongjmp`, and passes the MP6 full gate. |
 | `musyx/runtime/Chorus/chorus_fx.c` | [M5 `src/musyx/runtime/Chorus/chorus_fx.c` at `e246f9d`](https://github.com/mariopartyrd/marioparty5/blob/e246f9d9850ff53ac684b971068fbf87fdcf6acb/src/musyx/runtime/Chorus/chorus_fx.c), `Matching`. | **Admitted.** The authenticated `do_src1` and `do_src2` `static asm` bodies accompany three retained C functions. Target/source `.text` are `0x868/0x900`; the donor-only `0x98` update helper and its constants are linker-stripped, and the linked owner/full-container gate passes. This mixed owner is not clean decompiled C. |
 | `musyx/runtime/CheapReverb/creverb.c` | [M5 `src/musyx/runtime/CheapReverb/creverb.c` at `e246f9d`](https://github.com/mariopartyrd/marioparty5/blob/e246f9d9850ff53ac684b971068fbf87fdcf6acb/src/musyx/runtime/CheapReverb/creverb.c), `Matching`. | **Admitted.** The authenticated `HandleReverb` `static asm` body accompanies three retained C functions. Target/source `.text` are `0x8BC/0xBA4`; four donor-only C helpers and their constants are linker-stripped, and the linked owner/full-container gate passes. This mixed owner is not clean decompiled C. |

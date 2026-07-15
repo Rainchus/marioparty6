@@ -76,6 +76,10 @@ void mbStarNoSet(int no)
 {
 }
 
+void mbStarNoDispSet(void)
+{
+}
+
 int mbStarNoRandGet(void)
 {
     return -1;
