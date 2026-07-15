@@ -150,6 +150,13 @@ response is now assigned to its only semantic consumer, `subsamp.c`, rather
 than `voicing.c`. Evidence is retained in
 [`docs/native_matching_wave43.md`](docs/native_matching_wave43.md).
 
+Wave 44 recovers the complete GSSDK `smoother.c` and `mel.c` owners from MP6
+target evidence. All eight retained functions compile with typed state;
+`smtConstruct`, `smtDestruct`, `InitMel`, and `ConstructMel` are byte-exact.
+The remaining algorithm and control functions still diverge, so both owners
+remain `NonMatching` and fallback-linked. Evidence is retained in
+[`docs/native_matching_wave44.md`](docs/native_matching_wave44.md).
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -230,7 +237,7 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 
 #### Bucket 2: `C-not-yet-matched` (111 current fallback owners)
 
-Eighty-three owners have current source candidates and are tagged
+Eighty-five owners have current source candidates and are tagged
 `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-15; percentages are raw `.text` scores unless
@@ -314,6 +321,8 @@ otherwise noted.
 | `gssdk_lib/asrpho/common/blocks/flblocks/dctlift.c` | The complete target-derived `0x3C` DCT-lift block recovers its matrix process, coefficient generation, profile fields, and lifecycle. `ControlDCTLift` and `ConstructDCTLift` are exact; `ProcessDCTLift` is `0x1E4/0x1E4` at 98.950420% and `InitDCTLift` is `0x1FC/0x200` at 85.968506%. Whole `.text` is `0x484/0x488` at 93.394460%; `.sdata2 0x38` and all 27 relocations align. |
 | `gssdk_lib/asrpho/common/blocks/flblocks/logexp.c` | The target-derived two-function owner restores its typed 353-float lookup table. `HLnOnePlusExpHFloat` (`0x90`), semantic `.rodata 0x584`, and `.sdata2 0x48` are exact. `LogAdd` is `0x138/0x138` at 99.743590%, with four floating-point operand-register differences; target/source `.text` are both `0x1C8`, and the target's `.rodata 0x588` includes a four-byte alignment tail. |
 | `gssdk_lib/asrpho/common/blocks/flblocks/vq1500.c` | The target-derived `0x30` owner, `0x14` code-book descriptor, language/code-book method ABI, vector searches, queue lifecycle, and all nine functions are recovered. Eight functions are exact. `GetLabel` is exact-size `0x148` at 98.109760%; whole target/source `.text` are `0x4F0/0x4F0` at 99.509490%, the semantic float constant is exact, and both objects have 25 text relocations. |
+| `gssdk_lib/asrpho/common/blocks/flblocks/smoother.c` | The complete target-derived `0x20` smoother and `0x18` static matrix-bank descriptor recover construction, destruction, active-column rejection, QR update, and spline coefficient evaluation. `smtConstruct` (`0x2AC`) and `smtDestruct` (`0x90`) are exact. `Smoothing` is target/source `0x358/0x35C` at 75.154205%; whole `.text` is `0x694/0x698` at 87.370544%, and target/source `.sdata2` are `0x18/0x14` at 90.909096%. |
+| `gssdk_lib/asrpho/common/blocks/flblocks/mel.c` | The complete target-derived `0x40` mel-filter block recovers five functions, per-band weights/bin ranges, queue processing, profile allocation, and control/destruction. `InitMel` (`0x6C`) and `ConstructMel` (`0x44`) are exact. `ProcessMel` is exact-size `0x1B8` at 91.681816%, `ControlMel` is `0x158/0x188` at 72.534880%, and `MelInitBands` is `0x504/0x508` at 93.875390%. Whole `.text` is `0x8C4/0x8F8` at 90.654190%, while target/source `.sdata2` are `0x60/0x68` at 96.000000%. |
 | `gssdk_lib/asrpho/common/ctxdata/ctxdata.c` | The binary-proven `ContextDataV2` layout through offset `0xB8`, virtual table, and all accessors are recovered. Seventeen accessors are byte-exact; the three packed-tail pointer computations remain at 79.500000%, 66.933334%, and 68.000000%, while `FillContextV2VirtualTable` retains one source/target table-relocation identity difference. The owner remains fallback-linked. |
 | `gssdk_lib/asrpho/common/blocks/flblocks/mtx.c` | The complete real `0x18` float/integer matrix descriptors and all 12 allocation, association, compression, column-deletion, and QR-update functions are recovered. Nine functions are exact. `imtxDeleteCol` is exact-size `0x88` at 98.676470%, `mtxCompress` is `0xC4/0xBC` at 94.795920%, and `QrDeleteCol` is `0x308/0x314` at 94.118550%. Whole target/source `.text` is `0x7FC/0x800`, and both objects have 25 relocations; source `.sdata2 0x40` retains the compiler's additional `sqrtf` constants versus target `0x30`. |
 | `gssdk_lib/asrpho/common/blocks/flblocks/mtxopt.c` | The shared recovered `0x18` `FloatMatrix` replaces the old private prefix and preserves existing object evidence. `mtxFillCopy` (`0x30`) and `mtxFillX` (`0x80`) are exact. `QrPreMult` is target/source `0x1A8/0x1A4` at 92.528305%, with the same unrolled arithmetic but divergent register allocation and outer-loop closure, so the owner remains fallback-linked. |
@@ -322,18 +331,18 @@ otherwise noted.
 | `gssdk_lib/asrpho/common/ctxdata/langdata.c` | The real `LanguageDataV2` prefix and code-book layouts support 36 exact field/pointer accessors. The target's `0x13C` language-method object and the code-book method slots consumed by `vq1500.c` are now typed in the shared header. `_langGetpErgodicPenalty` is `0x64` at 77.040000%; the deeper packed-layout functions and virtual-table source closure remain unrecovered. |
 | `gssdk_lib/asrpho/common/tos/mqueue.c` | The target queue/list/reader prefix and three routines are recovered. `qQueueNbrElements` (`0x20`) is exact; `qDeQueueOne` (`0x50`) is 89.500000% and `qQueueConstruct` (`0x8C`) is 84.200000%. The remaining queue control, enqueue, reset, resize, and destruction routines are absent, so the owner remains fallback-linked. |
 
-The other 28 owners are tagged `NO-SOURCE`. Each explicit brace group below
-expands to the named owner files; the count audit is `1 + 27 = 28`.
+The other 26 owners are tagged `NO-SOURCE`. Each explicit brace group below
+expands to the named owner files; the count audit is `1 + 25 = 26`.
 
 - `musyx/runtime/` (1): `dsp_import.c`. The authenticated donor is a DSP
   firmware byte array, so it is preserved as reference evidence rather than
   counted as clean source recovery.
-- `gssdk_lib/` (27):
+- `gssdk_lib/` (25):
   - `gsapi/gsapi.c`;
   - `asrpho/asrspi.c` and
     `asrpho/rec1600/{convert,creasp,creaspch,creaspt,creatree,crsptrch,spi1600,train,userword}.c`;
   - `asrpho/common/blocks/{dpgenuw,dpscruw,isoword,nbestdp,pitchdp}.c`;
-  - `asrpho/common/blocks/flblocks/{acne,gender,mel,smoother,specsub,vad}.c`;
+  - `asrpho/common/blocks/flblocks/{acne,gender,specsub,vad}.c`;
   - `asrpho/common/blocks/flfxblks/{dist16,pitchco,shs_vuv,trigglr}.c`;
   - `asrpho/common/tos/tinyos.c`.
 
