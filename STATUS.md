@@ -10,44 +10,47 @@ party mode, boards, results, and ending. Minigame DLLs, instruction DLLs,
 minigame-mode wrappers, and mic-quiz modes are excluded; their native-port
 black-screen stubs are outside this decompilation repository's work.
 
-The immediate Priority 1a milestone is now `mdseldll.rel`, ahead of the
-remaining board owners. `include/ovl_table.h` places `mdseldll` at zero-based
-overlay 93, and the Matching `selmenuDll` mode table maps `***:MODE SEL`
-directly to `DLL_mdseldll`. Waves 67-69 open its `Rel()` and recover 111 of 113
-application functions as data-value-exact C for `0xD614` target text bytes.
-Every represented function is exact; only `fn_1_5BF0` and `fn_1_BAB4` remain
-absent rather than guessed. Target/source `.text` is `0x10010/0xD614` at
-83.60386%, `.data` is fully exact, and all target BSS bytes compare exact (the
-source object has a two-byte alignment tail). The application owner and its
-separated compiler runtime both remain `NonMatching`, so `mdseldll` is still
-the boot-to-mode-select blocker.
-Its sibling base is the MP5 `mdsel`/mode framework; recovery and any future
-Matching promotion still require MP6 object/relocation evidence and the
-complete REL plus DOL gate.
+Priority 1a `mdseldll.rel` is recovered and source-linked in Wave 70.
+`include/ovl_table.h` places it at zero-based overlay 93, and the Matching
+`selmenuDll` mode table maps `***:MODE SEL` directly to `DLL_mdseldll`. All
+113 application functions and `0x10010` application text bytes are exact C;
+the recovered `fn_1_5BF0` and `fn_1_BAB4` close the former `0x29FC` residual.
+The separate compiler runtime has 19/19 exact functions and `0xA44` text bytes
+under the authenticated original-assembly exception. Both owners are now
+configured `Matching`, and the source-linked `0x10A54` code-byte REL passes
+the complete object, relocation, REL, SHA, and DOL gates. The former
+boot-to-mode-select blocker is therefore closed; the remaining Priority 1 work
+returns to `board/`.
 
 The evidence-backed target ledger at this build is:
 
 - DOL `game/` plus `board/`: `696000 / 1431136` target `.text` bytes Matching
   (48.63%), across 70/97 owners. `game/` is 57/57 and `board/` is 13/40;
   Branch is the latest Board promotion.
-- required board/flow RELs: `5084 / ~3100000` target `.text` bytes in fully
-  source-linked modules (approximately 0.16%). The conservative done set is
-  `actmanDLL` (`2412`) plus `sequencedll` (`2672`). `bootDll`, `selmenuDll`,
-  and `fileseldll` are not counted because each still links a fallback runtime
-  owner. No auto-generated text owner is counted as recovered source.
+- required board/flow RELs: `73264 / ~3100000` target `.text` bytes in fully
+  source-linked modules (approximately 2.36%). The conservative done set is
+  `actmanDLL` (`2412`), `sequencedll` (`2672`), and `mdseldll` (`68180`:
+  `65552` exact C application bytes plus `2628` authenticated compiler-runtime
+  assembly bytes). `bootDll`, `selmenuDll`, and `fileseldll` are not counted
+  because each still links a fallback runtime owner. No auto-generated or
+  fallback-linked text owner is counted as recovered source.
 
 ## Verification
 
-- `ninja -j1`: `137 files OK` (the DOL and all configured REL outputs)
+- `rtk ninja`: `137 files OK` (the DOL and all configured REL outputs)
 - `build/tools/dtk.exe shasum -q -c config/GP6E01/build.sha1`:
   `137 files OK`
 - `cmp orig/GP6E01/sys/main.dol build/GP6E01/main.dol`: byte-identical
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 9.24% code and 31.37% data overall; 47.42% code
-  and 74.59% data in the DOL
-- Matching owners at that build: 303 of 897 overall, 294 of 396 in the DOL,
-  and 9 of 501 in the REL modules
+- `cmp orig/GP6E01/files/dll/mdseldll.rel build/GP6E01/mdseldll/mdseldll.rel`:
+  byte-identical
+- `build/GP6E01/mdseldll/mdseldll.rel` SHA-1:
+  `e6c20b24cfca8135ed8c49ce59108100277444c0`
+- DTK progress at that build: 9.79% code and 31.82% data overall; 47.42% code
+  and 74.59% data in the DOL; 1.81% code and 4.71% data in REL modules
+- Matching owners at that build: 305 of 897 overall, 294 of 396 in the DOL,
+  and 11 of 501 in the REL modules
 - DOL policy split: 255 matching owners without the assembly exception, 39
   matching owners admitted under the source-authentication exception, 101
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
@@ -516,6 +519,29 @@ functions remain absent, both REL owners remain `NonMatching`, and no full
 REL/DOL promotion gate is claimed. Evidence is retained in
 [`docs/native_matching_wave69.md`](docs/native_matching_wave69.md).
 
+Wave 70 closes Priority 1a. `fn_1_BAB4` recovers the complete `0x2748`
+mode-select driver, and `fn_1_5BF0` recovers the `0x2B4` positional-audio
+updater. Reordering definitions by target symbol address restores the original
+translation-unit emission order without changing any function body: all
+113/113 functions, their addresses and sizes, `0x10010` text bytes, `.data`,
+and 5,029 text relocations pass the data-value gate. The apparent two-byte
+object boundary (`.rodata 0x260/0x25E`, `.bss 0x1A4E/0x1A50`) resolves through
+normal linker alignment and trimming; no padding datum or artificial owner was
+added.
+
+The separated runtime is admitted only under the original-assembly sibling
+exception. ProjectPiki/Pikmin `24378f0e`,
+`src/Runtime/PPCEABI/H/runtime.c`, is configured Matching and authenticates the
+same `asm`/`nofralloc` 19-function source shape; MP5 `e246f9d`,
+`src/Runtime.PPCEABI.H/runtime.c`, corroborates the compiler-runtime family.
+The MP6 `mdseldll`, `fileseldll`, and `selmenuDll` target runtime text and
+rodata ranges are byte-identical. The MP6 source object proves 19/19 functions,
+`0xA44` text bytes, `0x18` rodata bytes, and both relocations exact. Both
+`mdseldll` owners are Matching after the full `137 files OK`, byte-identical
+REL, and byte-identical DOL gate. Runtime assembly remains separately reported
+and is not counted as clean decompiled C. Full evidence is retained in
+[`docs/native_matching_wave70.md`](docs/native_matching_wave70.md).
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -921,7 +947,7 @@ decompiled owners. Evidence is retained in
 
 ### Active REL fallback taxonomy
 
-The same two buckets apply to every configured REL fallback owner. These six
+The same two buckets apply to every configured REL fallback owner. These four
 owners are separate from the 396-owner DOL ledger:
 
 | Owner | Bucket and reason | Authentication or current evidence |
@@ -929,9 +955,17 @@ owners are separate from the 396-owner DOL ledger:
 | `REL/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; longstanding fallback, never de-flipped | MP5 `src/Runtime.PPCEABI.H/runtime.c` authenticates the compiler-assembly source family. This sibling checkout does not provide a locally runnable Matching manifest for the owner, so the exception has not been exercised. |
 | `REL/selmenuDll/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; longstanding fallback, never de-flipped | Same MP5 Runtime source authentication; MP6 object/link proof remains pending. |
 | `REL/fileseldll/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; longstanding fallback, never de-flipped | Same MP5 Runtime source authentication; MP6 object/link proof remains pending. |
-| `REL/mdseldll/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; newly split in Wave 67, never de-flipped | Its target text and rodata are byte-identical to the same-game `fileseldll` and `selmenuDll` runtime blocks, and MP5 authenticates the assembly source family. The exception gate remains pending. |
-| `REL/mdseldll/mdsel.c` | `C-not-yet-matched`; `SRC-INCOMPLETE`; newly split in Wave 67, never de-flipped | Waves 67-69 represent 111/113 target functions and all 111 are data-value-exact for `0xD614` bytes. Only `fn_1_5BF0` (`0x2B4`) and `fn_1_BAB4` (`0x2748`) remain absent. `.data` is exact; all target BSS bytes compare exact and the source object has a two-byte alignment tail. Function emission order, eight rodata bytes, and the complete REL gate remain unresolved, so the owner stays fallback-linked. |
 | `REL/meschkdll/meschkdll.c` | `C-not-yet-matched`; `SRC-DIVERGES`; never de-flipped | Five functions are exact; `fn_1_188` remains divergent, so the owner stays fallback-linked. |
+
+Wave 70 resolves the two former `mdseldll` fallback rows. Application owner
+`REL/mdseldll/mdsel.c` leaves `C-not-yet-matched` after all 113 functions and
+the linked REL prove exact. Runtime owner `REL/mdseldll/runtime.c` leaves
+`original-was-asm`/`ASM-GATE-PENDING` under the sibling-authentication
+exception: ProjectPiki/Pikmin `24378f0e`
+`src/Runtime/PPCEABI/H/runtime.c` supplies the Matching-owner source-shape
+citation, MP5 `e246f9d` corroborates the family, and the MP6 object plus full
+container gate proves the admitted target bytes. This promotion does not
+reclassify its assembly as clean C.
 
 ## Named DOL ownership
 

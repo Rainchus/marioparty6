@@ -26,6 +26,38 @@ asm void __shr2u(void);
 asm void __shr2i(void);
 asm void __cvt_dbl_usll(void);
 
+#ifdef MP6_REL_RUNTIME
+asm void __cvt_sll_dbl(void);
+asm void __cvt_ull_dbl(void);
+asm void __cvt_ull_flt(void);
+
+void _savev20(void);
+void _savev21(void);
+void _savev22(void);
+void _savev23(void);
+void _savev24(void);
+void _savev25(void);
+void _savev26(void);
+void _savev27(void);
+void _savev28(void);
+void _savev29(void);
+void _savev30(void);
+void _savev31(void);
+
+void _restv20(void);
+void _restv21(void);
+void _restv22(void);
+void _restv23(void);
+void _restv24(void);
+void _restv25(void);
+void _restv26(void);
+void _restv27(void);
+void _restv28(void);
+void _restv29(void);
+void _restv30(void);
+void _restv31(void);
+#endif
+
 void SAVE_FPR(14)(void);
 void SAVE_FPR(15)(void);
 void SAVE_FPR(16)(void);
@@ -182,6 +214,55 @@ asm void __save_fpr(void) {
 #endif // clang-format on
 }
 
+#ifdef MP6_REL_RUNTIME
+#pragma altivec_model on
+
+asm void _savevr(void) {
+#ifdef __MWERKS__ // clang-format off
+	nofralloc
+entry _savev20
+	li    r12, -0xC0
+	stvx  v20, r12, r0
+entry _savev21
+	li    r12, -0xB0
+	stvx  v21, r12, r0
+entry _savev22
+	li    r12, -0xA0
+	stvx  v22, r12, r0
+entry _savev23
+	li    r12, -0x90
+	stvx  v23, r12, r0
+entry _savev24
+	li    r12, -0x80
+	stvx  v24, r12, r0
+entry _savev25
+	li    r12, -0x70
+	stvx  v25, r12, r0
+entry _savev26
+	li    r12, -0x60
+	stvx  v26, r12, r0
+entry _savev27
+	li    r12, -0x50
+	stvx  v27, r12, r0
+entry _savev28
+	li    r12, -0x40
+	stvx  v28, r12, r0
+entry _savev29
+	li    r12, -0x30
+	stvx  v29, r12, r0
+entry _savev30
+	li    r12, -0x20
+	stvx  v30, r12, r0
+entry _savev31
+	li    r12, -0x10
+	stvx  v31, r12, r0
+	blr
+#endif // clang-format on
+}
+
+#pragma altivec_model off
+#endif
+
 /* 80362154-80362180 35CA94 002C+00 0/0 0/0 0/0 .text            __restore_fpr */
 asm void __restore_fpr(void) {
 #ifdef __MWERKS__ // clang-format off
@@ -313,6 +394,55 @@ asm void __restore_gpr(void) {
 		blr
 #endif // clang-format on
 }
+
+#ifdef MP6_REL_RUNTIME
+#pragma altivec_model on
+
+asm void _restorevr(void) {
+#ifdef __MWERKS__ // clang-format off
+	nofralloc
+entry _restv20
+	li   r12, -0xC0
+	lvx  v20, r12, r0
+entry _restv21
+	li   r12, -0xB0
+	lvx  v21, r12, r0
+entry _restv22
+	li   r12, -0xA0
+	lvx  v22, r12, r0
+entry _restv23
+	li   r12, -0x90
+	lvx  v23, r12, r0
+entry _restv24
+	li   r12, -0x80
+	lvx  v24, r12, r0
+entry _restv25
+	li   r12, -0x70
+	lvx  v25, r12, r0
+entry _restv26
+	li   r12, -0x60
+	lvx  v26, r12, r0
+entry _restv27
+	li   r12, -0x50
+	lvx  v27, r12, r0
+entry _restv28
+	li   r12, -0x40
+	lvx  v28, r12, r0
+entry _restv29
+	li   r12, -0x30
+	lvx  v29, r12, r0
+entry _restv30
+	li   r12, -0x20
+	lvx  v30, r12, r0
+entry _restv31
+	li   r12, -0x10
+	lvx  v31, r12, r0
+	blr
+#endif // clang-format on
+}
+
+#pragma altivec_model off
+#endif
 
 /* 80362238-80362324 35CB78 00EC+00 0/0 2/2 0/0 .text            __div2u */
 asm void __div2u(void) {
@@ -699,6 +829,110 @@ around:
 #endif // clang-format on
 }
 
+#ifdef MP6_REL_RUNTIME
+asm void __cvt_sll_dbl(void) {
+#ifdef __MWERKS__ // clang-format off
+	nofralloc
+	stwu     r1, -16(r1)
+	rlwinm.  r5, r3, 0, 0, 0
+	beq      positive
+	subfic   r4, r4, 0
+	subfze   r3, r3
+positive:
+	or.      r7, r3, r4
+	li       r6, 0
+	beq      zero
+	cntlzw   r7, r3
+	cntlzw   r8, r4
+	rlwinm   r9, r7, 26, 0, 4
+	srawi    r9, r9, 31
+	and      r9, r9, r8
+	add      r7, r7, r9
+	subfic   r8, r7, 32
+	subic    r9, r7, 32
+	slw      r3, r3, r7
+	srw      r10, r4, r8
+	or       r3, r3, r10
+	slw      r10, r4, r9
+	or       r3, r3, r10
+	slw      r4, r4, r7
+	sub      r6, r6, r7
+	rlwinm   r7, r4, 0, 21, 31
+	cmpwi    r7, 0x400
+	addi     r6, r6, 1086
+	blt      noround
+	bgt      round
+	rlwinm.  r7, r4, 0, 20, 20
+	beq      noround
+round:
+	addic    r4, r4, 0x800
+	addze    r3, r3
+	addze    r6, r6
+noround:
+	rlwinm   r4, r4, 21, 0, 31
+	rlwimi   r4, r3, 21, 0, 10
+	rlwinm   r3, r3, 21, 12, 31
+	rlwinm   r6, r6, 20, 0, 11
+	or       r3, r6, r3
+	or       r3, r5, r3
+zero:
+	stw      r3, 8(r1)
+	stw      r4, 12(r1)
+	lfd      f1, 8(r1)
+	addi     r1, r1, 16
+	blr
+#endif // clang-format on
+}
+
+asm void __cvt_ull_dbl(void) {
+#ifdef __MWERKS__ // clang-format off
+	nofralloc
+	stwu     r1, -16(r1)
+	or.      r7, r3, r4
+	li       r6, 0
+	beq      zero
+	cntlzw   r7, r3
+	cntlzw   r8, r4
+	rlwinm   r9, r7, 26, 0, 4
+	srawi    r9, r9, 31
+	and      r9, r9, r8
+	add      r7, r7, r9
+	subfic   r8, r7, 32
+	subic    r9, r7, 32
+	slw      r3, r3, r7
+	srw      r10, r4, r8
+	or       r3, r3, r10
+	slw      r10, r4, r9
+	or       r3, r3, r10
+	slw      r4, r4, r7
+	subf     r6, r7, r6
+	rlwinm   r7, r4, 0, 21, 31
+	cmpwi    r7, 0x400
+	addi     r6, r6, 1086
+	blt      noround
+	bgt      round
+	rlwinm.  r7, r4, 0, 20, 20
+	beq      noround
+round:
+	addic    r4, r4, 0x800
+	addze    r3, r3
+	addze    r6, r6
+noround:
+	rlwinm   r4, r4, 21, 0, 31
+	rlwimi   r4, r3, 21, 0, 10
+	rlwinm   r3, r3, 21, 12, 31
+	rlwinm   r6, r6, 20, 0, 11
+	or       r3, r6, r3
+zero:
+	stw      r3, 8(r1)
+	stw      r4, 12(r1)
+	lfd      f1, 8(r1)
+	addi     r1, r1, 16
+	blr
+#endif // clang-format on
+}
+#endif
+
 /* 803626BC-80362770 35CFFC 00B4+00 0/0 1/1 0/0 .text            __cvt_sll_flt */
 asm void __cvt_sll_flt(void)
 {
@@ -755,6 +989,57 @@ lbl_80362758:
     blr
 #endif // clang-format on
 }
+
+#ifdef MP6_REL_RUNTIME
+asm void __cvt_ull_flt(void) {
+#ifdef __MWERKS__ // clang-format off
+	nofralloc
+	stwu     r1, -16(r1)
+	or.      r7, r3, r4
+	li       r6, 0
+	beq      zero
+	cntlzw   r7, r3
+	cntlzw   r8, r4
+	rlwinm   r9, r7, 26, 0, 4
+	srawi    r9, r9, 31
+	and      r9, r9, r8
+	add      r7, r7, r9
+	subfic   r8, r7, 32
+	subic    r9, r7, 32
+	slw      r3, r3, r7
+	srw      r10, r4, r8
+	or       r3, r3, r10
+	slw      r10, r4, r9
+	or       r3, r3, r10
+	slw      r4, r4, r7
+	subf     r6, r7, r6
+	rlwinm   r7, r4, 0, 21, 31
+	cmpwi    r7, 0x400
+	addi     r6, r6, 1086
+	blt      noround
+	bgt      round
+	rlwinm.  r7, r4, 0, 20, 20
+	beq      noround
+round:
+	addic    r4, r4, 0x800
+	addze    r3, r3
+	addze    r6, r6
+noround:
+	rlwinm   r4, r4, 21, 0, 31
+	rlwimi   r4, r3, 21, 0, 10
+	rlwinm   r3, r3, 21, 12, 31
+	rlwinm   r6, r6, 20, 0, 11
+	or       r3, r6, r3
+zero:
+	stw      r3, 8(r1)
+	stw      r4, 12(r1)
+	lfd      f1, 8(r1)
+	frsp     f1, f1
+	addi     r1, r1, 16
+	blr
+#endif // clang-format on
+}
+#endif
 
 /* 80362770-8036283C 35D0B0 00CC+00 0/0 2/2 0/0 .text            __cvt_dbl_usll */
 asm void __cvt_dbl_usll(void)
