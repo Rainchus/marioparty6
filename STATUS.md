@@ -115,6 +115,17 @@ callbacks. All six owners remain fallback-linked because their large event
 closures are incomplete. Evidence is retained in
 [`docs/native_matching_wave40.md`](docs/native_matching_wave40.md).
 
+Wave 41 materializes 11,033 lines and 461 compiled functions across thirteen
+formerly `NO-SOURCE` MusyX runtime owners. The same-version MP5 donor and its
+byte-identical MusyX headers supply source shape, while Matching MP4 owners at
+the pinned upstream MusyX commit authenticate the common source family and
+`StdReverb` assembly bodies. The MP6 object pass pairs 212 functions; 140 are
+byte-exact and cover `0xB940` target text bytes. The false empty donor body for
+MP6's real `0x255C` `salBuildCommandList` is omitted, and `dsp_import.c` stays
+absent because its donor is a DSP firmware byte array rather than clean C.
+Every materialized owner remains fallback-linked. Evidence is retained in
+[`docs/native_matching_wave41.md`](docs/native_matching_wave41.md).
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -195,7 +206,7 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 
 #### Bucket 2: `C-not-yet-matched` (112 current fallback owners)
 
-Sixty-five owners have current source candidates and are tagged
+Seventy-eight owners have current source candidates and are tagged
 `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-15; percentages are raw `.text` scores unless
@@ -234,6 +245,19 @@ otherwise noted.
 | `board/capspecial.c` | Thirteen target-backed functions recover the exact `0x28` `TERESA_FADE_WORK`, Teresa steal state, Miracle lifecycle hooks, and Koopa dice/motion hooks. Target/source `.text` are `0xE744/0x1E8`; 9/13 mapped functions are exact. Fade kill/object/setter and Koopa motion remain 88.214290%-92.826090%; the large special-capsule state machines remain absent. |
 | `board/capevent.c` | Eleven move/stop, bank, duel-coin, and bubble-hook routines are exact, with the target's `10`/`5` duel defaults, four `-1` sentinels, and six-argument hook. Target/source `.text` are `0x14EFC/0x178`; the other 226 retained event functions remain absent. |
 | `board/mgcall.c` | Twelve functions recover the exact `0x10` `MGLISTWORK`, `.bss 0xD8` history/status/list closure, `.rodata 0x70` status tables, and `.data 0x48` pointer/size tables. Target/source `.text` are `0x75FC/0x3DC`; 8/12 mapped functions are exact. Init/focus-kill are 99.965515%/99.875000%, while data-close/battle-message are 87.307690%/89.000000%; the roulette/UI executors remain absent. |
+| `musyx/runtime/seq.c` | Same-version MP5 source plus byte-identical MusyX headers recover 41 compiled functions and the note/sequence/MIDI state. Target/source `.text` are `0x3FCC/0x5168`; 11/12 mapped functions are exact and `seqStartPlay` is 99.971054%. Target/source `.data 0x50`, `.bss 0xD940`, and `.sbss 0x20` match, but donor-only/unpaired helpers remain. |
+| `musyx/runtime/synth.c` | The real job queue, controller destinations, voice/fader state, and 41 functions are materialized. Target/source `.text` are `0x349C/0x433C`; 20/22 mapped functions are exact. `synthStartSound` is 98.035710%, `synthFXStart` is 90.094340%, and source BSS is four bytes shorter. |
+| `musyx/runtime/stream.c` | Twenty-two functions restore 64 `STREAM_INFO` records and exact `.bss 0x1900`. Target/source `.text` are `0x3C04/0x4728`; 12/14 mapped functions are exact. `streamHandle` is 99.594600%, `sndStreamFrq` is 71.000000%, and eight helpers remain unpaired. |
+| `musyx/runtime/synthdata.c` | Twenty-seven functions restore typed sample, keymap, curve, layer, macro, and FX registries. Target/source `.text` are `0x1D98/0x1D90`; 20/22 mapped functions are exact. Sample-reference add/remove are 95.818184%/95.128204%, and five comparison helpers remain unpaired. |
+| `musyx/runtime/synthmacros.c` | Ninety-nine functions restore macro command dispatch, queues, variables, envelopes, controller selection, and exact target `.data 0x448`/`.bss 0x20`. Target/source `.text` are `0x4FA0/0x619C`; 8/11 mapped functions are exact. `varGet`, `macHandleActive`, and `macStart` are 97.607410%-99.423080%; the command closure remains unpaired. |
+| `musyx/runtime/synthvoice.c` | Twenty-five functions restore VID lists, voice priority/free lists, and exact target `.bss 0xFC0`. Target/source `.text` are `0x1D64/0x1F98`; 16/18 mapped functions are exact. `voiceAllocate` does not align, `voiceBlock` is 51.884956%, and seven helpers remain unpaired. |
+| `musyx/runtime/s_data.c` | Twenty-six registry/group/sequence functions and typed group-stack state are materialized. Target/source `.text` are `0xBF0/0x1584`; the five mapped functions range from 14.687500% to 90.250000% and none is exact, so the owner remains substantial real C work. |
+| `musyx/runtime/hw_dspctrl.c` | Nineteen voice/studio/DSP-control functions are materialized; the false empty donor `salBuildCommandList` is deliberately omitted because MP6 retains real `0x255C` code. Target/source `.text` are `0x35D4/0x12A4`; 3/8 mapped functions are exact and five lifecycle/voice/aux functions are 99.797470%-99.875000%. |
+| `musyx/runtime/snd3d.c` | Forty-five emitter/listener/room/door/3D functions and their typed roots are materialized. Target/source `.text` are `0x2238/0x360C`; 2/13 mapped functions are exact and eleven diverge. The larger room/door and 3D setup closures remain unpaired. |
+| `musyx/runtime/snd_midictrl.c` | Thirty-eight MIDI/RPN/controller functions and their state tables are materialized. Target/source `.text` are `0x2300/0x1E00`; 23/32 mapped functions are exact. Nine controller/default functions diverge; semantic `.data` is exact and `.rodata` is 99.631000%. |
+| `musyx/runtime/hardware.c` | Fifty-five hardware/voice/studio/stream functions restore real callback and state ownership. Target/source `.text` are `0x1094/0x1130`; 15/41 mapped functions are exact and 26 remain 93.775510%-99.829270%. Target/source `.rodata` are both `0x100`. |
+| `musyx/runtime/hw_aramdma.c` | Fourteen active Dolphin functions restore typed ARAM transfer jobs, stream buffers, queues, and callbacks. Target/source `.text` are `0xCE0/0xCF4`; 7/11 mapped functions are exact. Init/store/remove/stream allocation are 73.500000%-98.594600%, and three helpers remain unpaired. |
+| `musyx/runtime/StdReverb/reverb.c` | The typed delay-line/reverb owner compiles nine functions; create/callback/free are exact, target/source `.text` are `0xD38/0x1058`, and `.data 0x20` is exact. M4 `147b165` configures the owner `MatchingFor(USA,PAL)` from pinned [upstream MusyX `reverb.c` at `adc8df9`](https://github.com/AxioDL/musyx/blob/adc8df9a959f1e37f71bdf3155e229f9f87ad166/src/musyx/runtime/StdReverb/reverb.c), authenticating both inline-assembly bodies. Donor `DoCrossTalk` is `0x190` versus the remaining target placeholder's `0x184`; the mixed owner stays `NonMatching`, fallback-linked, and excluded from clean-C totals. |
 | `dolphin/os/OS.c` | 59.719%; 0/14 functions exact. |
 | `dolphin/os/OSExec.c` | 80.972%; 2/8 functions exact. |
 | `dolphin/os/OSMemory.c` | 52.707%; 4/8 functions exact. |
@@ -269,13 +293,12 @@ otherwise noted.
 | `gssdk_lib/asrpho/common/ctxdata/langdata.c` | The real `LanguageDataV2` prefix and code-book layouts support 36 exact field/pointer accessors. The target's `0x13C` language-method object and the code-book method slots consumed by `vq1500.c` are now typed in the shared header. `_langGetpErgodicPenalty` is `0x64` at 77.040000%; the deeper packed-layout functions and virtual-table source closure remain unrecovered. |
 | `gssdk_lib/asrpho/common/tos/mqueue.c` | The target queue/list/reader prefix and three routines are recovered. `qQueueNbrElements` (`0x20`) is exact; `qDeQueueOne` (`0x50`) is 89.500000% and `qQueueConstruct` (`0x8C`) is 84.200000%. The remaining queue control, enqueue, reset, resize, and destruction routines are absent, so the owner remains fallback-linked. |
 
-The other 47 owners are tagged `NO-SOURCE`. Each explicit brace group below
-expands to the named owner files; the count audit is `14 + 33 = 47`.
+The other 34 owners are tagged `NO-SOURCE`. Each explicit brace group below
+expands to the named owner files; the count audit is `1 + 33 = 34`.
 
-- `musyx/runtime/` (14): `seq.c`, `synth.c`, `stream.c`, `synthdata.c`,
-  `synthmacros.c`, `synthvoice.c`, `s_data.c`, `hw_dspctrl.c`, `snd3d.c`,
-  `snd_midictrl.c`, `hardware.c`, `dsp_import.c`, `hw_aramdma.c`, and
-  `StdReverb/reverb.c`.
+- `musyx/runtime/` (1): `dsp_import.c`. The authenticated donor is a DSP
+  firmware byte array, so it is preserved as reference evidence rather than
+  counted as clean source recovery.
 - `gssdk_lib/` (33):
   - `gsapi/gsapi.c`;
   - `asrpho/asrspi.c` and
