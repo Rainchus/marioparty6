@@ -10,6 +10,14 @@ party mode, boards, results, and ending. Minigame DLLs, instruction DLLs,
 minigame-mode wrappers, and mic-quiz modes are excluded; their native-port
 black-screen stubs are outside this decompilation repository's work.
 
+The immediate Priority 1a milestone is now `mdseldll.rel`, ahead of the
+remaining board owners. `include/ovl_table.h` places `mdseldll` at zero-based
+overlay 93, and the Matching `selmenuDll` mode table maps `***:MODE SEL`
+directly to `DLL_mdseldll`. No `mdseldll` source or `Rel()` owner exists yet,
+so it is the current boot-to-mode-select blocker. Its sibling base is the MP5
+`mdsel`/mode framework; recovery and any future Matching promotion still
+require MP6 object/relocation evidence and the complete REL plus DOL gate.
+
 The evidence-backed target ledger at this build is:
 
 - DOL `game/` plus `board/`: `696000 / 1431136` target `.text` bytes Matching
@@ -440,6 +448,17 @@ compiler shape. The main process/object/event/effect closures remain, so
 `dice.c` stays `NonMatching` and does not change the clean-C target ledger.
 Evidence is retained in
 [`docs/native_matching_wave65.md`](docs/native_matching_wave65.md). This was
+an object-only WIP slice; no full-DOL gate or Matching promotion is claimed.
+
+Wave 66 advances `board/dice.c` from 43 to all 68 target functions represented
+and from 35 to 47 data-value-exact functions. Source `.text` grows from
+`0x1A5C` to `0x603C`; target/source `.text` is now `0x6390/0x603C` at
+92.468925%, with `0x337C` target text bytes exact. The slice recovers the main
+process/destructor, help setup, complete dice-object state machine, input/hit
+paths, number reset, equal-roll/inbound effects, and the complete SNpc number
+path. Twenty-one compiler/source-shape residuals remain, so `dice.c` stays
+`NonMatching` and does not change the clean-C target ledger. Evidence is retained in
+[`docs/native_matching_wave66.md`](docs/native_matching_wave66.md). This was
 an object-only WIP slice; no full-DOL gate or Matching promotion is claimed.
 
 The exact build result includes extracted original objects and explicit
