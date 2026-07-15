@@ -11,10 +11,58 @@
 #include "game/process.h"
 #include "game/msm.h"
 
+#include "string.h"
+
+enum {
+    MESS_CHARANAME_MARIO,
+    MESS_CHARANAME_LUIGI,
+    MESS_CHARANAME_PEACH,
+    MESS_CHARANAME_YOSHI,
+    MESS_CHARANAME_WARIO,
+    MESS_CHARANAME_DAISY,
+    MESS_CHARANAME_WALUIGI,
+    MESS_CHARANAME_KINOPIO,
+    MESS_CHARANAME_TERESA,
+    MESS_CHARANAME_MINIKOOPA,
+    MESS_CHARANAME_KINOPICO,
+    MESS_CHARANAME_MINIKOOPAR,
+    MESS_CHARANAME_MINIKOOPAG,
+    MESS_CHARANAME_MINIKOOPAB
+};
+
 static MBPLAYERWORK playerWork[GW_PLAYER_MAX];
 static BOOL blackoutF;
 static void (*turnInitHook)(int playerNo);
 static void (*turnCloseHook)(int playerNo);
+
+static void PlayerMetalKill(int playerNo);
+static void PlayerBiriQKill(int playerNo);
+void mbDiceNumKill(int playerNo);
+
+void mbPlayerClose(void)
+{
+    MBPLAYERWORK *workP;
+    int i;
+
+    workP = &playerWork[0];
+    for (i = 0; i < GW_PLAYER_MAX; i++, workP++) {
+        GW_PLAYER *playerP = &GwPlayer[i];
+
+        if (workP->objId != MB_MODEL_NONE) {
+            PlayerMetalKill(i);
+            PlayerBiriQKill(i);
+            mbObjKill(workP->objId);
+            workP->objId = MB_MODEL_NONE;
+        }
+        if (workP->matCopy) {
+            HSF_MATERIAL *matCopy = workP->matCopy;
+
+            HuMemDirectFree(matCopy);
+            workP->matCopy = NULL;
+        }
+        mbDiceNumKill(i);
+    }
+}
 
 MBPLAYERWORK *mbPlayerWorkGet(int playerNo)
 {
@@ -44,6 +92,76 @@ void mbPlayerEndTurnHookSet(int playerNo, MBPLAYERTURNHOOK hook)
 void mbPlayerMoveHookSet(int playerNo, MBPLAYERMOVEHOOK hook)
 {
     playerWork[playerNo].moveHook = hook;
+}
+
+BOOL mbPlayerRotateCheck(int playerNo)
+{
+    return playerWork[playerNo].rotateObj == NULL;
+}
+
+BOOL mbPlayerRotateCheckAll(void)
+{
+    int i;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        if (playerWork[i].rotateObj != NULL) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+void mbPlayerMatClone(int playerNo)
+{
+    HU3D_MODELID modelId = mbObjModelIDGet(mbPlayerObjIDGet(playerNo));
+    HU3D_MODEL *modelP = &Hu3DData[modelId];
+    HSF_DATA *hsf = modelP->hsf;
+    HSF_MATERIAL *matP = HuMemDirectMallocNum(
+        HEAP_HEAP, hsf->materialNum * sizeof(HSF_MATERIAL), HU_MEMNUM_OVL);
+
+    memcpy(matP, hsf->material, hsf->materialNum * sizeof(HSF_MATERIAL));
+    playerWork[playerNo].matCopy = matP;
+}
+
+u32 mbPlayerNameMesGet(int playerNo)
+{
+    u32 nameTbl[CHARNO_MAX] = {
+        MESS_CHARANAME_MARIO,
+        MESS_CHARANAME_LUIGI,
+        MESS_CHARANAME_PEACH,
+        MESS_CHARANAME_YOSHI,
+        MESS_CHARANAME_WARIO,
+        MESS_CHARANAME_DAISY,
+        MESS_CHARANAME_WALUIGI,
+        MESS_CHARANAME_KINOPIO,
+        MESS_CHARANAME_TERESA,
+        MESS_CHARANAME_MINIKOOPA,
+        MESS_CHARANAME_KINOPICO,
+        MESS_CHARANAME_MINIKOOPAR,
+        MESS_CHARANAME_MINIKOOPAG,
+        MESS_CHARANAME_MINIKOOPAB
+    };
+
+    return nameTbl[GwPlayer[playerNo].charNo];
+}
+
+char *mbPlayerNameGet(int playerNo)
+{
+    char *nameTbl[CHARNO_MAX] = {
+        "Mario",
+        "Luigi",
+        "Peach",
+        "Yoshi",
+        "Wario",
+        "Daisy",
+        "Waluigi",
+        "Kinopio",
+        "Teresa",
+        "Mini Koopa",
+        "Kinopiko"
+    };
+
+    return nameTbl[GwPlayer[playerNo].charNo];
 }
 
 void mbPlayerAmbSet(int playerNo, float ambR, float ambG, float ambB)

@@ -1,5 +1,7 @@
 #include "game/board/camera.h"
+#include "game/board/object.h"
 #include "game/disp.h"
+#include "game/frand.h"
 #include "game/hu3d.h"
 #include "game/memory.h"
 
@@ -16,6 +18,8 @@
     ((((s32)((angle) * (scale)) - 2046) & MB_TRIG_BYTE_MASK) >> 2)
 
 static float *cosTab;
+static HuVecF objectBBox[8];
+static HuVecF objectBBoxView[8];
 
 void mbMathInit(void)
 {
@@ -220,6 +224,17 @@ void mbMtxTransCat(Mtx mtx, float x, float y, float z)
     mtx[0][3] += x;
     mtx[1][3] += y;
     mtx[2][3] += z;
+}
+
+u32 mbRandMod(u32 mod)
+{
+    u32 value = frand();
+
+    value &= 0x7FFFFFFF;
+    if (value % 2 != 0) {
+        value |= 0x80000000;
+    }
+    return ((u64)value * mod) >> 32;
 }
 
 float mbVecMagXZ(HuVecF *a, HuVecF *b)
@@ -557,4 +572,237 @@ float mbMathDistScale(HuVecF *src, float scale, HuVecF *dst)
     pos.z = z;
     mbPos2Dto3D(&pos, dst);
     return 0.0f;
+}
+
+static void ObjectCullUpdate(HSF_OBJECT *object, Mtx mtx)
+{
+    HU3D_CAMERA *cameraP;
+    HuVecF center;
+    HuVecF centerView;
+    ROMtx cullMtx;
+    float fov;
+    float near;
+    float aspect;
+    float fovTan;
+    float cameraH;
+    float aspectInv;
+    s32 i;
+    BOOL cullF;
+
+    object->flags &= ~HSF_MATERIAL_DISPOFF;
+    if (shadowModelDrawF == FALSE) {
+        cameraP = &Hu3DCamera[Hu3DCameraNo];
+        fov = cameraP->fov;
+        near = cameraP->near;
+        aspect = cameraP->aspect;
+    } else {
+        fov = Hu3DShadow->fov;
+        near = Hu3DShadow->near;
+        aspect = 1.0f;
+    }
+    fovTan = -1.0f * (mbSinDeg(fov * 0.5f) / mbCosDeg(fov * 0.5f));
+    PSVECAdd(&object->mesh.mesh.min, &object->mesh.mesh.max, &center);
+    PSVECScale(&center, &center, 0.5f);
+    PSMTXMultVec(mtx, &center, &centerView);
+    cameraH = fabs(centerView.z * fovTan);
+    if (fabs(centerView.x) <= cameraH * aspect
+        && fabs(centerView.y) <= cameraH
+        && centerView.y < -near) {
+        return;
+    }
+
+    PSMTXReorder(mtx, cullMtx);
+    aspectInv = 1.0f / aspect;
+    cullMtx[0][0] *= aspectInv;
+    cullMtx[1][0] *= aspectInv;
+    cullMtx[2][0] *= aspectInv;
+    cullMtx[3][0] *= aspectInv;
+    cullMtx[0][2] *= fovTan;
+    cullMtx[1][2] *= fovTan;
+    cullMtx[2][2] *= fovTan;
+    cullMtx[3][2] *= fovTan;
+
+    objectBBox[0].x = object->mesh.mesh.max.x;
+    objectBBox[0].y = object->mesh.mesh.max.y;
+    objectBBox[0].z = object->mesh.mesh.max.z;
+    objectBBox[1].x = object->mesh.mesh.max.x;
+    objectBBox[1].y = object->mesh.mesh.max.y;
+    objectBBox[1].z = object->mesh.mesh.min.z;
+    objectBBox[2].x = object->mesh.mesh.max.x;
+    objectBBox[2].y = object->mesh.mesh.min.y;
+    objectBBox[2].z = object->mesh.mesh.max.z;
+    objectBBox[3].x = object->mesh.mesh.max.x;
+    objectBBox[3].y = object->mesh.mesh.min.y;
+    objectBBox[3].z = object->mesh.mesh.min.z;
+    objectBBox[4].x = object->mesh.mesh.min.x;
+    objectBBox[4].y = object->mesh.mesh.max.y;
+    objectBBox[4].z = object->mesh.mesh.max.z;
+    objectBBox[5].x = object->mesh.mesh.min.x;
+    objectBBox[5].y = object->mesh.mesh.max.y;
+    objectBBox[5].z = object->mesh.mesh.min.z;
+    objectBBox[6].x = object->mesh.mesh.min.x;
+    objectBBox[6].y = object->mesh.mesh.min.y;
+    objectBBox[6].z = object->mesh.mesh.max.z;
+    objectBBox[7].x = object->mesh.mesh.min.x;
+    objectBBox[7].y = object->mesh.mesh.min.y;
+    objectBBox[7].z = object->mesh.mesh.min.z;
+    PSMTXROMultVecArray(cullMtx, objectBBox, objectBBoxView, 8);
+
+    for (i = 0; i < 8; i++) {
+        if (objectBBoxView[i].z > near) {
+            break;
+        }
+    }
+    if (i >= 8) {
+        object->flags |= HSF_MATERIAL_DISPOFF;
+        return;
+    }
+
+    cullF = FALSE;
+    if (centerView.x >= 0.0f) {
+        for (i = 0; i < 8; i++) {
+            if (objectBBoxView[i].x < objectBBoxView[i].z) {
+                break;
+            }
+        }
+        if (i >= 8) {
+            cullF = TRUE;
+        }
+    } else {
+        for (i = 0; i < 8; i++) {
+            if (objectBBoxView[i].x > -objectBBoxView[i].z) {
+                break;
+            }
+        }
+        if (i >= 8) {
+            cullF = TRUE;
+        }
+    }
+    if (cullF) {
+        object->flags |= HSF_MATERIAL_DISPOFF;
+        return;
+    }
+
+    cullF = FALSE;
+    if (centerView.y >= 0.0f) {
+        for (i = 0; i < 8; i++) {
+            if (objectBBoxView[i].y < objectBBoxView[i].z) {
+                break;
+            }
+        }
+        if (i >= 8) {
+            cullF = TRUE;
+        }
+    } else {
+        for (i = 0; i < 8; i++) {
+            if (objectBBoxView[i].y > -objectBBoxView[i].z) {
+                break;
+            }
+        }
+        if (i >= 8) {
+            cullF = TRUE;
+        }
+    }
+    if (cullF) {
+        object->flags |= HSF_MATERIAL_DISPOFF;
+    }
+}
+
+#pragma dont_inline on
+static void ObjectBBoxUpdate(HSF_OBJECT *object)
+{
+    HuVecF *vertex = object->mesh.vertex->data;
+    s32 i;
+
+    object->mesh.mesh.max.x = -1000000.0f;
+    object->mesh.mesh.max.y = -1000000.0f;
+    object->mesh.mesh.max.z = -1000000.0f;
+    object->mesh.mesh.min.x = 1000000.0f;
+    object->mesh.mesh.min.y = 1000000.0f;
+    object->mesh.mesh.min.z = 1000000.0f;
+    for (i = 0; i < object->mesh.vertex->count; i++, vertex++) {
+        if (object->mesh.mesh.max.x < vertex->x) {
+            object->mesh.mesh.max.x = vertex->x;
+        }
+        if (object->mesh.mesh.max.y < vertex->y) {
+            object->mesh.mesh.max.y = vertex->y;
+        }
+        if (object->mesh.mesh.max.z < vertex->z) {
+            object->mesh.mesh.max.z = vertex->z;
+        }
+        if (object->mesh.mesh.min.x > vertex->x) {
+            object->mesh.mesh.min.x = vertex->x;
+        }
+        if (object->mesh.mesh.min.y > vertex->y) {
+            object->mesh.mesh.min.y = vertex->y;
+        }
+        if (object->mesh.mesh.min.z > vertex->z) {
+            object->mesh.mesh.min.z = vertex->z;
+        }
+    }
+}
+#pragma dont_inline reset
+
+static void ObjectCullHook(HSF_OBJECT *object, HSF_TRANSFORM *transform,
+    Mtx *prevMtx, Mtx *currMtx)
+{
+    Mtx objectMtx;
+    BOOL rotF = FALSE;
+
+    if (transform->rot.x != 0.0f) {
+        rotF = TRUE;
+        mbMtxRotTrigScaleX(objectMtx, mbSinDeg(transform->rot.x),
+            mbCosDeg(transform->rot.x), &transform->scale);
+    }
+    if (transform->rot.y != 0.0f) {
+        if (rotF == FALSE) {
+            rotF = TRUE;
+            mbMtxRotTrigScaleY(objectMtx, mbSinDeg(transform->rot.y),
+                mbCosDeg(transform->rot.y), &transform->scale);
+        } else {
+            mbMtxRotTrigY(objectMtx, mbSinDeg(transform->rot.y),
+                mbCosDeg(transform->rot.y));
+        }
+    }
+    if (transform->rot.z != 0.0f) {
+        if (rotF == FALSE) {
+            rotF = TRUE;
+            mbMtxRotTrigScaleZ(objectMtx, mbSinDeg(transform->rot.z),
+                mbCosDeg(transform->rot.z), &transform->scale);
+        } else {
+            mbMtxRotTrigZ(objectMtx, mbSinDeg(transform->rot.z),
+                mbCosDeg(transform->rot.z));
+        }
+    }
+    if (rotF == FALSE) {
+        PSMTXScale(objectMtx, transform->scale.x, transform->scale.y,
+            transform->scale.z);
+    }
+    objectMtx[0][3] = transform->pos.x;
+    objectMtx[1][3] = transform->pos.y;
+    objectMtx[2][3] = transform->pos.z;
+    PSMTXConcat(*prevMtx, objectMtx, *currMtx);
+    ObjectCullUpdate(object, *currMtx);
+}
+
+void mbObjCullInit(MBMODELID modelId)
+{
+    HSF_DATA *hsf;
+    HSF_OBJECT *object;
+    s16 i;
+    BOOL cullF = FALSE;
+
+    hsf = Hu3DData[mbObjModelIDGet(modelId)].hsf;
+    mbObjModelIDGet(modelId);
+    object = hsf->object;
+    for (i = 0; i < hsf->objectNum; i++, object++) {
+        if (object->mesh.cenvNum == 0 && object->constData != NULL) {
+            cullF = TRUE;
+            ObjectBBoxUpdate(object);
+            ((HSF_CONSTDATA *)object->constData)->hook = ObjectCullHook;
+        }
+    }
+    if (cullF == FALSE) {
+        Hu3DModelAttrSet(mbObjModelIDGet(modelId), HU3D_ATTR_NOCULL);
+    }
 }

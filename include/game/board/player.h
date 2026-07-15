@@ -42,6 +42,7 @@ static inline int mbPlayerGrpGet(int playerNo)
 
 void mbPlayerTurnInitHookSet(void (*hook)(int playerNo));
 void mbPlayerTurnCloseHookSet(void (*hook)(int playerNo));
+void mbPlayerClose(void);
 MBPLAYERWORK *mbPlayerWorkGet(int playerNo);
 void mbPlayerStartTurnHookSet(int playerNo, MBPLAYERTURNHOOK hook);
 void mbPlayerEndTurnHookSet(int playerNo, MBPLAYERTURNHOOK hook);
@@ -78,6 +79,10 @@ void mbPlayerScaleSet(int playerNo, float scaleX, float scaleY, float scaleZ);
 void mbPlayerScaleGet(int playerNo, HuVecF *scale);
 void mbPlayerRotateStart(int playerNo, s16 endAngle, s16 maxTime);
 BOOL mbPlayerRotateCheck(int playerNo);
+BOOL mbPlayerRotateCheckAll(void);
+void mbPlayerMatClone(int playerNo);
+u32 mbPlayerNameMesGet(int playerNo);
+char *mbPlayerNameGet(int playerNo);
 void mbPlayerMotionSet(int playerNo, int motNo, u32 attr);
 int mbPlayerMotionGet(int playerNo);
 void mbPlayerMotionShiftSet(int playerNo, int motNo, float start, float end,

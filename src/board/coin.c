@@ -1,6 +1,8 @@
 #include "game/board/coin.h"
 
+#include "game/gamework.h"
 #include "game/memory.h"
+#include "game/object.h"
 
 #include "string.h"
 
@@ -27,6 +29,18 @@ typedef struct MbCoinObjData_s {
     MBCOINOBJBANK *bank[COIN_OBJ_BANK_MAX];
 } MBCOINOBJDATA;
 
+typedef struct CoinDispWork_s {
+    unsigned killF : 1;
+    unsigned sign : 1;
+    unsigned mode : 3;
+    u8 modelNum;
+    s16 no;
+    u16 delay;
+    u16 time;
+    u16 maxTime;
+} COINDISPWORK;
+
+static OMOBJ *coinDispOMObj[GW_PLAYER_MAX + 1] = {};
 static MBCOINOBJDATA coinObjData;
 
 s16 mbCoinCreate(void)
@@ -358,4 +372,29 @@ void mbCoinObjMotSet(s16 objId, s8 motNo)
     objNo = objId & 0x3F;
     bankP = coinObjData.bank[bankNo];
     bankP->motNo[objNo] = motNo;
+}
+
+void mbCoinDispKill(s16 no)
+{
+    if (no <= 0 || no > GW_PLAYER_MAX) {
+        return;
+    }
+    if (coinDispOMObj[no]) {
+        COINDISPWORK *work = omObjGetWork(coinDispOMObj[no], COINDISPWORK);
+
+        work->killF = TRUE;
+    }
+}
+
+BOOL mbCoinDispKillCheck(s16 no)
+{
+    if (no <= 0 || no > GW_PLAYER_MAX) {
+        return TRUE;
+    }
+    if (coinDispOMObj[no]) {
+        COINDISPWORK *work = omObjGetWork(coinDispOMObj[no], COINDISPWORK);
+
+        return FALSE;
+    }
+    return TRUE;
 }

@@ -33,6 +33,8 @@ void mbCoinObjDispSet(s16 objId, BOOL dispF);
 BOOL mbCoinObjDispGet(s16 objId);
 void mbCoinObjLayerSet(s16 objId, u16 layer);
 void mbCoinObjMotSet(s16 objId, s8 motNo);
+void mbCoinDispKill(s16 no);
+BOOL mbCoinDispKillCheck(s16 no);
 
 void mbCoinEffCreate(HuVecF *pos);
 
