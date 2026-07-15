@@ -665,7 +665,7 @@ config.libs = [
         "os",
         [
             Object(
-                NonMatching,
+                Matching,
                 "dolphin/os/OS.c",
                 extra_cflags=["-char unsigned", "-DSDK_REVISION=1"],
             ),

@@ -308,7 +308,7 @@ static void mbMain(void)
             }
         }
         if (GWPartyGet()) {
-            if (!GwSystem.tagF) {
+            if (!GWTeamFGet()) {
                 for (i = 0; i < 4; i++) {
                     mbPlayerCoinSet(i, 10);
                 }
@@ -335,36 +335,38 @@ static void mbMain(void)
             mbTelopTimeChangeKill();
             mbCameraMoveStop();
         }
+        GwSystem.nextTime = GwSystem.curTime;
     }
-    GwSystem.nextTime = GwSystem.curTime;
     dayF = (GwSystem.curTime == 0);
     nightF = dayF ? FALSE : TRUE;
     GwMgNightF = nightF;
     if (mbReturnMgCheck()) {
         if (!GWPartyGet()) {
             interruptF = mbev_SingleMgEnd(0);
-        } else if (_CheckFlag(FLAG_BOARD_MG)) {
-            _ClearFlag(FLAG_BOARD_MG);
-        } else if (_CheckFlag(FLAG_BOARD_MG_KETTOU)) {
-            mbev_CapKettouEndCall(GwSystem.turnPlayerNo);
-            _ClearFlag(FLAG_BOARD_MG_KETTOU);
-            interruptF = TRUE;
-        } else if (_CheckFlag(FLAG_BOARD_MG_DONKEY)) {
-            mbev_CapDonkeyEndCall(GwSystem.turnPlayerNo);
-            _ClearFlag(FLAG_BOARD_MG_DONKEY);
-            interruptF = TRUE;
-        } else if (_CheckFlag(FLAG_BOARD_MG_KOOPA)) {
-            mbev_CapKoopaEndCall(GwSystem.turnPlayerNo);
-            _ClearFlag(FLAG_BOARD_MG_KOOPA);
-            interruptF = TRUE;
-        } else if (_CheckFlag(FLAGNUM(FLAG_GROUP_COMMON, 19))) {
-            if (ev_LoadTime != NULL) {
-                ev_LoadTime();
+        } else {
+            if (_CheckFlag(FLAG_BOARD_MG)) {
+                _ClearFlag(FLAG_BOARD_MG);
+            } else if (_CheckFlag(FLAG_BOARD_MG_KETTOU)) {
+                mbev_CapKettouEndCall(GwSystem.turnPlayerNo);
+                _ClearFlag(FLAG_BOARD_MG_KETTOU);
+                interruptF = TRUE;
+            } else if (_CheckFlag(FLAG_BOARD_MG_DONKEY)) {
+                mbev_CapDonkeyEndCall(GwSystem.turnPlayerNo);
+                _ClearFlag(FLAG_BOARD_MG_DONKEY);
+                interruptF = TRUE;
+            } else if (_CheckFlag(FLAG_BOARD_MG_KOOPA)) {
+                mbev_CapKoopaEndCall(GwSystem.turnPlayerNo);
+                _ClearFlag(FLAG_BOARD_MG_KOOPA);
+                interruptF = TRUE;
+            } else if (_CheckFlag(FLAGNUM(FLAG_GROUP_COMMON, 19))) {
+                if (ev_LoadTime != NULL) {
+                    ev_LoadTime();
+                }
+                _ClearFlag(FLAGNUM(FLAG_GROUP_COMMON, 19));
+                interruptF = TRUE;
             }
-            _ClearFlag(FLAGNUM(FLAG_GROUP_COMMON, 19));
-            interruptF = TRUE;
+            _ClearFlag(FLAG_BOARD_MOVE_DONE);
         }
-        _ClearFlag(FLAG_BOARD_MOVE_DONE);
     }
     while (1) {
     if (ev_TurnStart && !interruptF) {
@@ -405,10 +407,12 @@ static void mbMain(void)
             mbTutorialCall(2);
             mbStatusColorAllSet(0);
             mbNextTime();
+            continue;
         } else if (_CheckFlag(FLAG_BOARD_NOMG)) {
             interruptF = FALSE;
             mbStatusColorAllSet(0);
             mbNextTime();
+            continue;
         } else {
             s32 mgCallF;
             GwSystem.turnPlayerNo = -1;
@@ -446,8 +450,8 @@ static void mbMain(void)
         }
         GwSystem.turnPlayerNo = -1;
         mbStatusColorAllSet(0);
+        GwSystem.turnPlayerNo = 0;
     }
-    GwSystem.turnPlayerNo = 0;
     interruptF = FALSE;
     }
 }
