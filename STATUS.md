@@ -429,6 +429,19 @@ retained in [`docs/native_matching_wave64.md`](docs/native_matching_wave64.md).
 This was an object-only WIP slice; no full-DOL gate or Matching promotion is
 claimed.
 
+Wave 65 advances the engine-core `board/dice.c` owner from 15 to 43 of 68
+target functions represented and from one to 35 data-value-exact functions.
+Source `.text` grows from `0x254` to `0x1A5C`; target/source `.text` is now
+`0x6390/0x1A5C` at 25.429379%, with `0x1328` target text bytes exact. The wave
+recovers the real Dice, fade, number, SNpc, effect, and weighted-vertex work
+layouts, the retained tables/globals, the complete number flight/shrink/mesh
+deformation path, and the file-wide `-O4,p -schedule off -opt nopeephole`
+compiler shape. The main process/object/event/effect closures remain, so
+`dice.c` stays `NonMatching` and does not change the clean-C target ledger.
+Evidence is retained in
+[`docs/native_matching_wave65.md`](docs/native_matching_wave65.md). This was
+an object-only WIP slice; no full-DOL gate or Matching promotion is claimed.
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
