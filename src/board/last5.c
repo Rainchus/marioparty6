@@ -14,11 +14,7 @@ typedef struct Last5CoinWork_s {
     float velocity;
 } LAST5COINWORK;
 
-extern s16 mbPlayerTeamRankGet(int teamNo);
 extern int mbCoinAddProcExec(int playerNo, int coinNum, BOOL dispF, BOOL fastF);
-extern void mbPlayerMotionShiftSet(int playerNo, int motNo, float startTime, float endTime, u32 attr);
-extern void mbPlayerMotionEndWait(int playerNo);
-extern void mbPlayerWinLoseVoicePlay(int playerNo, int motNo, int voiceId);
 
 static void Last5PlayerOrderGet(int *playerOrder, int playerNum)
 {

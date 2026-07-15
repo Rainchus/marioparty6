@@ -12,14 +12,6 @@
 
 #include <string.h>
 
-extern int mbPlayerRankGet(int playerNo);
-extern int mbPlayerStarGet(int playerNo);
-extern int mbPlayerTeamRankGet(int teamNo);
-extern s16 mbPlayerTeamCoinGet(int teamNo);
-extern s16 mbPlayerGrpStarGet(int teamNo);
-extern s8 mbPlayerCapsuleGet(int playerNo, int index);
-extern s8 mbPlayerTeamCapsuleGet(int teamNo, int index);
-extern int mbPlayerTeamFindPlayer(int teamNo, int index);
 extern int mbCapColorGet(int capsuleNo);
 extern int mbSingleMgUnlockNumGet(void);
 extern int mbSingleStepGet(void);

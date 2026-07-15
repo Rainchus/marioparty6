@@ -41,20 +41,7 @@ extern void mbGuideMotionNextSet(OMOBJ *obj, s16 motNo);
 extern void mbGuideMotionSet(OMOBJ *obj, s16 motNo, BOOL shiftF);
 extern void mbPlayerColSnapSet(BOOL enable);
 extern void mbPlayerSwap(int playerNo1, int playerNo2);
-extern void *mbPlayerWorkGet(int playerNo);
-extern void mbPlayerPosSetV(int playerNo, HuVecF *pos);
-extern void mbPlayerRotYSet(int playerNo, float rotY);
-extern void mbPlayerMotionSet(int playerNo, int motNo, u32 attr);
-extern void mbPlayerMotionShiftSet(int playerNo, int motNo, float start,
-    float end, u32 attr);
-extern void mbPlayerMotionVoiceOnSet(int playerNo, int motNo, BOOL enable);
-extern BOOL mbPlayerMotionEndCheck(int playerNo);
-extern BOOL mbPlayerMotionEndCheckAll(void);
 extern BOOL mbPlayerRotateCheckAll(void);
-extern void mbPlayerWinLoseVoicePlay(int playerNo, int motNo, int voiceNo);
-extern void mbPlayerCoinAdd(int playerNo, int coinNum);
-extern void mbPlayerTeamCoinSet(int teamNo, s16 coinNum);
-extern void mbPlayerGrpStarSet(int teamNo, s16 starNum);
 extern u32 mbPlayerNameMesGet(int playerNo);
 extern void mbTelopCreate(int playerNo, int telopNo, BOOL statF);
 extern BOOL mbTelopCheck(void);
@@ -62,13 +49,6 @@ extern void mbStarMapViewProcExec(void);
 extern void mbWipeFadeIn(void);
 extern void mbWipeFadeOut(void);
 extern void mbWipeWait(void);
-
-typedef struct MbOpeningPlayerWork_s {
-    u8 unk00[0x10];
-    u8 moveF : 1;
-    u8 playerNo : 2;
-    u8 unk10 : 5;
-} MBOPENINGPLAYERWORK;
 
 typedef struct OpeningCoinWork_s {
     s16 coinId;
@@ -233,7 +213,7 @@ static void ev_OpeningParty(void)
     int boardNo;
     int i;
     GW_PLAYER *playerP;
-    MBOPENINGPLAYERWORK *playerWorkP;
+    MBPLAYERWORK *playerWorkP;
 
     mbCameraNearFarSet(10.0f, 30000.0f);
     HuDataDirRead(0x00110000);

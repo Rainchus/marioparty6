@@ -31,12 +31,6 @@ typedef struct BranchGuideWork_s {
     MBMODELID modelId[4];
 } BRANCHGUIDEWORK;
 
-typedef struct BranchPlayerWork_s {
-    u8 _unk00[0xE];
-    s16 _unk0E;
-} BRANCHPLAYERWORK;
-
-extern BRANCHPLAYERWORK *mbPlayerWorkGet(int playerNo);
 extern void mbPos3Dto2D(HuVecF *pos3D, HuVecF *pos2D);
 extern s8 mbPadStkXGet(int padNo);
 extern s8 mbPadStkYGet(int padNo);
@@ -418,9 +412,9 @@ static int BranchComChoiceGet(int playerNo, int linkNum, s16 *linkTbl, BOOL debu
     choice = -1;
     bestLen = 9999;
 
-    if (!debugF && mbPlayerWorkGet(playerNo)->_unk0E != 0) {
+    if (!debugF && mbPlayerWorkGet(playerNo)->masuNext != 0) {
         for (i = 0; i < linkNum; i++) {
-            int unk0E = mbPlayerWorkGet(playerNo)->_unk0E;
+            int unk0E = mbPlayerWorkGet(playerNo)->masuNext;
 
             len = mbMasuFind_IdStepGet(linkTbl[i], unk0E);
 

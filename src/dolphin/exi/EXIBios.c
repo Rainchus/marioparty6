@@ -50,6 +50,8 @@ extern void __OSEnableBarnacle(s32 chan, u32 dev);
 static BOOL __EXIProbe(s32 chan);
 static BOOL __EXIAttach(s32 chan, EXICallback extCallback);
 
+#pragma scheduling off
+
 static void SetExiInterruptMask(s32 chan, EXIControl* exi) {
   EXIControl* exi2;
 
@@ -775,3 +777,5 @@ char* EXIGetTypeString(u32 type) {
       return "Unknown";
   }
 }
+
+#pragma scheduling reset

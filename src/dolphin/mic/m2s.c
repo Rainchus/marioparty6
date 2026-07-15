@@ -30,8 +30,6 @@ typedef struct M2SDebugControl {
     s32 index;
 } M2SDebugControl;
 
-static void __M2SCalibration(s16* buffer, s32 samples);
-
 static M2SControlBlock __M2SBlock[M2S_CHANNEL_COUNT];
 static u32 __M2STmpHistory[M2S_CALIBRATION_SAMPLES];
 static M2SDebugControl __M2SDebug;
@@ -44,6 +42,51 @@ static s32 __M2SMode = 0;
 static s32 __M2SPrerecordingSamples = 0;
 static s32 __M2STmpAcc = 0;
 static s32 __M2STmpPtr = 0;
+
+static void __M2SCalibration(s16* buffer, s32 samples) {
+    M2SControlBlock* cb = &__M2SBlock[__M2SChannel];
+    s32 i;
+
+    if (cb->shifts > 0) {
+        for (i = 0; i < samples; i++) {
+            buffer[i] <<= cb->shifts;
+        }
+    } else if (cb->shifts < 0) {
+        for (i = 0; i < samples; i++) {
+            buffer[i] >>= -cb->shifts;
+        }
+    }
+
+    if (!cb->calibrated) {
+        s32 threshold = cb->calibration_threshold;
+        s32 accumulator = cb->calibration_accumulator;
+        s32 history_index = cb->calibration_history_index;
+
+        memcpy(__M2STmpHistory, cb->calibration_history,
+               M2S_CALIBRATION_HISTORY_BYTES);
+        for (i = 0; i < samples; i++) {
+            s32 sample = buffer[i];
+            s32 average = (sample * sample) / M2S_CALIBRATION_SAMPLES;
+
+            accumulator -= __M2STmpHistory[history_index];
+            accumulator += average;
+            if (accumulator >= threshold) {
+                cb->calibrated = TRUE;
+                return;
+            }
+
+            buffer[i] = 0;
+            __M2STmpHistory[history_index] = average;
+            history_index++;
+            if (history_index >= M2S_CALIBRATION_SAMPLES) {
+                history_index = 0;
+            }
+        }
+
+        __M2STmpAcc = accumulator;
+        __M2STmpPtr = history_index;
+    }
+}
 
 void M2SInit(void) {
     if (__init) {
@@ -392,10 +435,17 @@ void M2SAdvanceBuffer(s32 samples) {
     cb->sample_index = MICUpdateIndex(__M2SChannel, cb->sample_index, samples);
 
     if (__M2SDebug.buffer != NULL) {
-        s32 i;
+        s32 index = __M2SDebug.index;
 
-        for (i = 0; i < samples && __M2SDebug.index < __M2SDebug.samples; i++) {
-            __M2SDebug.buffer[__M2SDebug.index++] = __M2SBuffer[i];
+        if (samples > 0 && index < __M2SDebug.samples) {
+            s16* source = __M2SBuffer;
+            s16* destination = &__M2SDebug.buffer[index];
+
+            do {
+                *destination++ = *source++;
+                index++;
+            } while (--samples);
+            __M2SDebug.index = index;
         }
     }
 
@@ -404,51 +454,6 @@ void M2SAdvanceBuffer(s32 samples) {
         cb->calibration_history_index = __M2STmpPtr;
         memcpy(cb->calibration_history, __M2STmpHistory,
                M2S_CALIBRATION_HISTORY_BYTES);
-    }
-}
-
-static void __M2SCalibration(s16* buffer, s32 samples) {
-    M2SControlBlock* cb = &__M2SBlock[__M2SChannel];
-    s32 i;
-
-    if (cb->shifts > 0) {
-        for (i = 0; i < samples; i++) {
-            buffer[i] = (s16)(buffer[i] << cb->shifts);
-        }
-    } else if (cb->shifts < 0) {
-        for (i = 0; i < samples; i++) {
-            buffer[i] = (s16)(buffer[i] >> -cb->shifts);
-        }
-    }
-
-    if (!cb->calibrated) {
-        s32 threshold = cb->calibration_threshold;
-        s32 accumulator = cb->calibration_accumulator;
-        s32 history_index = cb->calibration_history_index;
-
-        memcpy(__M2STmpHistory, cb->calibration_history,
-               M2S_CALIBRATION_HISTORY_BYTES);
-        for (i = 0; i < samples; i++) {
-            s32 sample = buffer[i];
-            s32 average = (sample * sample) / M2S_CALIBRATION_SAMPLES;
-
-            accumulator -= __M2STmpHistory[history_index];
-            accumulator += average;
-            if (accumulator >= threshold) {
-                cb->calibrated = TRUE;
-                return;
-            }
-
-            buffer[i] = 0;
-            __M2STmpHistory[history_index] = average;
-            history_index++;
-            if (history_index >= M2S_CALIBRATION_SAMPLES) {
-                history_index = 0;
-            }
-        }
-
-        __M2STmpAcc = accumulator;
-        __M2STmpPtr = history_index;
     }
 }
 
