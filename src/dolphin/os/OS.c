@@ -9,11 +9,6 @@
 
 #include <dolphin/os/__os.h>
 
-/*
- * Clean-C SDK subset. The FPR, debugger-vector, exception-vector, default
- * exception, and paired-single routines remain owned by the target fallback.
- */
-
 #define NOP 0x60000000
 
 // external functions
@@ -92,6 +87,90 @@ void __OSDBINTEND(void);
 void __OSDBJUMPSTART(void);
 void __OSDBJUMPEND(void);
 extern void OSDefaultExceptionHandler(__OSException exception, OSContext* context);
+
+asm void __OSFPRInit(void)
+{
+    nofralloc
+    mfmsr r3
+    ori r3, r3, 0x2000
+    mtmsr r3
+
+    mfspr r3, 0x398
+    rlwinm. r3, r3, 3, 0x1f, 0x1f
+    beq skip_ps_init
+
+    lis r3, ZeroPS@ha
+    addi r3, r3, ZeroPS@l
+    psq_l f0, 0(r3), 0, 0
+    ps_mr f1, f0
+    ps_mr f2, f0
+    ps_mr f3, f0
+    ps_mr f4, f0
+    ps_mr f5, f0
+    ps_mr f6, f0
+    ps_mr f7, f0
+    ps_mr f8, f0
+    ps_mr f9, f0
+    ps_mr f10, f0
+    ps_mr f11, f0
+    ps_mr f12, f0
+    ps_mr f13, f0
+    ps_mr f14, f0
+    ps_mr f15, f0
+    ps_mr f16, f0
+    ps_mr f17, f0
+    ps_mr f18, f0
+    ps_mr f19, f0
+    ps_mr f20, f0
+    ps_mr f21, f0
+    ps_mr f22, f0
+    ps_mr f23, f0
+    ps_mr f24, f0
+    ps_mr f25, f0
+    ps_mr f26, f0
+    ps_mr f27, f0
+    ps_mr f28, f0
+    ps_mr f29, f0
+    ps_mr f30, f0
+    ps_mr f31, f0
+
+skip_ps_init:
+    lfd f0, ZeroF(r13)
+    fmr f1, f0
+    fmr f2, f0
+    fmr f3, f0
+    fmr f4, f0
+    fmr f5, f0
+    fmr f6, f0
+    fmr f7, f0
+    fmr f8, f0
+    fmr f9, f0
+    fmr f10, f0
+    fmr f11, f0
+    fmr f12, f0
+    fmr f13, f0
+    fmr f14, f0
+    fmr f15, f0
+    fmr f16, f0
+    fmr f17, f0
+    fmr f18, f0
+    fmr f19, f0
+    fmr f20, f0
+    fmr f21, f0
+    fmr f22, f0
+    fmr f23, f0
+    fmr f24, f0
+    fmr f25, f0
+    fmr f26, f0
+    fmr f27, f0
+    fmr f28, f0
+    fmr f29, f0
+    fmr f30, f0
+    fmr f31, f0
+
+    mtfsf 0xff, f0
+    blr
+}
 
 static void DisableWriteGatherPipe(void) {
     u32 hid2;
@@ -352,13 +431,13 @@ static void OSExceptionInit(void) {
         // Modify opcodes at __DBVECTOR if necessary
         if (__DBIsExceptionMarked(exception)) {
             DBPrintf(">>> OSINIT: exception %d vectored to debugger\n", exception);
-            memcpy((void*)__DBVECTOR, (void*)__OSDBJUMPSTART, (u32)__OSDBJUMPEND - (u32)__OSDBJUMPSTART);
+            memcpy((void*)__DBVECTOR, (void*)__OSDBINTEND, (u32)__OSDBJUMPEND - (u32)__OSDBINTEND);
         } else {
             // make sure the opcodes are still nop
             u32* ops = (u32*)__DBVECTOR;
             int cb;
 
-            for (cb = 0; cb < (u32)__OSDBJUMPEND - (u32)__OSDBJUMPSTART; cb += sizeof(u32)) {
+            for (cb = 0; cb < (u32)__OSDBJUMPEND - (u32)__OSDBINTEND; cb += sizeof(u32)) {
                 *ops++ = NOP;
             }
         }
@@ -385,6 +464,30 @@ static void OSExceptionInit(void) {
     DBPrintf("Exceptions initialized...\n");
 }
 
+static asm void __OSDBIntegrator(void)
+{
+    nofralloc
+entry __OSDBINTSTART
+    li r5, OS_DBINTERFACE_ADDR
+    mflr r3
+    stw r3, DB_EXCEPTIONRET_OFFSET(r5)
+    lwz r3, DB_EXCEPTIONDEST_OFFSET(r5)
+    oris r3, r3, OS_CACHED_REGION_PREFIX
+    mtlr r3
+    li r3, 0x30
+    mtmsr r3
+    blr
+entry __OSDBINTEND
+}
+
+static asm void __OSDBJump(void)
+{
+    nofralloc
+entry __OSDBJUMPSTART
+    bla OS_DBJUMPPOINT_ADDR
+entry __OSDBJUMPEND
+}
+
 __OSExceptionHandler __OSSetExceptionHandler(__OSException exception, __OSExceptionHandler handler) {
     __OSExceptionHandler oldHandler;
 
@@ -398,6 +501,84 @@ __OSExceptionHandler __OSSetExceptionHandler(__OSException exception, __OSExcept
 __OSExceptionHandler __OSGetExceptionHandler(__OSException exception) {
     ASSERTMSGLINE(1228, exception < __OS_EXCEPTION_MAX, "__OSGetExceptionHandler(): unknown exception.");
     return OSExceptionTable[exception];
+}
+
+static asm void OSExceptionVector(void)
+{
+    nofralloc
+entry __OSEVStart
+    mtsprg 0, r4
+    lwz r4, OS_CURRENTCONTEXT_PADDR
+    stw r3, OS_CONTEXT_R3(r4)
+    mfsprg r3, 0
+    stw r3, OS_CONTEXT_R4(r4)
+    stw r5, OS_CONTEXT_R5(r4)
+    lhz r3, OS_CONTEXT_STATE(r4)
+    ori r3, r3, OS_CONTEXT_STATE_EXC
+    sth r3, OS_CONTEXT_STATE(r4)
+    mfcr r3
+    stw r3, OS_CONTEXT_CR(r4)
+    mflr r3
+    stw r3, OS_CONTEXT_LR(r4)
+    mfctr r3
+    stw r3, OS_CONTEXT_CTR(r4)
+    mfxer r3
+    stw r3, OS_CONTEXT_XER(r4)
+    mfsrr0 r3
+    stw r3, OS_CONTEXT_SRR0(r4)
+    mfsrr1 r3
+    stw r3, OS_CONTEXT_SRR1(r4)
+    mr r5, r3
+entry __DBVECTOR
+    nop
+    mfmsr r3
+    ori r3, r3, 0x30
+    mtsrr1 r3
+entry __OSEVSetNumber
+    addi r3, 0, 0
+    lwz r4, 0xD4
+    rlwinm. r5, r5, 0, MSR_RI_BIT, MSR_RI_BIT
+    bne recoverable
+    addis r5, 0, OSDefaultExceptionHandler@ha
+    addi r5, r5, OSDefaultExceptionHandler@l
+    mtsrr0 r5
+    rfi
+recoverable:
+    rlwinm r5, r3, 2, 22, 29
+    lwz r5, OS_EXCEPTIONTABLE_ADDR(r5)
+    mtsrr0 r5
+    rfi
+entry __OSEVEnd
+    nop
+}
+
+asm void OSDefaultExceptionHandler(register __OSException exception, register OSContext* context)
+{
+    nofralloc
+    OS_EXCEPTION_SAVE_GPRS(context)
+    mfdsisr r5
+    mfdar r6
+    stwu r1, -8(r1)
+    b __OSUnhandledException
+}
+
+void __OSPSInit(void)
+{
+    PPCMthid2(PPCMfhid2() | 0x80000000 | 0x20000000);
+    ICFlashInvalidate();
+    __sync();
+
+    asm {
+        li r3, 0
+        mtspr GQR0, r3
+        mtspr GQR1, r3
+        mtspr GQR2, r3
+        mtspr GQR3, r3
+        mtspr GQR4, r3
+        mtspr GQR5, r3
+        mtspr GQR6, r3
+        mtspr GQR7, r3
+    }
 }
 
 u32 __OSGetDIConfig(void) {

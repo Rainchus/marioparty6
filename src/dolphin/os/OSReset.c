@@ -67,18 +67,46 @@ BOOL __OSCallResetFunctions(BOOL final)
     return TRUE;
 }
 
-static void Reset(u32 resetCode)
+static asm void Reset(u32 resetCode)
 {
-    OSTick start;
-
-    PPCMthid0(PPCMfhid0() | HID0_ABE);
-    PPCSync();
-    start = OSGetTick();
-    while (OSGetTick() - start < 0x1124) {
-    }
-    __PIRegs[PI_RESETCODE] = 3;
-    __PIRegs[PI_RESETCODE] = resetCode;
-    PPCHalt();
+    nofralloc
+    b L_000001BC
+L_000001A0:
+    mfspr r8, HID0
+    ori r8, r8, 0x8
+    mtspr HID0, r8
+    isync
+    sync
+    nop
+    b L_000001C0
+L_000001BC:
+    b L_000001DC
+L_000001C0:
+    mftb r5, 268
+L_000001C4:
+    mftb r6, 268
+    subf r7, r5, r6
+    cmplwi r7, 0x1124
+    blt L_000001C4
+    nop
+    b L_000001E0
+L_000001DC:
+    b L_000001FC
+L_000001E0:
+    lis r8, 0xcc00
+    ori r8, r8, 0x3000
+    li r4, 0x3
+    stw r4, 0x24(r8)
+    stw r3, 0x24(r8)
+    nop
+    b L_00000200
+L_000001FC:
+    b L_00000208
+L_00000200:
+    nop
+    b L_00000200
+L_00000208:
+    b L_000001A0
 }
 
 static void KillThreads(void)
@@ -86,11 +114,11 @@ static void KillThreads(void)
     OSThread* thread;
     OSThread* next;
 
-    for (thread = __OSActiveThreadQueue.head; thread != NULL; thread = next) {
+    for (thread = __OSActiveThreadQueue.head; thread; thread = next) {
         next = thread->linkActive.next;
         switch (thread->state) {
-        case OS_THREAD_STATE_READY:
-        case OS_THREAD_STATE_WAITING:
+        case 1:
+        case 4:
             OSCancelThread(thread);
             continue;
         default:
@@ -107,8 +135,9 @@ void __OSDoHotReset(u32 resetCode)
     Reset(resetCode * 8);
 }
 
-static void __OSShutdownDevices(BOOL doRecalibration)
+void __OSShutdownDevices(BOOL doRecalibration)
 {
+    int rc;
     BOOL disableRecalibration;
 
     __OSStopAudioSystem();
@@ -116,13 +145,14 @@ static void __OSShutdownDevices(BOOL doRecalibration)
         disableRecalibration = __PADDisableRecalibration(TRUE);
     }
 
-    while (!__OSCallResetFunctions(FALSE)) {
-    }
-    while (!__OSSyncSram()) {
-    }
+    do {
+    } while (!__OSCallResetFunctions(FALSE));
+    do {
+    } while (!__OSSyncSram());
 
     OSDisableInterrupts();
-    __OSCallResetFunctions(TRUE);
+    rc = __OSCallResetFunctions(TRUE);
+    ASSERTLINE(408, rc);
     LCDisable();
     if (!doRecalibration) {
         __PADDisableRecalibration(disableRecalibration);
@@ -139,7 +169,7 @@ void OSResetSystem(s32 reset, u32 resetCode, BOOL forceMenu)
     if (reset == OS_RESET_HOTRESET && forceMenu) {
         sram = __OSLockSram();
         sram->flags |= 0x40;
-        __OSUnlockSram(TRUE);
+        __OSUnlockSram(1);
         resetCode = 0;
     }
 
@@ -173,10 +203,10 @@ u32 OSGetResetCode(void)
 {
     u32 resetCode;
 
-    if (__OSRebootParams.valid) {
-        resetCode = OS_RESETCODE_RESTART | __OSRebootParams.restartCode;
-    } else {
-        resetCode = (__PIRegs[PI_RESETCODE] & ~7) / 8;
-    }
+    if (__OSRebootParams.valid)
+        resetCode = 0x80000000 | __OSRebootParams.restartCode;
+    else
+        resetCode = (__PIRegs[9] & 0xFFFFFFF8) / 8;
+
     return resetCode;
 }

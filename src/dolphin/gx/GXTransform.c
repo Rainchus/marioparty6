@@ -3,68 +3,111 @@
 
 #include <dolphin/gx/GXPriv.h>
 
-static inline void Copy6Floats(const f32 src[6], f32 dest[6])
+#define qr0 0
+
+static void WriteProjPS(const register f32 proj[6], register volatile void* dest)
 {
-    dest[0] = src[0];
-    dest[1] = src[1];
-    dest[2] = src[2];
-    dest[3] = src[3];
-    dest[4] = src[4];
-    dest[5] = src[5];
+    register f32 p01, p23, p45;
+
+    asm {
+        psq_l  p01,  0(proj), 0, qr0
+        psq_l  p23,  8(proj), 0, qr0
+        psq_l  p45, 16(proj), 0, qr0
+        psq_st p01,  0(dest), 0, qr0
+        psq_st p23,  0(dest), 0, qr0
+        psq_st p45,  0(dest), 0, qr0
+    }
 }
 
-static inline void WriteProjection(const f32 proj[6])
+static void Copy6Floats(const register f32 src[6], register volatile f32* dest)
+{
+    register f32 ps01, ps23, ps45;
+
+    asm {
+        psq_l  ps01,  0(src), 0, qr0
+        psq_l  ps23,  8(src), 0, qr0
+        psq_l  ps45, 16(src), 0, qr0
+        psq_st ps01,  0(dest), 0, qr0
+        psq_st ps23,  8(dest), 0, qr0
+        psq_st ps45, 16(dest), 0, qr0
+    }
+}
+
+static void __GXSetProjection(void)
 {
     GX_WRITE_U8(GX_LOAD_XF_REG);
     GX_WRITE_U32(0x61020);
-    GX_WRITE_F32(proj[0]);
-    GX_WRITE_F32(proj[1]);
-    GX_WRITE_F32(proj[2]);
-    GX_WRITE_F32(proj[3]);
-    GX_WRITE_F32(proj[4]);
-    GX_WRITE_F32(proj[5]);
+    WriteProjPS(gx->projMtx, (volatile void*)GXFIFO_ADDR);
     GX_WRITE_U32(gx->projType);
 }
 
-static inline void WriteMtx4x3(const f32 mtx[3][4])
+static void WriteMTXPS4x3(const register f32 mtx[3][4], register volatile f32* dest)
 {
-    GX_WRITE_F32(mtx[0][0]);
-    GX_WRITE_F32(mtx[0][1]);
-    GX_WRITE_F32(mtx[0][2]);
-    GX_WRITE_F32(mtx[0][3]);
-    GX_WRITE_F32(mtx[1][0]);
-    GX_WRITE_F32(mtx[1][1]);
-    GX_WRITE_F32(mtx[1][2]);
-    GX_WRITE_F32(mtx[1][3]);
-    GX_WRITE_F32(mtx[2][0]);
-    GX_WRITE_F32(mtx[2][1]);
-    GX_WRITE_F32(mtx[2][2]);
-    GX_WRITE_F32(mtx[2][3]);
+    register f32 a00_a01;
+    register f32 a02_a03;
+    register f32 a10_a11;
+    register f32 a12_a13;
+    register f32 a20_a21;
+    register f32 a22_a23;
+
+    asm {
+        psq_l a00_a01, 0x00(mtx), 0, qr0
+        psq_l a02_a03, 0x08(mtx), 0, qr0
+        psq_l a10_a11, 0x10(mtx), 0, qr0
+        psq_l a12_a13, 0x18(mtx), 0, qr0
+        psq_l a20_a21, 0x20(mtx), 0, qr0
+        psq_l a22_a23, 0x28(mtx), 0, qr0
+        psq_st a00_a01, 0(dest), 0, qr0
+        psq_st a02_a03, 0(dest), 0, qr0
+        psq_st a10_a11, 0(dest), 0, qr0
+        psq_st a12_a13, 0(dest), 0, qr0
+        psq_st a20_a21, 0(dest), 0, qr0
+        psq_st a22_a23, 0(dest), 0, qr0
+    }
 }
 
-static inline void WriteNrmMtx3x3(const f32 mtx[3][4])
+static void WriteMTXPS3x3from3x4(register f32 mtx[3][4], register volatile f32* dest)
 {
-    GX_WRITE_F32(mtx[0][0]);
-    GX_WRITE_F32(mtx[0][1]);
-    GX_WRITE_F32(mtx[0][2]);
-    GX_WRITE_F32(mtx[1][0]);
-    GX_WRITE_F32(mtx[1][1]);
-    GX_WRITE_F32(mtx[1][2]);
-    GX_WRITE_F32(mtx[2][0]);
-    GX_WRITE_F32(mtx[2][1]);
-    GX_WRITE_F32(mtx[2][2]);
+    register f32 a00_a01;
+    register f32 a02_a03;
+    register f32 a10_a11;
+    register f32 a12_a13;
+    register f32 a20_a21;
+    register f32 a22_a23;
+
+    asm {
+        psq_l  a00_a01, 0x00(mtx), 0, qr0
+        lfs    a02_a03, 0x08(mtx)
+        psq_l  a10_a11, 0x10(mtx), 0, qr0
+        lfs    a12_a13, 0x18(mtx)
+        psq_l  a20_a21, 0x20(mtx), 0, qr0
+        lfs    a22_a23, 0x28(mtx)
+        psq_st a00_a01, 0(dest), 0, qr0
+        stfs   a02_a03, 0(dest)
+        psq_st a10_a11, 0(dest), 0, qr0
+        stfs   a12_a13, 0(dest)
+        psq_st a20_a21, 0(dest), 0, qr0
+        stfs   a22_a23, 0(dest)
+    }
 }
 
-static inline void WriteMtx4x2(const f32 mtx[2][4])
+static void WriteMTXPS4x2(const register f32 mtx[2][4], register volatile f32* dest)
 {
-    GX_WRITE_F32(mtx[0][0]);
-    GX_WRITE_F32(mtx[0][1]);
-    GX_WRITE_F32(mtx[0][2]);
-    GX_WRITE_F32(mtx[0][3]);
-    GX_WRITE_F32(mtx[1][0]);
-    GX_WRITE_F32(mtx[1][1]);
-    GX_WRITE_F32(mtx[1][2]);
-    GX_WRITE_F32(mtx[1][3]);
+    register f32 a00_a01;
+    register f32 a02_a03;
+    register f32 a10_a11;
+    register f32 a12_a13;
+
+    asm {
+        psq_l a00_a01, 0x00(mtx), 0, qr0
+        psq_l a02_a03, 0x08(mtx), 0, qr0
+        psq_l a10_a11, 0x10(mtx), 0, qr0
+        psq_l a12_a13, 0x18(mtx), 0, qr0
+        psq_st a00_a01, 0(dest), 0, qr0
+        psq_st a02_a03, 0(dest), 0, qr0
+        psq_st a10_a11, 0(dest), 0, qr0
+        psq_st a12_a13, 0(dest), 0, qr0
+    }
 }
 
 void GXProject(f32 x, f32 y, f32 z, const Mtx mtx, const f32* pm, const f32* vp,
@@ -109,7 +152,7 @@ void GXSetProjection(const Mtx44 mtx, GXProjectionType type)
         gx->projMtx[1] = mtx[0][2];
         gx->projMtx[3] = mtx[1][2];
     }
-    WriteProjection(gx->projMtx);
+    __GXSetProjection();
     gx->bpSentNot = 1;
 }
 
@@ -117,7 +160,7 @@ void GXSetProjectionv(const f32* ptr)
 {
     gx->projType = ptr[0] == 0.0f ? GX_PERSPECTIVE : GX_ORTHOGRAPHIC;
     Copy6Floats(&ptr[1], gx->projMtx);
-    WriteProjection(gx->projMtx);
+    __GXSetProjection();
     gx->bpSentNot = 1;
 }
 
@@ -132,7 +175,7 @@ void GXLoadPosMtxImm(const Mtx mtx, u32 id)
     u32 addr = id * 4;
     GX_WRITE_U8(GX_LOAD_XF_REG);
     GX_WRITE_U32(addr | 0xB0000);
-    WriteMtx4x3(mtx);
+    WriteMTXPS4x3(mtx, &GXWGFifo.f32);
 }
 
 void GXLoadNrmMtxImm(const Mtx mtx, u32 id)
@@ -140,7 +183,7 @@ void GXLoadNrmMtxImm(const Mtx mtx, u32 id)
     u32 addr = id * 3 + 0x400;
     GX_WRITE_U8(GX_LOAD_XF_REG);
     GX_WRITE_U32(addr | 0x80000);
-    WriteNrmMtx3x3(mtx);
+    WriteMTXPS3x3from3x4((void*)mtx, &GXWGFifo.f32);
 }
 
 void GXSetCurrentMtx(u32 id)
@@ -151,6 +194,7 @@ void GXSetCurrentMtx(u32 id)
 
 void GXLoadTexMtxImm(const f32 mtx[][4], u32 id, GXTexMtxType type)
 {
+    u32 reg;
     u32 addr;
     u32 count;
 
@@ -160,12 +204,13 @@ void GXLoadTexMtxImm(const f32 mtx[][4], u32 id, GXTexMtxType type)
         addr = id * 4;
     }
     count = type == GX_MTX2x4 ? 8 : 12;
+    reg = addr | ((count - 1) << 16);
     GX_WRITE_U8(GX_LOAD_XF_REG);
-    GX_WRITE_U32(addr | ((count - 1) << 16));
+    GX_WRITE_U32(reg);
     if (type == GX_MTX3x4) {
-        WriteMtx4x3(mtx);
+        WriteMTXPS4x3(mtx, &GXWGFifo.f32);
     } else {
-        WriteMtx4x2(mtx);
+        WriteMTXPS4x2(mtx, &GXWGFifo.f32);
     }
 }
 

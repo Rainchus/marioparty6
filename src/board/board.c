@@ -279,6 +279,9 @@ static void mbMain(void)
 {
     s32 i;
     s32 interruptF = FALSE;
+    s16 nightF;
+    BOOL dayF;
+
     mbWipeWait();
     if (GwSystem.turnNo > GwSystem.turnMax && !_CheckFlag(FLAG_BOARD_TUTORIAL)) {
         _ClearFlag(FLAG_BOARD_MOVE_DONE);
@@ -322,9 +325,6 @@ static void mbMain(void)
         GwSystem.turnPlayerNo = 0;
         _SetFlag(FLAG_BOARD_OPENING);
     }
-    while (1) {
-    s16 nightF;
-    BOOL dayF;
     if (GwSystem.curTime != GwSystem.nextTime) {
         GwSystem.timeTurn = 0;
         GwMgNightF = GwSystem.curTime;
@@ -345,7 +345,6 @@ static void mbMain(void)
             interruptF = mbev_SingleMgEnd(0);
         } else if (_CheckFlag(FLAG_BOARD_MG)) {
             _ClearFlag(FLAG_BOARD_MG);
-            interruptF = TRUE;
         } else if (_CheckFlag(FLAG_BOARD_MG_KETTOU)) {
             mbev_CapKettouEndCall(GwSystem.turnPlayerNo);
             _ClearFlag(FLAG_BOARD_MG_KETTOU);
@@ -367,21 +366,20 @@ static void mbMain(void)
         }
         _ClearFlag(FLAG_BOARD_MOVE_DONE);
     }
+    while (1) {
     if (ev_TurnStart && !interruptF) {
         ev_TurnStart();
     }
     if (GwSystem.turnPlayerNo == 0 && !interruptF && GwSystem.turnMax - GwSystem.turnNo < 5) {
-        if (!_CheckFlag(FLAG_BOARD_LAST5)) {
-            if (GWPartyGet()) {
-                mbev_Last5();
-                _SetFlag(FLAG_BOARD_LAST5);
-            } else {
-                mbTelopLastTurnCreate();
-                if (!_CheckFlag(FLAG_BOARD_LAST5)) {
-                    if (!GWPartyGet()) {
-                        mbSingleCall(12, 0);
-                        _SetFlag(FLAG_BOARD_LAST5);
-                    }
+        if (!_CheckFlag(FLAG_BOARD_LAST5) && GWPartyGet()) {
+            mbev_Last5();
+            _SetFlag(FLAG_BOARD_LAST5);
+        } else {
+            mbTelopLastTurnCreate();
+            if (!_CheckFlag(FLAG_BOARD_LAST5)) {
+                if (!GWPartyGet()) {
+                    mbSingleCall(12, 0);
+                    _SetFlag(FLAG_BOARD_LAST5);
                 }
             }
         }
@@ -448,8 +446,9 @@ static void mbMain(void)
         }
         GwSystem.turnPlayerNo = -1;
         mbStatusColorAllSet(0);
-        GwSystem.turnPlayerNo = 0;
     }
+    GwSystem.turnPlayerNo = 0;
+    interruptF = FALSE;
     }
 }
 
