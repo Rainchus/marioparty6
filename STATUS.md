@@ -13,13 +13,14 @@ black-screen stubs are outside this decompilation repository's work.
 The immediate Priority 1a milestone is now `mdseldll.rel`, ahead of the
 remaining board owners. `include/ovl_table.h` places `mdseldll` at zero-based
 overlay 93, and the Matching `selmenuDll` mode table maps `***:MODE SEL`
-directly to `DLL_mdseldll`. Waves 67-68 open its `Rel()` and recover 92 of 113
-application functions as data-value-exact C for `0x6CA0` target text bytes.
-Every represented function is exact; the other 21 remain absent rather than
-guessed. Target/source `.text` is `0x10010/0x6CA0` at 42.421284%, `.data` is
-fully exact, and the typed/opaque BSS ownership now covers all but the target's
-final two bytes. The application owner and its separated compiler runtime both
-remain `NonMatching`, so `mdseldll` is still the boot-to-mode-select blocker.
+directly to `DLL_mdseldll`. Waves 67-69 open its `Rel()` and recover 111 of 113
+application functions as data-value-exact C for `0xD614` target text bytes.
+Every represented function is exact; only `fn_1_5BF0` and `fn_1_BAB4` remain
+absent rather than guessed. Target/source `.text` is `0x10010/0xD614` at
+83.60386%, `.data` is fully exact, and all target BSS bytes compare exact (the
+source object has a two-byte alignment tail). The application owner and its
+separated compiler runtime both remain `NonMatching`, so `mdseldll` is still
+the boot-to-mode-select blocker.
 Its sibling base is the MP5 `mdsel`/mode framework; recovery and any future
 Matching promotion still require MP6 object/relocation evidence and the
 complete REL plus DOL gate.
@@ -500,6 +501,21 @@ full REL/DOL gate or promotion is claimed, and no fallback-linked byte is
 counted as recovered source. Evidence is retained in
 [`docs/native_matching_wave68.md`](docs/native_matching_wave68.md).
 
+Wave 69 advances the same Priority 1a owner from 92 to 111 represented and
+data-value-exact functions, adding `0x6974` exact target text bytes. The exact
+total is now `0xD614/0x10010` at 83.60386%; the only absent functions are
+`fn_1_5BF0` (`0x2B4`) and the monolithic `fn_1_BAB4` (`0x2748`). The slice
+recovers the paired model-motion state machines, the `0x88` twelve-record
+model/effect owner, mode-input and audio tables, the complete object
+initialization graph, and the typed microphone response callback. The callback
+layout and signed result vector are established by target loads and the
+same-game `game/mic.c` producer; the recovered structure parameter reproduces
+all 442 target instructions and their register coloring. All 111 represented
+functions pass objdiff with `functionRelocDiffs=data_value`. The two unresolved
+functions remain absent, both REL owners remain `NonMatching`, and no full
+REL/DOL promotion gate is claimed. Evidence is retained in
+[`docs/native_matching_wave69.md`](docs/native_matching_wave69.md).
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -914,7 +930,7 @@ owners are separate from the 396-owner DOL ledger:
 | `REL/selmenuDll/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; longstanding fallback, never de-flipped | Same MP5 Runtime source authentication; MP6 object/link proof remains pending. |
 | `REL/fileseldll/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; longstanding fallback, never de-flipped | Same MP5 Runtime source authentication; MP6 object/link proof remains pending. |
 | `REL/mdseldll/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; newly split in Wave 67, never de-flipped | Its target text and rodata are byte-identical to the same-game `fileseldll` and `selmenuDll` runtime blocks, and MP5 authenticates the assembly source family. The exception gate remains pending. |
-| `REL/mdseldll/mdsel.c` | `C-not-yet-matched`; `SRC-INCOMPLETE`; newly split in Wave 67, never de-flipped | Waves 67-68 represent 92/113 target functions and all 92 are data-value-exact for `0x6CA0` bytes; 21 functions remain absent. `.data` is exact and BSS is two source bytes short. Function emission order and the complete REL gate remain unresolved, so the owner stays fallback-linked. |
+| `REL/mdseldll/mdsel.c` | `C-not-yet-matched`; `SRC-INCOMPLETE`; newly split in Wave 67, never de-flipped | Waves 67-69 represent 111/113 target functions and all 111 are data-value-exact for `0xD614` bytes. Only `fn_1_5BF0` (`0x2B4`) and `fn_1_BAB4` (`0x2748`) remain absent. `.data` is exact; all target BSS bytes compare exact and the source object has a two-byte alignment tail. Function emission order, eight rodata bytes, and the complete REL gate remain unresolved, so the owner stays fallback-linked. |
 | `REL/meschkdll/meschkdll.c` | `C-not-yet-matched`; `SRC-DIVERGES`; never de-flipped | Five functions are exact; `fn_1_188` remains divergent, so the owner stays fallback-linked. |
 
 ## Named DOL ownership
