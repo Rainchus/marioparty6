@@ -499,7 +499,7 @@ config.libs = [
         "cflags": cflags_musyx,
         "host": False,
         "objects": [
-            Object(NonMatching, "musyx/runtime/seq.c"),
+            Object(Matching, "musyx/runtime/seq.c"),
             Object(NonMatching, "musyx/runtime/synth.c"),
             Object(Matching, "musyx/runtime/seq_api.c"),
             Object(Matching, "musyx/runtime/snd_synthapi.c"),
