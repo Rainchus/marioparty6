@@ -9,6 +9,7 @@
 #define M2S_CHANNEL_COUNT 2
 #define M2S_BUFFER_SAMPLES 128
 #define M2S_CALIBRATION_SAMPLES 44
+#define M2S_CALIBRATION_HISTORY_BYTES (M2S_CALIBRATION_SAMPLES * sizeof(s16))
 #define M2S_RESERVED_RING_SAMPLES 1152
 
 typedef struct M2SControlBlock {
@@ -398,7 +399,8 @@ void M2SAdvanceBuffer(s32 samples) {
     if (!cb->calibrated) {
         cb->calibration_accumulator = __M2STmpAcc;
         cb->calibration_history_index = __M2STmpPtr;
-        memcpy(cb->calibration_history, __M2STmpHistory, sizeof(cb->calibration_history));
+        memcpy(cb->calibration_history, __M2STmpHistory,
+               M2S_CALIBRATION_HISTORY_BYTES);
     }
 }
 
@@ -421,7 +423,8 @@ static void __M2SCalibration(s16* buffer, s32 samples) {
         s32 accumulator = cb->calibration_accumulator;
         s32 history_index = cb->calibration_history_index;
 
-        memcpy(__M2STmpHistory, cb->calibration_history, sizeof(__M2STmpHistory));
+        memcpy(__M2STmpHistory, cb->calibration_history,
+               M2S_CALIBRATION_HISTORY_BYTES);
         for (i = 0; i < samples; i++) {
             s32 sample = buffer[i];
             s32 average = (sample * sample) / M2S_CALIBRATION_SAMPLES;

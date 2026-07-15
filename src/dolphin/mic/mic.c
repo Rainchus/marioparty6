@@ -36,13 +36,13 @@ typedef struct MICControlBlock {
     u32 status;
     u32 field_34;
     u32 error_count;
-    u32 hw_buff_size;
+    s32 hw_buff_size;
     u32 sample_rate;
     u32 gain;
     s16* buff_ring_base;
-    u32 buff_size;
-    u32 buff_ring_size;
-    u32 buff_ring_cur;
+    s32 buff_size;
+    s32 buff_ring_size;
+    s32 buff_ring_cur;
     u32 button;
     u32 last_button;
     u32 button_time_delta;
@@ -402,7 +402,7 @@ s32 MICGetCurrentTop(s32 chan) {
         BOOL enabled = OSDisableInterrupts();
 
         if (cb->is_attached) {
-            result = cb->buff_ring_cur / sizeof(s16);
+            result = cb->buff_ring_cur >> 1;
         }
         OSRestoreInterrupts(enabled);
     }
@@ -418,7 +418,7 @@ s32 MICUpdateIndex(s32 chan, s32 index, s32 samples) {
         BOOL enabled = OSDisableInterrupts();
 
         if (cb->is_attached) {
-            s32 samples_in_ring = cb->buff_ring_size / sizeof(s16);
+            s32 samples_in_ring = cb->buff_ring_size >> 1;
             s32 requested = index + samples;
 
             result = requested < samples_in_ring ? requested : requested - samples_in_ring;
@@ -437,8 +437,8 @@ s32 MICGetSamplesLeft(s32 chan, s32 index) {
         BOOL enabled = OSDisableInterrupts();
 
         if (cb->is_attached) {
-            s32 samples_in_ring = cb->buff_ring_size / sizeof(s16);
-            s32 current = cb->buff_ring_cur / sizeof(s16);
+            s32 samples_in_ring = cb->buff_ring_size >> 1;
+            s32 current = cb->buff_ring_cur >> 1;
 
             if (current < index) {
                 result = samples_in_ring - (index - current);

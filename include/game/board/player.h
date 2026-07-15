@@ -27,6 +27,7 @@ void mbPlayerRotateStart(int playerNo, s16 endAngle, s16 maxTime);
 BOOL mbPlayerRotateCheck(int playerNo);
 void mbPlayerMotIdleSet(int playerNo);
 int mbPlayerCoinGet(int playerNo);
+int mbPlayerCapsuleFind(int playerNo, int capsuleNo);
 void mbMoveNumDispSet(int playerNo, BOOL dispF);
 void mbPlayerBlackoutSet(BOOL value);
 BOOL mbPlayerBlackoutGet(void);
