@@ -1530,6 +1530,7 @@ gssdk_lib/asrpho/common/blocks/flfxblks/statio.c:
 
 gssdk_lib/asrpho/common/blocks/flfxblks/subsamp.c:
 	.text       start:0x80138B94 end:0x8013927C
+	.rodata     start:0x8021A250 end:0x8021A308
 	.sdata2     start:0x802C2FC0 end:0x802C2FD8
 
 gssdk_lib/asrpho/common/blocks/flfxblks/trigglr.c:
@@ -1538,7 +1539,6 @@ gssdk_lib/asrpho/common/blocks/flfxblks/trigglr.c:
 
 gssdk_lib/asrpho/common/blocks/flfxblks/voicing.c:
 	.text       start:0x8013A340 end:0x8013ABB8
-	.rodata     start:0x8021A250 end:0x8021A308
 	.sdata2     start:0x802C3018 end:0x802C3058
 
 gssdk_lib/asrpho/common/ctxdata/ctxdata.c:
