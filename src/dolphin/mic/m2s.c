@@ -283,7 +283,7 @@ void M2SStart(void) {
     cb->calibrated = FALSE;
     cb->calibration_accumulator = 0;
     cb->calibration_history_index = 0;
-    memset(cb->calibration_history, 0, sizeof(cb->calibration_history));
+    memset(cb->calibration_history, 0, M2S_CALIBRATION_HISTORY_BYTES);
     __M2SDebug.index = 0;
     OSRestoreInterrupts(enabled);
 }
@@ -371,7 +371,10 @@ s32 M2SGetSamplesLeft(void) {
 void M2SAdvanceBuffer(s32 samples) {
     M2SControlBlock* cb;
 
-    if (!__init || !__open || samples < 0) {
+    if (!__init || !__open) {
+        return;
+    }
+    if (samples < 0) {
         return;
     }
 

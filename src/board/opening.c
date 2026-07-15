@@ -25,11 +25,20 @@
 #include "dolphin/pad.h"
 
 extern float mbHermiteCalcSlope(float a, float b, float c, float d, float t);
+extern void mbHermiteCalcV(HuVecF *a, HuVecF *b, HuVecF *c, HuVecF *d,
+    HuVecF *dst, float t);
 extern void mbDiceExec(int playerNo, int type, void *pos, int value, BOOL flag1,
     BOOL flag2, void *hook, int color);
 extern void mbDicePadBtnHookSet(int playerNo, u16 (*hook)(int playerNo));
 extern BOOL mbDiceKillCheckAll(void);
 extern void mbDiceNumShrinkSet(int playerNo);
+extern void mbDirClose(void);
+extern OMOBJ *mbGuideCreateFlag(HuVecF *pos, s8 *motTbl, BOOL screenF,
+    BOOL altMtxF, BOOL layerF);
+extern void mbGuideKill(OMOBJ *obj);
+extern int mbGuideModelGet(OMOBJ *obj);
+extern void mbGuideMotionNextSet(OMOBJ *obj, s16 motNo);
+extern void mbGuideMotionSet(OMOBJ *obj, s16 motNo, BOOL shiftF);
 extern void mbPlayerColSnapSet(BOOL enable);
 extern void mbPlayerSwap(int playerNo1, int playerNo2);
 extern void *mbPlayerWorkGet(int playerNo);
@@ -48,8 +57,11 @@ extern void mbPlayerTeamCoinSet(int teamNo, s16 coinNum);
 extern void mbPlayerGrpStarSet(int teamNo, s16 starNum);
 extern u32 mbPlayerNameMesGet(int playerNo);
 extern void mbTelopCreate(int playerNo, int telopNo, BOOL statF);
+extern BOOL mbTelopCheck(void);
 extern void mbStarMapViewProcExec(void);
 extern void mbWipeFadeIn(void);
+extern void mbWipeFadeOut(void);
+extern void mbWipeWait(void);
 
 typedef struct MbOpeningPlayerWork_s {
     u8 unk00[0x10];
@@ -152,6 +164,7 @@ static void ev_OpeningPartyKill(void);
 static void OpeningCoinExec(void);
 static void PlayerDropExec(HuVecF *center);
 static void PlayerOrderSet(int *order);
+static void ev_OpeningSingle(void);
 static void ev_OpeningSingleKill(void);
 static void OpeningSingleEffHook(HU3D_MODEL *modelP, MBPARTICLE *particleP,
     Mtx mtx);
@@ -164,6 +177,15 @@ static float OpeningCurveEval(HuVecF *a, HuVecF *b, HuVecF *c, HuVecF *d, float 
     vec.y = mbHermiteCalcSlope(a->y, b->y, c->y, d->y, t);
     vec.z = mbHermiteCalcSlope(a->z, b->z, c->z, d->z, t);
     return VECMag(&vec);
+}
+
+typedef float (*OPENINGCURVEEVALFUNC)(HuVecF *a, HuVecF *b, HuVecF *c,
+    HuVecF *d, float t);
+
+static inline float OpeningCurveEvalCall(HuVecF *a, HuVecF *b, HuVecF *c,
+    HuVecF *d, float t, OPENINGCURVEEVALFUNC func)
+{
+    return func(a, b, c, d, t);
 }
 
 void mbev_Opening(void)
@@ -606,6 +628,438 @@ static void PlayerOrderSet(int *order)
         }
     }
     HuPrcVSleep();
+}
+
+void mbev_OpeningSingle(void)
+{
+    SINGLEGUIDEWORK *work = &singleGuideWork;
+    HuVecF *cameraPathTbl;
+    HuVecF *masuPosTbl;
+    float *pathLengthTbl;
+    s16 winId;
+    int playerNo;
+
+    mbDirClose();
+    work->endF = FALSE;
+    work->dispF = FALSE;
+    singleGuideObj = NULL;
+    singleOpeningPosTbl2 = NULL;
+    singleOpeningPosTbl = NULL;
+    singleOpeningZoomTbl = NULL;
+    singleWinId = -1;
+    singleEff1MdlId = -1;
+    singleFXNo = -1;
+    winId = -1;
+    if (!_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+        openingSingleProc = HuPrcChildCreate(ev_OpeningSingle, 0x200C,
+            0x4000, 0, mbMainProc);
+    }
+    HuPrcDestructorSet2(openingSingleProc, ev_OpeningSingleKill);
+    while (!work->endF) {
+        if (work->dispF && mbTelopCheck()) {
+            if (winId < 0) {
+                winId = mbWinCreateHelp(0x0026000C);
+                mbWinPosSet(winId, 228, 408);
+            }
+            for (playerNo = 0; playerNo < GW_PLAYER_MAX; playerNo++) {
+                if (!GwPlayer[playerNo].comF
+                    && (HuPadBtnDown[GwPlayer[playerNo].padNo]
+                        & PAD_BUTTON_START)) {
+                    if (singleWinId != -1) {
+                        mbWinKill(singleWinId);
+                        singleWinId = -1;
+                    }
+                    HuPrcKill(openingSingleProc);
+                    work->endF = TRUE;
+                    break;
+                }
+            }
+        }
+        HuPrcVSleep();
+    }
+    mbWipeWait();
+    if (!WipeCheckIn()) {
+        mbWipeFadeOut();
+    }
+    mbWinKill(winId);
+    OSReport(lbl_80248648);
+    if (singleGuideObj != NULL) {
+        mbGuideKill(singleGuideObj);
+    }
+    if (singleOpeningPosTbl2 != NULL) {
+        cameraPathTbl = singleOpeningPosTbl2;
+        HuMemDirectFree(cameraPathTbl);
+    }
+    if (singleOpeningPosTbl != NULL) {
+        masuPosTbl = singleOpeningPosTbl;
+        HuMemDirectFree(masuPosTbl);
+    }
+    if (singleOpeningZoomTbl != NULL) {
+        pathLengthTbl = singleOpeningZoomTbl;
+        HuMemDirectFree(pathLengthTbl);
+    }
+    if (singleEff1MdlId != -1) {
+        mbParticleKill(singleEff1MdlId);
+        HuDataDirClose(0x00210000);
+    }
+    if (singleFXNo != -1) {
+        mbAudFXStop(singleFXNo);
+    }
+}
+
+static void ev_OpeningSingle(void)
+{
+    s16 masuList[256];
+    HuVecF guidePath[5];
+    HuVecF cameraPos;
+    HuVecF cameraRot;
+    HuVecF cameraCenter;
+    HuVecF masuPos;
+    HuVecF guidePos;
+    HuVecF guideDir;
+    HuVecF prevGuidePos;
+    HuVecF segmentDir;
+    HuVecF prevSegmentDir;
+    HuVecF tangentIn;
+    HuVecF tangentOut;
+    HuVecF curveStart;
+    HuVecF curveEnd;
+    HuVecF curveTangentIn;
+    HuVecF curveTangentOut;
+    HuVec2f winPos;
+    HuVecF *masuPosTbl;
+    HuVecF *cameraPathTbl;
+    HuVecF *segmentP;
+    HuVecF *bezierTbl;
+    ANIMDATA *animP;
+    MBMODELID guideMdlId;
+    s16 startMasuId;
+    s16 masuNum;
+    int cameraPathNum;
+    int cameraPathNo;
+    int boardNo;
+    int cameraType;
+    int playerNo;
+    int size;
+    int div;
+    int step;
+    int i;
+    int j;
+    int k;
+    float baseY;
+    float baseT;
+    float deltaT;
+    float edgeLength;
+    float sampleLength;
+    float pathLength;
+    float oldT;
+    float minLength;
+    float distance;
+    float t;
+    float sampleT;
+    float angle;
+    float weight;
+
+    playerNo = 0;
+    singleGuideObj = mbGuideCreateFlag(&singleGuidePosTbl[0],
+        (s8 *)singleGuideMotFileTbl, FALSE, FALSE, FALSE);
+    mbGuideMotionNextSet(singleGuideObj, 1);
+    guideMdlId = mbGuideModelGet(singleGuideObj);
+    mbObjDispSet(guideMdlId, FALSE);
+    mbObjMotionSet(guideMdlId, 5, HU3D_MOTATTR_NONE);
+
+    startMasuId = mbMasuFind_AttrIdGet(-1, 0x8000);
+    masuNum = mbMasuFind_TypeListGet2(startMasuId, 7, FALSE, FALSE,
+        masuList);
+    size = masuNum * sizeof(HuVecF);
+    cameraPathTbl = HuMemDirectMallocNum(HEAP_HEAP, size, HU_MEMNUM_OVL);
+    singleOpeningPosTbl2 = cameraPathTbl;
+    masuPosTbl = HuMemDirectMallocNum(HEAP_HEAP, size, HU_MEMNUM_OVL);
+    singleOpeningPosTbl = masuPosTbl;
+    for (i = masuNum - 1, j = 0; i > -1; i--, j++) {
+        mbMasuPosGet(masuList[i], &singleOpeningPosTbl[j]);
+    }
+
+    cameraPathNum = 0;
+    singleOpeningPosTbl2[cameraPathNum++] = singleOpeningPosTbl[0];
+    for (i = 0; i < masuNum - 1; i++) {
+        VECSubtract(&singleOpeningPosTbl[i + 1], &singleOpeningPosTbl[i],
+            &segmentDir);
+        if (i != 0) {
+            VECNormalize(&prevSegmentDir, &prevSegmentDir);
+            VECNormalize(&segmentDir, &segmentDir);
+            if (VECDotProduct(&prevSegmentDir, &segmentDir) < 0.7f) {
+                singleOpeningPosTbl2[cameraPathNum++] =
+                    singleOpeningPosTbl[i];
+            }
+        }
+        prevSegmentDir = segmentDir;
+    }
+    singleOpeningPosTbl2[cameraPathNum++] = singleOpeningPosTbl[masuNum - 1];
+
+    mbCameraNearFarSet(10.0f, 30000.0f);
+    mbCameraZoomSet(mbOpeningZoomGet());
+    mbOpeningRotGet(&cameraRot);
+    mbCameraRotSetV(&cameraRot);
+    mbOpeningPosGet(&cameraCenter);
+    mbCameraCenterSetV(&cameraCenter);
+    mbWipeFadeIn();
+    mbMusBoardPlay();
+    boardNo = GwSystem.boardNo;
+    cameraType = boardNo - 5;
+    boardNo = GwSystem.boardNo;
+    mbTelopCreate(-1, boardNo + 16, FALSE);
+    HuPrcSleep(90);
+    singleGuideWork.dispF = TRUE;
+    cameraPos = singleOpeningPosTbl2[0];
+
+    if (cameraType < 3) {
+        mbCameraMovePos(&cameraPos, &singleGuidePosTbl[4], NULL, 800.0f,
+            -1.0f, 180);
+        mbCameraMoveWait();
+        HuPrcSleep(12);
+        baseY = cameraPos.y;
+        singleOpeningZoomTbl = HuMemDirectMallocNum(HEAP_HEAP,
+            cameraPathNum * sizeof(float), HU_MEMNUM_OVL);
+        for (cameraPathNo = 0; cameraPathNo < cameraPathNum - 1;
+            cameraPathNo++) {
+            i = cameraPathNo;
+            if (i > cameraPathNum - 1) {
+                i = cameraPathNum - 1;
+            }
+            cameraPathTbl = singleOpeningPosTbl2;
+            segmentP = &cameraPathTbl[i];
+            if (i == 0) {
+                VECSubtract(&segmentP[1], &segmentP[0], &tangentIn);
+            } else {
+                VECSubtract(&segmentP[1], &segmentP[-1], &tangentIn);
+            }
+            if (i == cameraPathNum - 2) {
+                VECSubtract(&segmentP[1], &segmentP[0], &tangentOut);
+            } else {
+                VECSubtract(&segmentP[2], &segmentP[0], &tangentOut);
+            }
+            VECScale(&tangentIn, &tangentIn, 0.5f);
+            VECScale(&tangentOut, &tangentOut, 0.5f);
+            curveStart = segmentP[0];
+            curveEnd = segmentP[1];
+            curveTangentIn = tangentIn;
+            curveTangentOut = tangentOut;
+
+            div = 10;
+            baseT = 0.0f;
+            pathLength = 0.0f;
+            deltaT = 1.0f - baseT;
+            edgeLength = deltaT
+                * (OpeningCurveEvalCall(&curveStart, &curveEnd,
+                       &curveTangentIn, &curveTangentOut, baseT,
+                       OpeningCurveEval)
+                    + OpeningCurveEvalCall(&curveStart, &curveEnd,
+                        &curveTangentIn, &curveTangentOut, 1.0f,
+                        OpeningCurveEval))
+                * 0.5f;
+            for (i = 1; i <= div; i *= 2) {
+                sampleLength = 0.0f;
+                for (j = 1; j <= i; j++) {
+                    sampleLength += OpeningCurveEvalCall(&curveStart, &curveEnd,
+                        &curveTangentIn, &curveTangentOut,
+                        baseT + deltaT * (j - 0.5f), OpeningCurveEval);
+                }
+                sampleLength *= deltaT;
+                pathLength = (edgeLength + (2.0f * sampleLength)) / 3.0f;
+                deltaT *= 0.5f;
+                edgeLength = (edgeLength + sampleLength) * 0.5f;
+            }
+            singleOpeningZoomTbl[cameraPathNo] = pathLength;
+        }
+
+        t = 0.0f;
+        distance = 0.0f;
+        cameraPathNo = 0;
+        while (cameraPathNo < cameraPathNum - 1) {
+            i = cameraPathNo;
+            if (i > cameraPathNum - 1) {
+                i = cameraPathNum - 1;
+            }
+            cameraPathTbl = singleOpeningPosTbl2;
+            segmentP = &cameraPathTbl[i];
+            if (i == 0) {
+                VECSubtract(&segmentP[1], &segmentP[0], &tangentIn);
+            } else {
+                VECSubtract(&segmentP[1], &segmentP[-1], &tangentIn);
+            }
+            if (i == cameraPathNum - 2) {
+                VECSubtract(&segmentP[1], &segmentP[0], &tangentOut);
+            } else {
+                VECSubtract(&segmentP[2], &segmentP[0], &tangentOut);
+            }
+            VECScale(&tangentIn, &tangentIn, 0.5f);
+            VECScale(&tangentOut, &tangentOut, 0.5f);
+            curveStart = segmentP[0];
+            curveEnd = segmentP[1];
+            curveTangentIn = tangentIn;
+            curveTangentOut = tangentOut;
+
+            minLength = 0.1f;
+            step = 0;
+            do {
+                div = 10;
+                baseT = 0.0f;
+                deltaT = (t - baseT) / div;
+                sampleT = baseT;
+                sampleLength = 0.0f;
+                for (i = 0; i < div - 1; i++) {
+                    sampleT += deltaT;
+                    sampleLength += OpeningCurveEvalCall(&curveStart, &curveEnd,
+                        &curveTangentIn, &curveTangentOut, sampleT,
+                        OpeningCurveEval);
+                }
+                pathLength = deltaT * 0.5f
+                    * (OpeningCurveEvalCall(&curveStart, &curveEnd,
+                            &curveTangentIn, &curveTangentOut, baseT,
+                            OpeningCurveEval)
+                        + OpeningCurveEvalCall(&curveStart, &curveEnd,
+                            &curveTangentIn, &curveTangentOut, t,
+                            OpeningCurveEval)
+                        + (2.0f * sampleLength));
+                pathLength -= distance;
+                sampleLength = OpeningCurveEvalCall(&curveStart, &curveEnd,
+                    &curveTangentIn, &curveTangentOut, t, OpeningCurveEval);
+                if (fabs(sampleLength) < minLength) {
+                    sampleLength = 1.0f;
+                }
+                oldT = t;
+                t -= pathLength / sampleLength;
+                step++;
+            } while (t != oldT && step < 10);
+            mbHermiteCalcV(&curveStart, &curveEnd, &curveTangentIn,
+                &curveTangentOut, &cameraCenter, t);
+            mbCameraCenterSetV(&cameraCenter);
+            distance += 5.0f;
+            if (distance >= singleOpeningZoomTbl[cameraPathNo]) {
+                distance -= singleOpeningZoomTbl[cameraPathNo];
+                cameraPathNo++;
+                t -= 1.0f;
+            }
+            HuPrcVSleep();
+        }
+    } else {
+        mbCameraMovePos(&cameraPos, &singleGuidePosTbl[4], NULL, 3700.0f,
+            -1.0f, 180);
+        mbCameraMoveWait();
+        HuPrcSleep(12);
+        singleOpeningZoomTbl = NULL;
+        mbCameraMoveMasu(startMasuId, &singleGuidePosTbl[4], NULL, 800.0f,
+            -1.0f, 300);
+        mbCameraMoveWait();
+    }
+
+    HuPrcSleep(12);
+    mbMasuPosGet(startMasuId, &masuPos);
+    for (i = 0; i < 5; i++) {
+        guidePath[i] = masuPos;
+        guidePath[i].x += singleGuidePosTbl[i + 5].x;
+        guidePath[i].y += singleGuidePosTbl[i + 5].y;
+        guidePath[i].z += singleGuidePosTbl[i + 5].z;
+    }
+    prevGuidePos = guidePath[0];
+    animP = HuSprAnimRead(HuDataReadNum(0x00210001, HU_MEMNUM_OVL));
+    singleEff1MdlId = mbParticleCreate(animP, 128);
+    mbParticleHookSet(singleEff1MdlId, OpeningSingleEffHook);
+    Hu3DModelLayerSet(singleEff1MdlId, 5);
+    singleGuideEffOnF = TRUE;
+    mbCameraMovePlayer(playerNo, NULL, NULL, 2400.0f, -1.0f, 60);
+    mbObjDispSet(guideMdlId, TRUE);
+    singleFXNo = mbAudFXPlay(1093);
+    for (i = 0; i <= 180u; i++) {
+        weight = i / 180.0f;
+        bezierTbl = HuMemDirectMallocNum(HEAP_HEAP, sizeof(guidePath),
+            HU_MEMNUM_OVL);
+        memcpy(bezierTbl, guidePath, sizeof(guidePath));
+        for (j = 1; j < 5; j++) {
+            for (k = 0; k < 5 - j; k++) {
+                bezierTbl[k].x += weight
+                    * (bezierTbl[k + 1].x - bezierTbl[k].x);
+                bezierTbl[k].y += weight
+                    * (bezierTbl[k + 1].y - bezierTbl[k].y);
+                bezierTbl[k].z += weight
+                    * (bezierTbl[k + 1].z - bezierTbl[k].z);
+            }
+        }
+        guidePos = bezierTbl[0];
+        HuMemDirectFree(bezierTbl);
+        mbObjPosSetV(guideMdlId, &guidePos);
+        guideCurPos = guidePos;
+        VECSubtract(&guidePos, &prevGuidePos, &guideDir);
+        angle = HuAtan(guideDir.z, guideDir.x);
+        if (i == 150u) {
+            mbObjMotionShiftSet(guideMdlId, 4, 0.0f, 16.0f,
+                HU3D_MOTATTR_LOOP);
+        } else if (i > 150u) {
+            weight = (i - 150) / 30.0f;
+            angle *= 1.0f - weight;
+        }
+        mbObjRotYSet(guideMdlId, angle);
+        prevGuidePos = guidePos;
+        HuPrcVSleep();
+    }
+    singleGuideEffOnF = FALSE;
+    mbCameraMoveWait();
+    if (singleFXNo != -1) {
+        mbAudFXStop(singleFXNo);
+    }
+    HuPrcSleep(60);
+
+    mbGuideMotionSet(singleGuideObj, 12, TRUE);
+    mbAudGuidePlay(950);
+    boardNo = GwSystem.boardNo;
+    singleWinId = mbWinCreate(2, singleWelcomeMesTbl[boardNo - 6], 6);
+    mbWinTopPosGet(&winPos);
+    winPos.y -= 20.0f;
+    mbWinTopPosSet(winPos.x, winPos.y);
+    mbWinTopWait();
+    singleWinId = -1;
+
+    mbAudGuidePlay(952);
+    singleWinId = mbWinCreate(2, 0x002C0011, 6);
+    mbWinTopPosGet(&winPos);
+    winPos.y -= 20.0f;
+    mbWinTopPosSet(winPos.x, winPos.y);
+    mbWinTopWait();
+    singleWinId = -1;
+
+    mbAudGuidePlay(950);
+    singleWinId = mbWinCreate(2, 0x002C0012, 6);
+    mbWinTopPosGet(&winPos);
+    winPos.y -= 20.0f;
+    mbWinTopPosSet(winPos.x, winPos.y);
+    mbWinTopWait();
+    singleWinId = -1;
+
+    mbObjMotionShiftSet(guideMdlId, 5, 0.0f, 8.0f, HU3D_MOTATTR_NONE);
+    tangentIn.x = 0.0f;
+    tangentIn.y = 0.0f;
+    tangentIn.z = 0.0f;
+    mbObjPosGet(guideMdlId, &guidePos);
+    singleFXNo = mbAudFXPlay(1093);
+    for (i = 0; i < 120u; i++) {
+        tangentIn.y += -16.333334f;
+        guidePos.y -= 0.016666668f * tangentIn.y;
+        mbObjPosSetV(guideMdlId, &guidePos);
+        guideCurPos = guidePos;
+        if (i == 12u) {
+            singleGuideEffOnF = TRUE;
+        }
+        HuPrcVSleep();
+    }
+    if (singleFXNo != -1) {
+        mbAudFXStop(singleFXNo);
+    }
+    HuPrcSleep(30);
+    mbWipeFadeOut();
+    singleGuideWork.dispF = FALSE;
+    singleGuideWork.endF = TRUE;
+    HuPrcEnd();
 }
 
 static void ev_OpeningSingleKill(void)

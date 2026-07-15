@@ -8,6 +8,7 @@ typedef void (*TUTORIALMAINFUNC)(void);
 
 void mbTutorialInit(void);
 void mbTutorialMainFuncSet(TUTORIALMAINFUNC func);
+void mbTutorialCreate(void);
 int mbTutorialCall(int scene);
 void mbTutorialCallEnd(void);
 void mbTutorialVSleep(void);
@@ -42,6 +43,8 @@ void mbTutorialExitOnSet(BOOL exitOnF);
 
 BOOL mbTutorialWinWait(int winNo);
 void mbTutorialWinClose(int winNo);
+int mbTutorialWinCreate(int message);
+void mbTutorialWinKeyWait(int winNo);
 void mbTutorialWinMesExec(int message);
 void mbTutorialWinMesMasuExec(int message, int masuId);
 void mbTutorialMgCallInit(void);
