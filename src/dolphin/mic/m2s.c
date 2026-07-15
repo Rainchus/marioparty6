@@ -108,8 +108,6 @@ void M2SInit(void) {
 }
 
 BOOL M2SSetBuffer(s16* buffer) {
-    M2SControlBlock* cb;
-
     if (!__init) {
         return FALSE;
     }
@@ -117,8 +115,7 @@ BOOL M2SSetBuffer(s16* buffer) {
         return FALSE;
     }
 
-    cb = &__M2SBlock[__M2SChannel];
-    if (cb->is_active) {
+    if (__M2SBlock[__M2SChannel].is_active) {
         return FALSE;
     }
 
@@ -163,8 +160,6 @@ BOOL M2SSetActiveChannel(s32 chan) {
 }
 
 BOOL M2SSetMode(s32 mode) {
-    M2SControlBlock* cb;
-
     if (!__init) {
         return FALSE;
     }
@@ -172,8 +167,7 @@ BOOL M2SSetMode(s32 mode) {
         return FALSE;
     }
 
-    cb = &__M2SBlock[__M2SChannel];
-    if (cb->is_active) {
+    if (__M2SBlock[__M2SChannel].is_active) {
         return FALSE;
     }
 

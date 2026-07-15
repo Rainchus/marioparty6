@@ -38,6 +38,9 @@ void mbMasuClose(void);
 BOOL mbMasuDataRead(int dataNum);
 void mbMasuNextSet(s16 id);
 void mbMasuNextDispSet(BOOL dispF);
+int mbev_MasuMove(int playerNo, s16 id);
+int mbev_MasuCapStop(int playerNo, s16 id);
+int mbev_MasuStop(int playerNo, s16 id);
 int mbev_MasuMasuStart(int playerNo);
 int mbev_MasuMasuEnd(int id);
 int mbMasuNumGet(void);
@@ -134,9 +137,11 @@ void mbev_MasuHatenaSet(MASUEVENTHOOK hook);
 void mbev_MasuLinkTblHookSet(MASUPATHCHECKHOOK hook);
 int mbMasuPlayerCapMoveCheck(int playerNo, s16 id);
 int mbMasuPlayerCapStopCheck(int playerNo, s16 id);
+void mbMasuPlayerColorSet(int playerNo);
 void mbMasuPlayerDispSet(BOOL dispF);
 void mbMasuPlayerFadeSet(BOOL fadeF);
 void mbMasuPlayerPrizeReset(int playerNo);
+int mbMasuPKinokoValueGet(int playerNo, s16 id);
 int mbMasuStub(void);
 
 #endif

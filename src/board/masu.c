@@ -1,16 +1,20 @@
 #include "game/board/masu.h"
 #include "game/board/audio.h"
 #include "game/board/branch.h"
+#include "game/board/camera.h"
 #include "game/board/gate.h"
 #include "game/board/main.h"
 #include "game/board/object.h"
 #include "game/board/player.h"
+#include "game/board/status.h"
+#include "game/board/tutorial.h"
 #include "game/data.h"
 #include "game/gamework.h"
 #include "game/hsfex.h"
 #include "game/hu3d.h"
 #include "game/object.h"
 #include "game/sprite.h"
+#include <stdlib.h>
 #include <string.h>
 
 typedef struct MasuFindWork_s {
@@ -31,6 +35,11 @@ typedef struct MasuNextWork_s {
     s16 time;
     s16 duration;
 } MASUNEXTWORK;
+
+typedef struct MasuPKinokoResult_s {
+    u8 id;
+    u8 step;
+} MASUPKINOKORESULT;
 
 static MASUFINDWORK masuFindWork[MASU_MAX];
 static s16 masuFindResult[MASU_MAX];
@@ -72,6 +81,19 @@ extern float mbSinDeg(float angle);
 extern s16 mbCapMasuPlayerGet(s16 id);
 extern s16 mbCapMasuDispTypeGet(s16 id);
 extern void mbPlayerColSnapPlayerSet(int playerNo, BOOL snapF);
+extern int mbSingleCall(int mode, int arg);
+extern void mbev_StarMasu();
+extern int mbev_Shop(int playerNo, int shopNo);
+extern void mbCapMasuExec(int playerNo, s16 id);
+extern int mbev_CapCall(int playerNo, int capsuleNo, BOOL moveF, BOOL stopF);
+extern void mbPlayerCapCoinMasuExec(int playerNo);
+extern void mbPlayerPlusMasuExec(int playerNo);
+extern void mbPlayerMinusMasuExec(int playerNo);
+extern void mbev_CapCallDonkey(int playerNo);
+extern void mbev_CapCallKoopa(int playerNo);
+extern void mbev_CapCallKettou(int playerNo, s16 id, BOOL stopF);
+extern void mbev_CapCallMiracle(int playerNo, s16 id);
+extern void mbev_SingleMg(int playerNo, s16 id);
 static void MasuDispInit(void);
 static void MasuDispClose(void);
 static u32 MasuDisplayListMake(void **displayList);
@@ -81,6 +103,7 @@ static void MasuNextCreate(void);
 static void MasuNextMain(void);
 static void MasuNextKill(void);
 void MasuNextDraw(HU3D_MODEL *modelP, Mtx *mtx);
+static int ev_MasuHatena(int playerNo, s16 id);
 
 typedef struct MasuDisp_s {
     int type;
@@ -95,6 +118,14 @@ static int masuFileTbl[] = {
 static int masuSingleFileTbl[] = {
     DATANUM(DATA_bmasu, 1),
     DATANUM(DATA_bmasu, 3),
+};
+
+static s16 masuPatTbl[] = {
+    -1, 0, 1, 2, 6, 7, -2, 5, 8, -1, 9,
+};
+
+static s16 masuSinglePatTbl[] = {
+    -1, 0, 1, 2, 6, 7, 3, 5, 8, 9, 10, 11, 0,
 };
 
 static MASUDISP masuDispTbl[] = {
@@ -335,6 +366,238 @@ static u32 MasuDisplayListKaoMake(void **displayList)
 
 #undef MASU_DL_BUF_SIZE
 
+void MasuDraw(HU3D_MODEL *modelP, Mtx *mtx)
+{
+    GXColor color = { 0xFF, 0xFF, 0xFF, 0xFF };
+    GXColor colorKao = { 0xFF, 0xFF, 0xFF, 0xFF };
+    MASU *masuP;
+    Mtx model;
+    Mtx modelView;
+    Mtx rot;
+    Mtx trans;
+    Mtx texMtx;
+    HuVecF pos;
+    int i;
+
+    if (!masuDispF) {
+        return;
+    }
+
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+    GXInvalidateTexAll();
+    HuSprTexLoad(masuAnimTbl[0], 0, GX_TEXMAP0, GX_CLAMP, GX_CLAMP, GX_TRUE);
+    HuSprTexLoad(masuAnimTbl[1], 0, GX_TEXMAP1, GX_CLAMP, GX_CLAMP, GX_TRUE);
+    HuSprTexLoad(masuAnimTbl[1], 0, GX_TEXMAP2, GX_CLAMP, GX_CLAMP, GX_TRUE);
+    GXSetNumTexGens(1);
+    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0,
+        GX_TEXMTX0, GX_FALSE, GX_PTIDENTITY);
+    GXSetNumTevStages(1);
+    GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+    GXSetNumChans(1);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT0,
+        GX_DF_CLAMP, GX_AF_SPOT);
+    GXSetColorUpdate(GX_TRUE);
+    GXSetAlphaUpdate(GX_FALSE);
+    GXSetZCompLoc(GX_FALSE);
+    GXSetAlphaCompare(GX_GEQUAL, 1, GX_AOP_AND, GX_GEQUAL, 1);
+    GXSetCullMode(GX_CULL_BACK);
+    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA,
+        GX_LO_NOOP);
+
+    masuDispCnt = 0;
+    masuP = &masuData[masuLayer][1];
+    for (i = 0; i < masuNum[masuLayer]; i++, masuP++) {
+        int patNo;
+
+        if (GwSystem.partyF) {
+            patNo = masuPatTbl[masuP->type];
+            if (patNo < 0) {
+                if (patNo == -1) {
+                    continue;
+                }
+                patNo = !GwSystem.curTime ? 4 : 3;
+            }
+        } else {
+            patNo = masuSinglePatTbl[masuP->type];
+            if (patNo < 0) {
+                continue;
+            }
+        }
+
+        mbMasuPosGet(i + 1, &pos);
+        if (!mbCameraCullCheck(&pos, 200.0f)) {
+            continue;
+        }
+
+        GXSetNumTevStages(1);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0,
+            GX_COLOR0A0);
+        GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO,
+            GX_CC_TEXC);
+        GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO,
+            GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO,
+            GX_CA_TEXA);
+        GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO,
+            GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+
+        if (!masuP->useMtxF) {
+            mtxRot(rot, masuP->rot.x, masuP->rot.y, masuP->rot.z);
+            PSMTXTrans(trans, masuP->pos.x, masuP->pos.y + 3.0f,
+                masuP->pos.z);
+            PSMTXConcat(trans, rot, model);
+        } else {
+            PSMTXCopy(masuP->matrix, model);
+        }
+        PSMTXConcat(*mtx, model, modelView);
+        GXLoadPosMtxImm(modelView, GX_PNMTX0);
+
+        if (GwSystem.partyF) {
+            s16 capPlayerNo = mbCapMasuPlayerGet(i + 1);
+
+            if (capPlayerNo >= 0 && mbCapMasuDispTypeGet(i + 1) == 1) {
+                PSMTXScale(texMtx, 1.0f, 1.0f / 13.0f, 0.0f);
+                if (!GwSystem.tagF) {
+                    mtxTransCat(texMtx, 0.0f,
+                        (float)GwPlayer[capPlayerNo].charNo / 13.0f, 0.0f);
+                } else {
+                    mtxTransCat(texMtx, 0.0f,
+                        (float)(GwPlayer[capPlayerNo].team + 11) / 13.0f,
+                        0.0f);
+                }
+                GXLoadTexMtxImm(texMtx, GX_TEXMTX0, GX_MTX2x4);
+                GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP1,
+                    GX_COLOR0A0);
+                GXCallDisplayList(masuDisplayList, masuDisplayListLen);
+                masuDispCnt++;
+                continue;
+            }
+        }
+
+        if ((masuP->flag & masuDispAttrMask[masuLayer]) == 0
+            && (masuP->mAttr & masuDispMAttrMask[masuLayer]) == 0) {
+            PSMTXScale(texMtx, 0.25f, 1.0f / 3.0f, 0.0f);
+            mtxTransCat(texMtx, (patNo % 4) * 0.25f,
+                (float)(patNo / 4) / 3.0f, 0.0f);
+            GXLoadTexMtxImm(texMtx, GX_TEXMTX0, GX_MTX2x4);
+            GXCallDisplayList(masuDisplayList, masuDisplayListLen);
+        }
+        masuDispCnt++;
+    }
+
+    if (!masuCapsuleDispF || !GwSystem.partyF) {
+        return;
+    }
+
+    masuP = &masuData[masuLayer][1];
+    GXSetCullMode(GX_CULL_NONE);
+    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
+    for (i = 0; i < masuNum[masuLayer]; i++, masuP++) {
+        s16 capPlayerNo = mbCapMasuPlayerGet(i + 1);
+        float scale;
+
+        if (capPlayerNo < 0 || mbCapMasuDispTypeGet(i + 1) != 2) {
+            continue;
+        }
+        mbMasuPosGet(i + 1, &pos);
+        if (!mbCameraCullCheck(&pos, 200.0f)) {
+            continue;
+        }
+
+        GXSetNumTevStages(1);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP2,
+            GX_COLOR0A0);
+        GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO,
+            GX_CC_TEXC);
+        GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO,
+            GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_TEXA, GX_CA_A1,
+            GX_CA_ZERO);
+        GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO,
+            GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        PSMTXScale(texMtx, 1.0f, 1.0f / 13.0f, 0.0f);
+        if (!GwSystem.tagF) {
+            mtxTransCat(texMtx, 0.0f,
+                (float)GwPlayer[capPlayerNo].charNo / 13.0f, 0.0f);
+        } else {
+            mtxTransCat(texMtx, 0.0f,
+                (float)(GwPlayer[capPlayerNo].team + 11) / 13.0f, 0.0f);
+        }
+        GXLoadTexMtxImm(texMtx, GX_TEXMTX0, GX_MTX2x4);
+
+        if (!masuP->useMtxF) {
+            mtxRot(rot, masuP->rot.x, masuP->rot.y, masuP->rot.z);
+            PSMTXTrans(trans, masuP->pos.x, masuP->pos.y, masuP->pos.z);
+            PSMTXConcat(trans, rot, model);
+        } else {
+            PSMTXCopy(masuP->matrix, model);
+        }
+
+        if (!masuCapsuleFadeOnF) {
+            HuVecF nearestDist;
+            float minDist = 100000.0f;
+            int nearestPlayer = -1;
+            int playerNo;
+
+            for (playerNo = 0; playerNo < GW_PLAYER_MAX; playerNo++) {
+                HuVecF playerPos;
+                HuVecF dist;
+                float total;
+
+                mbPlayerPosGet(playerNo, &playerPos);
+                dist.x = abs((int)(playerPos.x - model[0][3]));
+                dist.y = abs((int)(playerPos.y - model[1][3]));
+                dist.z = abs((int)(playerPos.z - model[2][3]));
+                total = dist.x + dist.y + dist.z;
+                if (minDist > total) {
+                    minDist = total;
+                    nearestDist = dist;
+                    nearestPlayer = playerNo;
+                }
+            }
+
+            colorKao.a = 224;
+            scale = 1.0f;
+            if (nearestPlayer >= 0) {
+                float distance = nearestDist.x;
+
+                if (distance < nearestDist.y) {
+                    distance = nearestDist.y;
+                }
+                if (distance < nearestDist.z) {
+                    distance = nearestDist.z;
+                }
+                if (distance < 250.0f) {
+                    float time = distance - 150.0f;
+
+                    if (time < 0.0f) {
+                        time = 0.0f;
+                    }
+                    time /= 100.0f;
+                    colorKao.a = 224.0f - 64.0f * (1.0f - time);
+                    scale = 1.0f + 0.5f * (1.0f - time);
+                }
+            }
+        } else {
+            colorKao.a = 224;
+            scale = 1.0f;
+        }
+
+        color = colorKao;
+        GXSetTevColor(GX_TEVREG1, color);
+        PSMTXScale(modelView, scale, scale, scale);
+        PSMTXConcat(model, modelView, model);
+        PSMTXConcat(*mtx, model, modelView);
+        GXLoadPosMtxImm(modelView, GX_PNMTX0);
+        GXCallDisplayList(masuDisplayListKao, masuDisplayListKaoLen);
+    }
+}
+
 static void MasuNextCreate(void)
 {
     masuNextProc = HuPrcChildCreate(MasuNextMain, 0x2003, 0x2000, 0, mbMainProc);
@@ -414,6 +677,89 @@ static void MasuNextKill(void)
     }
 }
 
+void MasuNextDraw(HU3D_MODEL *modelP, Mtx *mtx)
+{
+    MASUNEXTWORK *work;
+    Mtx masuMtx;
+    Mtx rot;
+    Mtx model;
+    GXColor color = { 0xFF, 0xFF, 0xFF, 0xFF };
+    int dispNum = 0;
+    int i;
+
+    if (!masuNextDispF) {
+        return;
+    }
+
+    HuSprTexLoad(masuNextAnim, 0, GX_TEXMAP0, GX_CLAMP, GX_CLAMP,
+        GX_LINEAR);
+    GXSetNumTexGens(1);
+    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0,
+        GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
+    GXSetNumTevStages(1);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0,
+        GX_COLOR0A0);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO,
+        GX_CC_TEXC);
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO,
+        GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_A0, GX_CA_TEXA,
+        GX_CA_ZERO);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO,
+        GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetNumChans(1);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG,
+        GX_LIGHT0, GX_DF_CLAMP, GX_AF_SPOT);
+    GXSetZCompLoc(GX_FALSE);
+    GXSetAlphaCompare(GX_GEQUAL, 1, GX_AOP_AND, GX_GEQUAL, 1);
+    GXSetCullMode(GX_CULL_BACK);
+    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA,
+        GX_LO_NOOP);
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+
+    work = masuNextWork;
+    for (i = 0; i < GW_PLAYER_MAX; i++, work++) {
+        int j;
+
+        if (work->masuId == 0) {
+            continue;
+        }
+        mbMasuMtxGet(work->masuId, masuMtx);
+        color.a = work->alpha;
+        GXSetTevColor(GX_TEVREG0, color);
+        for (j = 0; j < 1; j++) {
+            float angle;
+
+            if (j & 1) {
+                angle = work->angle;
+            } else {
+                angle = -work->angle;
+            }
+            PSMTXRotRad(rot, 'Y', 0.017453292f * angle);
+            PSMTXConcat(masuMtx, rot, model);
+            mtxScaleCat(model, work->scale, 1.0f, work->scale);
+            PSMTXConcat(*mtx, model, model);
+            GXLoadPosMtxImm(model, GX_PNMTX0);
+            GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+            GXPosition3f32(-120.00001f, 0.5f, -120.00001f);
+            GXTexCoord2f32(0.0f, 0.0f);
+            GXPosition3f32(120.00001f, 0.5f, -120.00001f);
+            GXTexCoord2f32(1.0f, 0.0f);
+            GXPosition3f32(120.00001f, 0.5f, 120.00001f);
+            GXTexCoord2f32(1.0f, 1.0f);
+            GXPosition3f32(-120.00001f, 0.5f, 120.00001f);
+            GXTexCoord2f32(0.0f, 1.0f);
+            GXEnd();
+        }
+        dispNum++;
+    }
+}
+
 void mbMasuNextSet(s16 id)
 {
     MASUNEXTWORK *work = masuNextWork;
@@ -444,6 +790,183 @@ void mbMasuNextSet(s16 id)
 void mbMasuNextDispSet(BOOL dispF)
 {
     masuNextDispF = dispF;
+}
+
+int mbev_MasuMove(int playerNo, s16 id)
+{
+    if (GwSystem.partyF) {
+        switch (mbMasuTypeGet(id)) {
+            case 7:
+                mbev_StarMasu(playerNo, id);
+                return TRUE;
+            case 8:
+                mbCapMasuExec(playerNo, id);
+                break;
+            case 9:
+                mbev_Shop(playerNo, id);
+                break;
+        }
+    } else {
+        mbSingleCall(11, id);
+        if (mbMasuTypeGet(id) == 8) {
+            mbCapMasuExec(playerNo, id);
+        }
+    }
+    mbev_CapCall(playerNo, mbMasuCapsuleGet(id), FALSE, TRUE);
+    return FALSE;
+}
+
+int mbev_MasuCapStop(int playerNo, s16 id)
+{
+    int result = TRUE;
+
+    if (_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+        mbTutorialCall(10);
+    }
+    if (GwSystem.partyF) {
+        if (mbMasuPlayerCapStopCheck(playerNo, id) != 0) {
+            result = mbev_CapCall(playerNo, mbMasuCapsuleGet(id), FALSE,
+                FALSE);
+        } else {
+            switch (mbMasuTypeGet(id)) {
+                case 0:
+                case 1:
+                    GwPlayer[playerNo].plusMasuNum++;
+                    if (GwPlayer[playerNo].plusMasuNum > 99) {
+                        GwPlayer[playerNo].plusMasuNum = 99;
+                    }
+                    break;
+                case 2:
+                    GwPlayer[playerNo].minusMasuNum++;
+                    if (GwPlayer[playerNo].minusMasuNum > 99) {
+                        GwPlayer[playerNo].minusMasuNum = 99;
+                    }
+                    break;
+                case 3:
+                    GwPlayer[playerNo].hatenaMasuNum++;
+                    if (GwPlayer[playerNo].hatenaMasuNum > 99) {
+                        GwPlayer[playerNo].hatenaMasuNum = 99;
+                    }
+                    break;
+                case 4:
+                    GwPlayer[playerNo].miracleMasuNum++;
+                    if (GwPlayer[playerNo].miracleMasuNum > 99) {
+                        GwPlayer[playerNo].miracleMasuNum = 99;
+                    }
+                    break;
+                case 5:
+                    GwPlayer[playerNo].kettouMasuNum++;
+                    if (GwPlayer[playerNo].kettouMasuNum > 99) {
+                        GwPlayer[playerNo].kettouMasuNum = 99;
+                    }
+                    break;
+                case 6:
+                    if (!GwSystem.curTime) {
+                        GwPlayer[playerNo].donkeyMasuNum++;
+                        if (GwPlayer[playerNo].donkeyMasuNum > 99) {
+                            GwPlayer[playerNo].donkeyMasuNum = 99;
+                        }
+                    } else {
+                        GwPlayer[playerNo].koopaMasuNum++;
+                        if (GwPlayer[playerNo].koopaMasuNum > 99) {
+                            GwPlayer[playerNo].koopaMasuNum = 99;
+                        }
+                    }
+                    break;
+            }
+        }
+    } else {
+        switch (mbMasuTypeGet(id)) {
+            case 3:
+                GwPlayer[playerNo].hatenaMasuNum++;
+                if (GwPlayer[playerNo].hatenaMasuNum > 99) {
+                    GwPlayer[playerNo].hatenaMasuNum = 99;
+                }
+                break;
+            case 6:
+                GwPlayer[playerNo].koopaMasuNum++;
+                if (GwPlayer[playerNo].koopaMasuNum > 99) {
+                    GwPlayer[playerNo].koopaMasuNum = 99;
+                }
+                break;
+        }
+    }
+    if (_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+        mbTutorialCall(11);
+    }
+    return result;
+}
+
+int mbev_MasuStop(int playerNo, s16 id)
+{
+    int result = TRUE;
+
+    if (_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+        mbTutorialCall(12);
+    }
+    if (GwSystem.partyF) {
+        if (mbMasuPlayerCapStopCheck(playerNo, id) > 0) {
+            mbPlayerCapCoinMasuExec(playerNo);
+            return TRUE;
+        }
+        switch (mbMasuTypeGet(id)) {
+            case 1:
+                mbPlayerPlusMasuExec(playerNo);
+                break;
+            case 2:
+                mbPlayerMinusMasuExec(playerNo);
+                break;
+            case 3:
+                result = ev_MasuHatena(playerNo, id);
+                break;
+            case 4:
+                if (!_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+                    mbev_CapCallMiracle(playerNo, id);
+                }
+                break;
+            case 5:
+                if (!_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+                    mbev_CapCallKettou(playerNo,
+                        GwPlayer[playerNo].masuId, TRUE);
+                }
+                break;
+            case 6:
+                if (!_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+                    if (!GwSystem.curTime) {
+                        mbev_CapCallDonkey(playerNo);
+                    } else {
+                        mbev_CapCallKoopa(playerNo);
+                    }
+                }
+                break;
+            case 7:
+                mbev_StarMasu(playerNo, id);
+                break;
+        }
+    } else {
+        mbSingleCall(7, id);
+        switch (mbMasuTypeGet(id)) {
+            case 1:
+            case 2:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+            case 9:
+            case 10:
+            case 11:
+                if (!_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+                    mbev_SingleMg(playerNo, id);
+                }
+                break;
+            case 3:
+                if (!_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+                    result = ev_MasuHatena(playerNo, id);
+                }
+                break;
+        }
+    }
+    return result;
 }
 
 int mbev_MasuMasuStart(int playerNo)
@@ -1562,6 +2085,58 @@ int mbMasuPlayerCapStopCheck(int playerNo, s16 id)
     return 0;
 }
 
+void mbMasuPlayerColorSet(int playerNo)
+{
+    int colorTbl[][2] = {
+        { 1, STATUS_COLOR_BLUE },
+        { 2, STATUS_COLOR_RED },
+        { 6, STATUS_COLOR_GRAY },
+        { 3, STATUS_COLOR_GREEN },
+        { 5, STATUS_COLOR_GREEN },
+        { 4, STATUS_COLOR_GREEN },
+        { 8, STATUS_COLOR_GREEN },
+        { -1, STATUS_COLOR_NULL },
+    };
+    MASU *masuP;
+    s16 id;
+    int capResult;
+    int color;
+
+    if (!GwSystem.partyF) {
+        return;
+    }
+    id = GwPlayer[playerNo].masuId;
+    capResult = mbMasuPlayerCapStopCheck(playerNo, id);
+    if (capResult == 0) {
+        masuP = mbMasuGet(id);
+        for (color = 0; colorTbl[color][0] >= 0; color++) {
+            if (masuP->type == colorTbl[color][0]) {
+                break;
+            }
+        }
+        if (colorTbl[color][0] < 0) {
+            mbStatusColorSet(playerNo, STATUS_COLOR_GRAY);
+            return;
+        }
+        if (colorTbl[color][0] == 6) {
+            if (!GwSystem.curTime) {
+                color = STATUS_COLOR_BLUE;
+            } else {
+                color = STATUS_COLOR_RED;
+            }
+        } else {
+            color = colorTbl[color][1];
+        }
+    } else {
+        if (capResult > 0) {
+            color = STATUS_COLOR_PURPLE;
+        } else {
+            color = STATUS_COLOR_PURPLE;
+        }
+    }
+    mbStatusColorSet(playerNo, color);
+}
+
 void mbMasuPlayerDispSet(BOOL dispF)
 {
     masuCapsuleDispF = dispF;
@@ -1582,6 +2157,111 @@ void mbMasuPlayerPrizeReset(int playerNo)
     GwPlayer[playerNo].miracleMasuNum = 0;
     GwPlayer[playerNo].kettouMasuNum = 0;
     GwPlayer[playerNo].donkeyMasuNum = 0;
+}
+
+int mbMasuPKinokoValueGet(int playerNo, s16 id)
+{
+    s16 linkTbl[MASU_LINK_MAX];
+    u8 candidateTbl[MASU_MAX];
+    u8 resultVisit[MASU_MAX];
+    MASUPKINOKORESULT resultTbl[MASU_MAX];
+    s16 workNo = 0;
+    s16 resultNum = 0;
+    s16 candidateNum = 0;
+    int linkNo;
+    int linkNum;
+    int type;
+    int i;
+
+    if (mbRandMod(100) < 50) {
+        return 9;
+    }
+
+    masuFindNo = 0;
+    masuFindStep = 9999;
+    masuFindId = MASU_NULL;
+    memset(masuFindVisit, 0, sizeof(masuFindVisit));
+    memset(resultVisit, 0, sizeof(resultVisit));
+    resultVisit[id] = TRUE;
+    masuFindResultNum = 0;
+    linkNo = 0;
+
+    while (TRUE) {
+        masuFindVisit[id] = TRUE;
+        if (masuFindNo <= 10) {
+            linkNum = mbMasuLinkTblGet2(id, linkTbl, FALSE);
+            while (linkNo < linkNum) {
+                if (!masuFindVisit[linkTbl[linkNo]]) {
+                    break;
+                }
+                linkNo++;
+            }
+            if (linkNo < linkNum) {
+                masuFindWork[workNo].id = id;
+                masuFindWork[workNo].linkNo = linkNo + 1;
+                workNo++;
+                if (mbMasuDispCheck(id)) {
+                    if (!resultVisit[id]) {
+                        resultTbl[resultNum].id = id;
+                        resultTbl[resultNum].step = masuFindNo;
+                        resultNum++;
+                        resultVisit[id] = TRUE;
+                    } else if (resultNum != 0) {
+                        for (i = 0; i < resultNum; i++) {
+                            if (id == resultTbl[i].id) {
+                                break;
+                            }
+                        }
+                        if (resultTbl[i].step > masuFindNo) {
+                            resultTbl[i].step = masuFindNo;
+                        }
+                    }
+                }
+                id = linkTbl[linkNo];
+                linkNo = 0;
+                if (mbMasuDispCheck(id)) {
+                    masuFindNo++;
+                }
+                continue;
+            }
+        }
+
+        masuFindVisit[id] = FALSE;
+        workNo--;
+        if (workNo < 0) {
+            break;
+        }
+        if (mbMasuDispCheck(id)) {
+            masuFindNo--;
+        }
+        id = masuFindWork[workNo].id;
+        linkNo = masuFindWork[workNo].linkNo;
+    }
+
+    for (i = 0; i < resultNum; i++) {
+        type = mbMasuTypeGet(resultTbl[i].id);
+        if (type == 3 || type == 4 || type == 5
+            || (!GwSystem.curTime && type == 6)) {
+            candidateTbl[candidateNum++] = i;
+        }
+    }
+    if (candidateNum == 0) {
+        for (i = 0; i < resultNum; i++) {
+            s16 resultId = resultTbl[i].id;
+
+            if (mbCapMasuPlayerGet(resultId) == playerNo
+                && mbCapMasuDispTypeGet(resultId) == 1) {
+                candidateTbl[candidateNum++] = i;
+            }
+        }
+    }
+    if (candidateNum == 0) {
+        return 9;
+    }
+
+    i = mbRandMod(candidateNum);
+    mbPlayerWorkGet(playerNo)->masuNext = resultTbl[candidateTbl[i]].id;
+    return resultTbl[candidateTbl[i]].step - 1;
 }
 
 int mbMasuStub(void)
