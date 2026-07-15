@@ -350,7 +350,6 @@ void GWPlayerCoinSet(GW_PLAYER_ID playerNo, s16 coin);
 void GWPlayerCoinAdd(GW_PLAYER_ID playerNo, s16 coin);
 void GWPlayerStarSet(GW_PLAYER_ID playerNo, s16 star);
 void GWPlayerStarAdd(GW_PLAYER_ID playerNo, s16 star);
-s16 GWPlayerStarGet(GW_PLAYER_ID playerNo);
 
 void GWSinglePrizeFlagSet(GW_SINGLE_PRIZE_FLAG flag);
 BOOL GWSinglePrizeFlagGet(GW_SINGLE_PRIZE_FLAG flag);

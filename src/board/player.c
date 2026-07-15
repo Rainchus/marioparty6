@@ -5,6 +5,7 @@
 
 #include "game/board/audio.h"
 #include "game/board/camera.h"
+#include "game/board/coin.h"
 #include "game/board/effect.h"
 #include "game/board/main.h"
 #include "game/board/masu.h"
@@ -63,6 +64,9 @@ void mbObjMetalKill(MBMODELID modelId);
 void mbObjBiriQKill(MBMODELID modelId);
 BOOL mbWipeSpecialStatGet(void);
 void mbWipeFadeIn(void);
+BOOL mbPauseEnableCheck(void);
+void mbPos3DtoNorm(HuVecF *src, s16 cameraMask, HuVecF *dst);
+float mbAngleEaseOut(float angleStart, float angleEnd, float weight);
 
 void mbPlayerClose(void)
 {
@@ -292,6 +296,295 @@ void mbPlayerMoveExec(int playerNo, HuVecF *srcPos, HuVecF *dstPos,
         maxTime, rot, waitF);
 }
 
+enum {
+    PLAYER_MOVE_MODE_RUN,
+    PLAYER_MOVE_MODE_JUMP,
+    PLAYER_MOVE_MODE_CLIMB
+};
+
+typedef struct PlayerMoveWork {
+    u8 killF : 1;
+    u8 mode : 2;
+    u8 playerNo : 2;
+    s16 time;
+    s16 maxTime;
+} PLAYERMOVEWORK;
+
+static void PlayerMoveOMExec(OMOBJ *objP);
+
+void mbPlayerMoveMain(int playerNo, HuVecF *srcPos, HuVecF *dstPos, u32 motNo,
+    float motSpeed, u32 motAttr, s16 maxTime, HuVecF *rot, BOOL waitF)
+{
+    BOOL setAngle = FALSE;
+    OMOBJ *objP = playerWork[playerNo].moveObj = omAddObjEx(mbObjMan, 0x100,
+        0, 0, -1, PlayerMoveOMExec);
+    PLAYERMOVEWORK *workP = omObjGetWork(objP, PLAYERMOVEWORK);
+    int mode;
+    HuVecF moveDir;
+    HuVecF playerRot;
+
+    if (srcPos != NULL) {
+        objP->trans.x = srcPos->x;
+        objP->trans.y = srcPos->y;
+        objP->trans.z = srcPos->z;
+    } else {
+        mbPlayerPosGet(playerNo, &objP->trans);
+    }
+    if (dstPos != NULL) {
+        objP->rot.x = dstPos->x;
+        objP->rot.y = dstPos->y;
+        objP->rot.z = dstPos->z;
+        workP->mode = PLAYER_MOVE_MODE_RUN;
+    } else {
+        MASU *masuPrev;
+        MASU *masuNext;
+        s16 masuIdPrev;
+        int masuIdNext;
+
+        masuIdNext = GwPlayer[playerNo].masuIdNext;
+        masuNext = mbMasuGet(masuIdNext);
+        masuIdPrev = GwPlayer[playerNo].masuIdPrev;
+        if (masuIdPrev < 0) {
+            mode = PLAYER_MOVE_MODE_RUN;
+        } else {
+            masuPrev = mbMasuGet(masuIdPrev);
+            if ((masuPrev->flag & MASU_FLAG_JUMPFROM)
+                && (masuNext->flag & MASU_FLAG_JUMPTO)) {
+                mode = PLAYER_MOVE_MODE_JUMP;
+            } else if ((masuPrev->flag & MASU_FLAG_CLIMBFROM)
+                && (masuNext->flag & MASU_FLAG_CLIMBTO)) {
+                mode = PLAYER_MOVE_MODE_CLIMB;
+            } else {
+                mode = PLAYER_MOVE_MODE_RUN;
+            }
+        }
+        workP->mode = mode;
+        mbMasuPosGet(GwPlayer[playerNo].masuIdNext, &objP->rot);
+    }
+    if (motNo == 0) {
+        switch (workP->mode) {
+            case PLAYER_MOVE_MODE_RUN:
+                mbPlayerWorkGet(playerNo)->_unk0C = 1;
+                mbPlayerMotionShiftSet(playerNo, 3, 0.0f, 4.0f,
+                    HU3D_MOTATTR_LOOP);
+                break;
+            case PLAYER_MOVE_MODE_JUMP:
+                mbPlayerWorkGet(playerNo)->_unk0C = 2;
+                mbPlayerMotionShiftSet(playerNo, 4, 6.0f, 2.0f,
+                    HU3D_MOTATTR_NONE);
+                maxTime = 24;
+                break;
+            case PLAYER_MOVE_MODE_CLIMB:
+                mbPlayerWorkGet(playerNo)->_unk0C = 3;
+                mbPlayerMotionShiftSet(playerNo, 14, 0.0f, 4.0f,
+                    HU3D_MOTATTR_LOOP);
+                maxTime = 100;
+                motSpeed = 2.0f;
+                VECSubtract(&objP->rot, &objP->trans, &moveDir);
+                maxTime = VECMag(&moveDir) / 15.000001f;
+                if (objP->trans.y >= objP->rot.y) {
+                    moveDir.x = -moveDir.x;
+                    moveDir.y = -moveDir.y;
+                    moveDir.z = -moveDir.z;
+                    motSpeed = -motSpeed;
+                }
+                playerRot.x = playerRot.z = 0.0f;
+                playerRot.y = HuAtan(moveDir.x, moveDir.z);
+                mbPlayerRotSetV(playerNo, &playerRot);
+                setAngle = TRUE;
+                break;
+        }
+    } else {
+        mbPlayerMotionShiftSet(
+            playerNo, motNo, 0.0f, 4.0f, motAttr);
+    }
+    mbPlayerMotionSpeedSet(playerNo, motSpeed);
+    if (setAngle == FALSE) {
+        if (rot == NULL) {
+            float rotY;
+
+            VECSubtract(&objP->rot, &objP->trans, &playerRot);
+            rotY = 90.0f - HuAtan(playerRot.z, playerRot.x);
+            mbPlayerRotYSet(playerNo, rotY);
+        } else {
+            mbPlayerRotSetV(playerNo, rot);
+        }
+    }
+    if (srcPos) {
+        mbPlayerPosSetV(playerNo, srcPos);
+    }
+    objP->scale.x = objP->trans.x;
+    objP->scale.y = objP->trans.y;
+    objP->scale.z = objP->trans.z;
+    workP->playerNo = playerNo;
+    workP->time = 0;
+    workP->maxTime = maxTime;
+    {
+        int movePlayerNo = workP->playerNo;
+
+        if (playerWork[movePlayerNo].masuMoveF) {
+            int moveMaxTime = workP->maxTime;
+            int movePlayerNo2 = workP->playerNo;
+            MBPLAYERWORK *workP2 = mbPlayerWorkGet(movePlayerNo2);
+
+            workP2->_unk08 = moveMaxTime;
+        }
+    }
+    GwPlayer[playerNo].moveF = TRUE;
+    if (!waitF) {
+        return;
+    }
+    while (GwPlayer[playerNo].moveF) {
+        HuPrcVSleep();
+    }
+    mbPlayerWorkGet(playerNo)->_unk0C = 0;
+    mbPlayerWorkGet(playerNo)->moveEndF = TRUE;
+}
+
+static void PlayerMoveOMExec(OMOBJ *objP)
+{
+    PLAYERMOVEWORK *workP = omObjGetWork(objP, PLAYERMOVEWORK);
+    float weight;
+
+    if (mbExitCheck() || workP->killF) {
+        GwPlayer[workP->playerNo].moveF = FALSE;
+        omDelObjEx(HuPrcCurrentGet(), objP);
+        playerWork[workP->playerNo].moveObj = NULL;
+        return;
+    }
+    workP->time++;
+    weight = (float)workP->time / workP->maxTime;
+    objP->trans.x = objP->scale.x
+        + (weight * (objP->rot.x - objP->scale.x));
+    objP->trans.y = objP->scale.y
+        + (weight * (objP->rot.y - objP->scale.y));
+    objP->trans.z = objP->scale.z
+        + (weight * (objP->rot.z - objP->scale.z));
+    if (playerWork[workP->playerNo].masuMoveF) {
+        playerWork[workP->playerNo]._unk08 = workP->maxTime - workP->time;
+    }
+    if (workP->time >= workP->maxTime) {
+        GwPlayer[workP->playerNo].moveF = FALSE;
+        mbPlayerPosSet(workP->playerNo, objP->rot.x, objP->rot.y,
+            objP->rot.z);
+        omDelObjEx(HuPrcCurrentGet(), objP);
+        playerWork[workP->playerNo].moveObj = NULL;
+    } else if (workP->mode != PLAYER_MOVE_MODE_JUMP) {
+        mbPlayerPosSet(workP->playerNo, objP->trans.x, objP->trans.y,
+            objP->trans.z);
+    } else {
+        playerWork[workP->playerNo].moveEndF = FALSE;
+        if (workP->time >= workP->maxTime - 2) {
+            weight = 1.0f;
+            playerWork[workP->playerNo].moveEndF = TRUE;
+        } else {
+            weight = (float)workP->time / (workP->maxTime - 2);
+        }
+        mbPlayerPosSet(workP->playerNo, objP->trans.x,
+            objP->trans.y + (100.0f * (1.5f * HuSin(weight * 180.0f))),
+            objP->trans.z);
+        if (workP->time == workP->maxTime - 5) {
+            mbPlayerMotionShiftSet(workP->playerNo, 5, 2.0f, 2.0f,
+                HU3D_MOTATTR_NONE);
+        }
+    }
+}
+
+typedef struct PlayerRotateWork {
+    u8 killF : 1;
+    s8 playerNo;
+    s16 maxTime;
+    s16 time;
+} PLAYERROTATEWORK;
+
+static void PlayerRotateOMExec(OMOBJ *objP);
+
+void mbPlayerRotateStart(int playerNo, s16 endAngle, s16 maxTime)
+{
+    OMOBJ *objP;
+    PLAYERROTATEWORK *workP;
+    float angle;
+
+    if (maxTime <= 0) {
+        return;
+    }
+    if (playerWork[playerNo].rotateObj) {
+        objP = playerWork[playerNo].rotateObj;
+    } else {
+        playerWork[playerNo].rotateObj = objP = omAddObjEx(mbObjMan, 0x100,
+            0, 0, -1, PlayerRotateOMExec);
+    }
+    workP = omObjGetWork(objP, PLAYERROTATEWORK);
+    workP->killF = FALSE;
+    workP->maxTime = maxTime;
+    workP->playerNo = playerNo;
+    workP->time = 0;
+    objP->rot.y = mbPlayerRotYGet(playerNo);
+    objP->scale.z = endAngle;
+    angle = fmod(endAngle - objP->rot.y, 360.0f);
+    if ((s16)angle == 0) {
+        mbPlayerMotionShiftSet(playerNo, 1, 0.0f, 5.0f,
+            HU3D_MOTATTR_LOOP);
+        workP->killF = TRUE;
+    } else {
+        if (angle < 0.0f) {
+            angle += 360.0f;
+        }
+        if (angle > 180.0f) {
+            angle -= 360.0f;
+        }
+        objP->scale.y = angle;
+        if (fabs(angle) > 5.0f) {
+            mbPlayerMotionShiftSet(playerNo, 2, 0.0f, 5.0f,
+                HU3D_MOTATTR_LOOP);
+        } else {
+            mbPlayerMotionShiftSet(playerNo, 1, 0.0f, 5.0f,
+                HU3D_MOTATTR_LOOP);
+        }
+    }
+}
+
+static void PlayerRotateOMExec(OMOBJ *objP)
+{
+    PLAYERROTATEWORK *workP = omObjGetWork(objP, PLAYERROTATEWORK);
+    float rotY;
+    float angle;
+    float weight;
+
+    if (workP->killF || mbExitCheck()) {
+        mbPlayerRotYSet(workP->playerNo, objP->scale.z);
+        playerWork[workP->playerNo].rotateObj = NULL;
+        omDelObjEx(HuPrcCurrentGet(), objP);
+        return;
+    }
+    angle = (float)(workP->time++) / workP->maxTime;
+    weight = HuSin(angle * 90.0f);
+    rotY = objP->rot.y + (weight * objP->scale.y);
+    mbPlayerRotYSet(workP->playerNo, rotY);
+    if (workP->time >= workP->maxTime) {
+        workP->killF = TRUE;
+        mbPlayerMotionSet(workP->playerNo, 1, HU3D_MOTATTR_LOOP);
+        return;
+    }
+}
+
+BOOL mbPlayerRotateCheck(int playerNo)
+{
+    return playerWork[playerNo].rotateObj == NULL;
+}
+
+BOOL mbPlayerRotateCheckAll(void)
+{
+    int i;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        if (playerWork[i].rotateObj != NULL) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 void mbPlayerDiceMotExec(int playerNo)
 {
     int time;
@@ -314,9 +607,140 @@ typedef struct MoveNumWork {
     u8 carF : 1;
 } MOVENUMWORK;
 
+static void MoveNumOMExec(OMOBJ *objP);
+
+void mbMoveNumCreateColor(int playerNo, BOOL carF, int color)
+{
+    int modelId;
+    HU3D_CAMERA *cameraP;
+    OMOBJ *objP;
+    MOVENUMWORK *workP;
+    int i;
+    HuVecF pos;
+    HuVecF posNorm;
+
+    cameraP = &Hu3DCamera[0];
+    if (playerWork[playerNo].moveNumObj) {
+        return;
+    }
+    playerWork[playerNo].moveNumObj = objP = omAddObjEx(mbObjMan, 0x7E02,
+        20, 0, -1, MoveNumOMExec);
+    omSetStatBit(objP, OM_STAT_MODELPAUSE);
+    workP = omObjGetWork(objP, MOVENUMWORK);
+    workP->dispF = TRUE;
+    workP->killF = FALSE;
+    workP->playerNo = playerNo;
+    workP->carF = carF;
+    for (i = 0; i < 20; i++) {
+        modelId = mbCoinObjCreate(i % 10, color);
+        mbCoinObjLayerSet(modelId, 4);
+        mbCoinObjDispSet(modelId, FALSE);
+        objP->mdlId[i] = modelId;
+    }
+    mbPlayerPosGet(playerNo, &pos);
+    mbPos3DtoNorm(&pos, 1, &posNorm);
+    objP->trans.y = posNorm.y;
+    pos.y += 300.0f;
+    mbPos3DtoNorm(&pos, 1, &posNorm);
+    objP->trans.y = posNorm.y - objP->trans.y;
+    objP->trans.z = posNorm.z;
+    if (carF) {
+        Mtx lookAt;
+        HuVecF posCamera;
+        float tanFov;
+
+        mbPlayerPosGet(playerNo, &pos);
+        pos.y += 300.0f;
+        MTXLookAt(lookAt, &cameraP->pos, &cameraP->up, &cameraP->target);
+        MTXMultVec(lookAt, &pos, &posCamera);
+        tanFov = HuSin(cameraP->fov * 0.5f)
+            / HuCos(cameraP->fov * 0.5f);
+        objP->rot.y = posCamera.y / (tanFov * posCamera.z);
+        objP->rot.z = -posCamera.z;
+    }
+}
+
 void mbMoveNumCreate(int playerNo, BOOL carF)
 {
     mbMoveNumCreateColor(playerNo, carF, 0);
+}
+
+static void MoveNumOMExec(OMOBJ *objP)
+{
+    int digitNum = 0;
+    MOVENUMWORK *workP = omObjGetWork(objP, MOVENUMWORK);
+    HU3D_CAMERA *cameraP = &Hu3DCamera[0];
+    HU3D_CAMERA *camera2P = &Hu3DCamera[2];
+    int i;
+    HuVecF pos;
+    HuVecF posNorm;
+    float scaleX;
+    float scaleY;
+    float tanFov;
+    float scale;
+    float rotZ;
+
+    if (workP->killF || mbExitCheck()) {
+        for (i = 0; i < 20; i++) {
+            if (objP->mdlId[i] != -1) {
+                mbCoinObjNumDec(objP->mdlId[i]);
+                objP->mdlId[i] = -1;
+            }
+        }
+        omDelObjEx(HuPrcCurrentGet(), objP);
+        playerWork[workP->playerNo].moveNumObj = NULL;
+        return;
+    }
+    if (mbPauseEnableCheck()) {
+        return;
+    }
+    mbPlayerPosGet(workP->playerNo, &pos);
+    mbPos3DtoNorm(&pos, 1, &posNorm);
+    posNorm.y += objP->trans.y;
+    posNorm.z = objP->trans.z;
+    tanFov = HuSin(camera2P->fov * 0.5f)
+        / HuCos(camera2P->fov * 0.5f);
+    scaleX = 1.2f * (tanFov * -posNorm.z);
+    scaleY = tanFov * -posNorm.z;
+    posNorm.x *= scaleX;
+    posNorm.y *= scaleY;
+    pos = posNorm;
+    mbCameraRotGet(&posNorm);
+    rotZ = -posNorm.z;
+    for (i = 0; i < 20; i++) {
+        mbCoinObjDispSet(objP->mdlId[i], FALSE);
+    }
+    if (workP->dispF) {
+        int modelNo;
+
+        scale = HuSin(cameraP->fov * 0.5f)
+            / HuCos(cameraP->fov * 0.5f);
+        scale = tanFov / scale;
+        modelNo = GwPlayer[workP->playerNo].moveNum / 10;
+        if (modelNo != 0) {
+            mbCoinObjDispSet(objP->mdlId[modelNo], TRUE);
+            mbCoinObjPosSet(objP->mdlId[modelNo],
+                pos.x - (60.000004f * scale), pos.y, pos.z);
+            mbCoinObjRotSet(objP->mdlId[modelNo], rotZ, 0.0f, 0.0f);
+            mbCoinObjScaleSet(
+                objP->mdlId[modelNo], scale, scale, scale);
+            digitNum++;
+        }
+        modelNo = (GwPlayer[workP->playerNo].moveNum % 10) + 10;
+        if (modelNo != 0) {
+            mbCoinObjDispSet(objP->mdlId[modelNo], TRUE);
+            if (digitNum == 0) {
+                mbCoinObjPosSet(
+                    objP->mdlId[modelNo], pos.x, pos.y, pos.z);
+            } else {
+                mbCoinObjPosSet(objP->mdlId[modelNo],
+                    pos.x + (60.000004f * scale), pos.y, pos.z);
+            }
+            mbCoinObjRotSet(objP->mdlId[modelNo], rotZ, 0.0f, 0.0f);
+            mbCoinObjScaleSet(
+                objP->mdlId[modelNo], scale, scale, scale);
+        }
+    }
 }
 
 void mbMoveNumKill(int playerNo)
@@ -340,13 +764,347 @@ void mbMoveNumDispSet(int playerNo, BOOL dispF)
 }
 
 typedef struct PlayerColWork {
+    u8 motStartF : 1;
     u8 killF : 1;
-    u8 _unk0_1 : 1;
     u8 snapF : 1;
     u8 restF : 1;
-    u8 _unk0_4 : 2;
+    u8 playerNo : 2;
     u8 state : 2;
+    u8 circleF;
+    u8 masuId;
+    u8 masuIdNext;
+    s8 time;
+    s8 maxTime;
+    u8 _pad06[2];
+    float rotYStart;
+    float radius;
 } PLAYERCOLWORK;
+
+static void PlayerColCornerSet(int playerNo, int masuIdNext);
+static void PlayerColCornerSnap(int playerNo, int masuId, int cornerNo);
+static void PlayerColInit(int playerNo, int masuId, int cornerNo);
+static void PlayerColOMExec(OMOBJ *obj);
+
+void mbev_PlayerColMasuAllSet(int *masuIdFix, BOOL snapF)
+{
+    int i;
+    int j;
+    int cornerNo;
+    int masuId;
+    s8 orderNo;
+    HuVecF pos;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        if (playerWork[i].colObj) {
+            PLAYERCOLWORK *workP;
+
+            if (GwPlayer[i].masuId == 0) {
+                continue;
+            }
+            workP = omObjGetWork(playerWork[i].colObj, PLAYERCOLWORK);
+            workP->masuIdNext = GwPlayer[i].masuIdNext;
+            if (workP->restF) {
+                continue;
+            }
+        }
+        if (masuIdFix[i] >= 0) {
+            mbPlayerMasuCornerSet(i, 0);
+            PlayerColCornerSnap(i, masuIdFix[i], 0);
+            continue;
+        }
+        if (playerWork[i].colObj) {
+            PLAYERCOLWORK *workP =
+                omObjGetWork(playerWork[i].colObj, PLAYERCOLWORK);
+
+            if (!workP->snapF) {
+                continue;
+            }
+        }
+        masuId = GwPlayer[i].masuId;
+        orderNo = GwPlayer[i].orderNo;
+        cornerNo = 0;
+        for (j = 0; j < GW_PLAYER_MAX; j++) {
+            if (i != j && masuId == masuIdFix[j]) {
+                cornerNo++;
+            }
+        }
+        for (j = 0; j < GW_PLAYER_MAX; j++) {
+            if (i != j && masuIdFix[j] < 0 &&
+                masuId == GwPlayer[j].masuId &&
+                orderNo > GwPlayer[j].orderNo) {
+                cornerNo++;
+            }
+        }
+        if (cornerNo == 0) {
+            mbMasuPosGet(masuId, &pos);
+        } else {
+            mbMasuCornerRotPosGet(masuId, cornerNo - 1, &pos);
+        }
+        {
+            PLAYERCOLWORK *workP =
+                omObjGetWork(playerWork[i].colObj, PLAYERCOLWORK);
+            u8 circleF = workP->circleF;
+
+            workP->circleF = FALSE;
+            if (snapF) {
+                mbPlayerPosSetV(i, &pos);
+                PlayerColCornerSnap(i, masuId, cornerNo);
+            } else if (cornerNo != mbPlayerMasuCornerGet(i) || circleF) {
+                PlayerColInit(i, masuId, cornerNo);
+            }
+        }
+        mbPlayerMasuCornerSet(i, cornerNo);
+    }
+}
+
+void mbev_PlayerColMasu(int playerNo, int masuId, BOOL snapF)
+{
+    int orderNo[GW_PLAYER_MAX];
+    int playerNoTbl[GW_PLAYER_MAX];
+    HuVecF pos;
+    int num = 0;
+    int i;
+    int j;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        if (i != playerNo) {
+            if (GwPlayer[i].masuId == 0) {
+                continue;
+            }
+            if (masuId != GwPlayer[i].masuId) {
+                continue;
+            }
+        }
+        orderNo[num] = GwPlayer[i].orderNo;
+        if (i == playerNo) {
+            orderNo[num] = -1;
+        }
+        playerNoTbl[num] = i;
+        num++;
+        mbPlayerColSnapPlayerSet(i, TRUE);
+        mbPlayerColRestSet(i, TRUE);
+    }
+    for (i = 0; i < num - 1; i++) {
+        for (j = i + 1; j < num; j++) {
+            if (orderNo[i] > orderNo[j]) {
+                int temp = orderNo[i];
+
+                orderNo[i] = orderNo[j];
+                orderNo[j] = temp;
+                temp = playerNoTbl[i];
+                playerNoTbl[i] = playerNoTbl[j];
+                playerNoTbl[j] = temp;
+            }
+        }
+    }
+    for (i = 0; i < num; i++) {
+        int playerNoSet = playerNoTbl[i];
+        int cornerNo = i;
+        PLAYERCOLWORK *workP;
+        u8 circleF;
+
+        if (cornerNo != 0) {
+            mbMasuCornerRotPosGet(masuId, cornerNo - 1, &pos);
+        } else {
+            mbMasuPosGet(masuId, &pos);
+        }
+        workP = omObjGetWork(playerWork[playerNoSet].colObj, PLAYERCOLWORK);
+        circleF = workP->circleF;
+        workP->circleF = FALSE;
+        if (snapF) {
+            mbPlayerPosSetV(playerNoSet, &pos);
+            PlayerColCornerSnap(playerNoSet, masuId, cornerNo);
+        } else if (cornerNo != mbPlayerMasuCornerGet(playerNoSet) || circleF) {
+            PlayerColInit(playerNoSet, masuId, cornerNo);
+        }
+        mbPlayerMasuCornerSet(playerNoSet, cornerNo);
+    }
+}
+
+void mbev_PlayerColCircleAdd(
+    int playerNo, int masuId, BOOL snapF, float radius)
+{
+    int orderNo[GW_PLAYER_MAX];
+    int playerNoTbl[GW_PLAYER_MAX];
+    HuVecF pos;
+    HuVecF posCenter;
+    int num = 0;
+    int i;
+    int j;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        PLAYERCOLWORK *workP;
+
+        if (i != playerNo) {
+            if (GwPlayer[i].masuId == 0) {
+                continue;
+            }
+            if (masuId != GwPlayer[i].masuId) {
+                continue;
+            }
+        }
+        workP = omObjGetWork(playerWork[i].colObj, PLAYERCOLWORK);
+        workP->circleF = TRUE;
+        workP->radius = radius;
+        orderNo[num] = GwPlayer[i].orderNo;
+        if (i == playerNo) {
+            orderNo[num] = -1;
+        }
+        playerNoTbl[num] = i;
+        num++;
+        mbPlayerColSnapPlayerSet(i, TRUE);
+        mbPlayerColRestSet(i, TRUE);
+    }
+    for (i = 0; i < num - 1; i++) {
+        for (j = i + 1; j < num; j++) {
+            if (orderNo[i] > orderNo[j]) {
+                int temp = orderNo[i];
+
+                orderNo[i] = orderNo[j];
+                orderNo[j] = temp;
+                temp = playerNoTbl[i];
+                playerNoTbl[i] = playerNoTbl[j];
+                playerNoTbl[j] = temp;
+            }
+        }
+    }
+    for (i = 0; i < num; i++) {
+        int playerNoSet = playerNoTbl[i];
+        int cornerNo = i;
+
+        if (playerNo < 0 && cornerNo == 0) {
+            cornerNo = num;
+        }
+        mbMasuPosGet(masuId, &posCenter);
+        if (cornerNo != 0) {
+            float scale;
+
+            mbMasuCornerRotPosGet(masuId, cornerNo - 1, &pos);
+            VECSubtract(&pos, &posCenter, &pos);
+            scale = radius / VECMag(&pos);
+            VECScale(&pos, &pos, scale);
+            VECAdd(&posCenter, &pos, &posCenter);
+        }
+        if (snapF) {
+            mbPlayerPosSetV(playerNoSet, &posCenter);
+            PlayerColCornerSnap(playerNoSet, masuId, cornerNo);
+        } else {
+            PlayerColInit(playerNoSet, masuId, cornerNo);
+        }
+        mbPlayerMasuCornerSet(playerNoSet, cornerNo);
+    }
+}
+
+void mbev_PlayerColMasuAdd(int playerNo, int masuId, BOOL snapF)
+{
+    HuVecF pos;
+    int i;
+    int j;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        s8 orderNo;
+        int cornerNo;
+        PLAYERCOLWORK *workP;
+        u8 circleF;
+
+        if (masuId != GwPlayer[i].masuId || i == playerNo) {
+            continue;
+        }
+        if (playerWork[i].colObj) {
+            workP = omObjGetWork(playerWork[i].colObj, PLAYERCOLWORK);
+            workP->masuIdNext = GwPlayer[i].masuIdNext;
+            if (workP->restF || !workP->snapF) {
+                continue;
+            }
+        }
+        orderNo = GwPlayer[i].orderNo;
+        cornerNo = 1;
+        if (playerNo < 0) {
+            cornerNo = 0;
+        }
+        for (j = 0; j < GW_PLAYER_MAX; j++) {
+            if (i != j && masuId == GwPlayer[j].masuId &&
+                orderNo > GwPlayer[j].orderNo) {
+                cornerNo++;
+            }
+        }
+        if (cornerNo != 0) {
+            mbMasuCornerRotPosGet(masuId, cornerNo - 1, &pos);
+        } else {
+            mbMasuPosGet(masuId, &pos);
+        }
+        workP = omObjGetWork(playerWork[i].colObj, PLAYERCOLWORK);
+        circleF = workP->circleF;
+        workP->circleF = FALSE;
+        if (snapF) {
+            mbPlayerPosSetV(i, &pos);
+            PlayerColCornerSnap(i, masuId, cornerNo);
+        } else if (cornerNo != mbPlayerMasuCornerGet(i) || circleF) {
+            PlayerColInit(i, masuId, cornerNo);
+        }
+        mbPlayerMasuCornerSet(i, cornerNo);
+    }
+    if (playerNo >= 0) {
+        mbPlayerMasuCornerSet(playerNo, 0);
+    }
+}
+
+void mbev_PlayerColBall(int masuId, int *playerNoTbl, HuVecF *posTbl)
+{
+    int useF[GW_PLAYER_MAX] = { 0, 0, 0, 0 };
+    int playerNoSort[GW_PLAYER_MAX];
+    int orderNo[GW_PLAYER_MAX];
+    HuVecF pos[GW_PLAYER_MAX];
+    int num;
+    int i;
+    int j;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        if (playerNoTbl[i] >= 0) {
+            useF[playerNoTbl[i]] = TRUE;
+        }
+    }
+    num = 0;
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        if (masuId != GwPlayer[i].masuId && !useF[i]) {
+            continue;
+        }
+        orderNo[num] = GwPlayer[i].orderNo;
+        if (orderNo[num] != 0 && !mbPlayerColSnapGet(i)) {
+            orderNo[num] += GW_PLAYER_MAX;
+        }
+        playerNoSort[num] = i;
+        num++;
+    }
+    for (i = 0; i < num - 1; i++) {
+        for (j = i + 1; j < num; j++) {
+            if (orderNo[i] > orderNo[j]) {
+                int temp = orderNo[i];
+
+                orderNo[i] = orderNo[j];
+                orderNo[j] = temp;
+                temp = playerNoSort[i];
+                playerNoSort[i] = playerNoSort[j];
+                playerNoSort[j] = temp;
+            }
+        }
+    }
+    for (i = 0; i < num; i++) {
+        int playerNo = playerNoSort[i];
+        int cornerNo = i;
+
+        if (cornerNo != 0) {
+            mbMasuCornerRotPosGet(masuId, cornerNo - 1, &pos[playerNo]);
+        } else {
+            mbMasuPosGet(masuId, &pos[playerNo]);
+        }
+    }
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        if (playerNoTbl[i] >= 0) {
+            posTbl[i] = pos[playerNoTbl[i]];
+        }
+    }
+}
 
 void mbev_PlayerColMasuSet(int playerNo, int masuId, BOOL waitF)
 {
@@ -358,6 +1116,140 @@ void mbev_PlayerColMasuSet(int playerNo, int masuId, BOOL waitF)
     }
     masuIdTbl[playerNo] = masuId;
     mbev_PlayerColMasuAllSet(masuIdTbl, waitF);
+}
+
+static void PlayerColCornerSet(int playerNo, int masuIdNext)
+{
+    int masuIdFix[GW_PLAYER_MAX];
+    int i;
+    int j;
+    int cornerNo;
+    int masuId;
+    s8 orderNo;
+    HuVecF pos;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        masuIdFix[i] = -1;
+    }
+    masuIdFix[playerNo] = masuIdNext;
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        PLAYERCOLWORK *workP;
+        u8 circleF;
+
+        if (playerWork[i].colObj == NULL) {
+            continue;
+        }
+        if (GwPlayer[i].masuId == 0) {
+            continue;
+        }
+        workP = omObjGetWork(playerWork[i].colObj, PLAYERCOLWORK);
+        workP->masuIdNext = GwPlayer[i].masuIdNext;
+        if (i == playerNo) {
+            continue;
+        }
+        if (workP->restF || !workP->snapF) {
+            continue;
+        }
+        masuId = GwPlayer[i].masuId;
+        orderNo = GwPlayer[i].orderNo;
+        cornerNo = 0;
+        for (j = 0; j < GW_PLAYER_MAX; j++) {
+            if (i != j && masuId == masuIdFix[j]) {
+                cornerNo++;
+            }
+        }
+        for (j = 0; j < GW_PLAYER_MAX; j++) {
+            if (i != j && masuIdFix[j] < 0 &&
+                masuId == GwPlayer[j].masuId &&
+                orderNo > GwPlayer[j].orderNo) {
+                cornerNo++;
+            }
+        }
+        if (cornerNo == 0) {
+            mbMasuPosGet(masuId, &pos);
+        } else {
+            mbMasuCornerRotPosGet(masuId, cornerNo - 1, &pos);
+        }
+        circleF = workP->circleF;
+        workP->circleF = FALSE;
+        if (cornerNo != mbPlayerMasuCornerGet(i) || circleF) {
+            PlayerColInit(i, masuId, cornerNo);
+        }
+        mbPlayerMasuCornerSet(i, cornerNo);
+    }
+}
+
+static void PlayerColCornerSnap(int playerNo, int masuId, int cornerNo)
+{
+    MBPLAYERWORK *playerWorkP = mbPlayerWorkGet(playerNo);
+    PLAYERCOLWORK *workP =
+        omObjGetWork(playerWorkP->colObj, PLAYERCOLWORK);
+    Mtx masuMtx;
+    Mtx masuMtxInv;
+    HuVecF pos;
+
+    if (workP->snapF) {
+        workP->killF = FALSE;
+        workP->state = 0;
+        workP->motStartF = FALSE;
+        workP->masuId = masuId;
+        playerWorkP->masuCorner = cornerNo;
+        mbMasuMtxGet(workP->masuId, masuMtx);
+        MTXInverse(masuMtx, masuMtxInv);
+        mbPlayerPosGet(playerNo, &pos);
+        MTXMultVec(masuMtxInv, &pos, &playerWork[playerNo]._unk3C);
+        MTXMultVec(
+            masuMtxInv, &pos, &playerWork[playerNo].colObj->trans);
+        mbPlayerRotYSet(playerNo, 0.0f);
+        workP->rotYStart = 0.0f;
+        GwPlayer[playerNo].moveF = FALSE;
+    }
+}
+
+static void PlayerColInit(int playerNo, int masuId, int cornerNo)
+{
+    MBPLAYERWORK *playerWorkP = mbPlayerWorkGet(playerNo);
+    PLAYERCOLWORK *workP =
+        omObjGetWork(playerWorkP->colObj, PLAYERCOLWORK);
+    Mtx masuMtx;
+    Mtx masuMtxInv;
+    HuVecF posPlayer;
+    HuVecF posMasu;
+    HuVecF posDiff;
+    float rotY;
+
+    if (workP->snapF) {
+        workP->motStartF = FALSE;
+        workP->state = 1;
+        workP->killF = FALSE;
+        workP->masuId = masuId;
+        playerWorkP->masuCorner = cornerNo;
+        mbMasuMtxGet(workP->masuId, masuMtx);
+        MTXInverse(masuMtx, masuMtxInv);
+        mbPlayerPosGet(playerNo, &posPlayer);
+        MTXMultVec(
+            masuMtxInv, &posPlayer, &playerWork[playerNo].colObj->trans);
+        GwPlayer[playerNo].moveF = TRUE;
+        if (playerWorkP->masuCorner == 0) {
+            mbMasuPosGet(workP->masuId, &posMasu);
+        } else {
+            mbMasuCornerRotPosGet(workP->masuId,
+                playerWorkP->masuCorner - 1, &posMasu);
+            if (workP->circleF) {
+                float scale;
+
+                mbMasuPosGet(workP->masuId, &posDiff);
+                VECSubtract(&posMasu, &posDiff, &posMasu);
+                scale = workP->radius / VECMag(&posMasu);
+                VECScale(&posMasu, &posMasu, scale);
+                VECAdd(&posMasu, &posDiff, &posMasu);
+            }
+        }
+        VECSubtract(&posMasu, &posPlayer, &posDiff);
+        rotY = 90.0f - HuAtan(posDiff.z, posDiff.x);
+        mbPlayerRotYSet(playerNo, rotY);
+        workP->rotYStart = rotY;
+    }
 }
 
 BOOL mbPlayerColCheck(void)
@@ -389,6 +1281,163 @@ void mbev_PlayerColReserve(int playerNo, int masuId, BOOL waitF)
     }
     masuIdTbl[playerNo] = masuId;
     mbev_PlayerColMasuAllSet(masuIdTbl, waitF);
+}
+
+static void PlayerColOMExec(OMOBJ *obj)
+{
+    PLAYERCOLWORK *workP = omObjGetWork(obj, PLAYERCOLWORK);
+    int playerNo = workP->playerNo;
+    MBPLAYERWORK *playerWorkP = mbPlayerWorkGet(playerNo);
+    Mtx masuMtx;
+    Mtx masuMtxInv;
+    HuVecF pos;
+    HuVecF posDiff;
+    float weight;
+    float rotY;
+
+    if (mbExitCheck()) {
+        omDelObjEx(HuPrcCurrentGet(), obj);
+        playerWorkP->colObj = NULL;
+        return;
+    }
+    if (GwPlayer[playerNo].masuId == 0) {
+        return;
+    }
+    if (workP->masuIdNext != GwPlayer[playerNo].masuIdNext) {
+        workP->masuIdNext = GwPlayer[playerNo].masuIdNext;
+        PlayerColCornerSet(playerNo, workP->masuIdNext);
+    }
+    if (!workP->snapF || playerWorkP->moveObj || playerWorkP->posFixObj) {
+        workP->killF = TRUE;
+        workP->state = 0;
+        return;
+    }
+    if (workP->killF) {
+        workP->killF = FALSE;
+        workP->masuId = GwPlayer[playerNo].masuId;
+        workP->masuIdNext = GwPlayer[playerNo].masuIdNext;
+        mbMasuMtxGet(workP->masuId, masuMtx);
+        MTXInverse(masuMtx, masuMtxInv);
+        mbPlayerPosGet(playerNo, &pos);
+        MTXMultVec(masuMtxInv, &pos, &playerWorkP->_unk3C);
+        MTXMultVec(masuMtxInv, &pos, &obj->trans);
+        playerWorkP->_unk3C.y = obj->trans.y = 0.0f;
+    }
+    switch (workP->state) {
+        case 0:
+            obj->trans.x = playerWorkP->_unk3C.x;
+            obj->trans.y = playerWorkP->_unk3C.y;
+            obj->trans.z = playerWorkP->_unk3C.z;
+            break;
+
+        case 1:
+            if (!workP->motStartF) {
+                mbPlayerMotionSet(playerNo, 3, HU3D_MOTATTR_LOOP);
+                workP->motStartF = TRUE;
+                workP->time = 0;
+                workP->maxTime = 12;
+                obj->rot.x = obj->trans.x;
+                obj->rot.y = obj->trans.y;
+                obj->rot.z = obj->trans.z;
+            }
+            if (playerWorkP->masuCorner == 0) {
+                playerWorkP->_unk3C.x = playerWorkP->_unk3C.y =
+                    playerWorkP->_unk3C.z = 0.0f;
+            } else {
+                mbMasuCornerPosGet(workP->masuId,
+                    playerWorkP->masuCorner - 1, &playerWorkP->_unk3C);
+                if (workP->circleF) {
+                    weight = workP->radius / VECMag(&playerWorkP->_unk3C);
+                    VECScale(&playerWorkP->_unk3C,
+                        &playerWorkP->_unk3C, weight);
+                }
+            }
+            if (workP->time > workP->maxTime) {
+                workP->state = 2;
+                workP->time = 0;
+                workP->maxTime = 8;
+                obj->trans.x = playerWorkP->_unk3C.x;
+                obj->trans.y = playerWorkP->_unk3C.y;
+                obj->trans.z = playerWorkP->_unk3C.z;
+                mbPlayerMotionShiftSet(
+                    playerNo, 1, 0.0f, 8.0f, HU3D_MOTATTR_LOOP);
+            } else {
+                weight = (float)(workP->time++) / workP->maxTime;
+                VECSubtract(&playerWorkP->_unk3C, &obj->rot, &posDiff);
+                obj->trans.x = obj->rot.x +
+                    (weight * (playerWorkP->_unk3C.x - obj->rot.x));
+                obj->trans.y = obj->rot.y +
+                    (weight * (playerWorkP->_unk3C.y - obj->rot.y));
+                obj->trans.z = obj->rot.z +
+                    (weight * (playerWorkP->_unk3C.z - obj->rot.z));
+            }
+            break;
+
+        case 2:
+            if (workP->time > workP->maxTime) {
+                mbPlayerRotYSet(playerNo, 0.0f);
+                GwPlayer[playerNo].moveF = FALSE;
+                workP->state = 0;
+            }
+            weight = (float)(workP->time++) / workP->maxTime;
+            rotY = mbAngleEaseOut(workP->rotYStart, 0.0f, weight);
+            mbPlayerRotYSet(playerNo, rotY);
+            break;
+    }
+    mbMasuMtxGet(workP->masuId, masuMtx);
+    MTXMultVec(masuMtx, &obj->trans, &pos);
+    mbPlayerPosSetV(playerNo, &pos);
+}
+
+void mbev_PlayerColSet(int playerNo, int masuId)
+{
+    int i;
+    int cornerNo;
+    HuVecF pos;
+    Mtx masuMtx;
+    Mtx masuMtxInv;
+    HuVecF posPlayer;
+
+    if (!playerColSnapF) {
+        return;
+    }
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        MBPLAYERWORK *playerWorkP;
+        PLAYERCOLWORK *workP;
+
+        if (GwPlayer[i].moveF) {
+            continue;
+        }
+        if (masuId != GwPlayer[i].masuId) {
+            continue;
+        }
+        cornerNo = mbPlayerMasuCornerGet(i);
+        if (cornerNo == 0) {
+            mbMasuPosGet(masuId, &pos);
+        } else {
+            mbMasuCornerRotPosGet(masuId, cornerNo - 1, &pos);
+        }
+        mbPlayerPosSetV(i, &pos);
+        playerWorkP = mbPlayerWorkGet(i);
+        workP = omObjGetWork(playerWorkP->colObj, PLAYERCOLWORK);
+        if (!workP->snapF) {
+            continue;
+        }
+        workP->motStartF = FALSE;
+        workP->state = 0;
+        workP->killF = FALSE;
+        workP->masuId = masuId;
+        playerWorkP->masuCorner = cornerNo;
+        mbMasuMtxGet(workP->masuId, masuMtx);
+        MTXInverse(masuMtx, masuMtxInv);
+        mbPlayerPosGet(i, &posPlayer);
+        MTXMultVec(masuMtxInv, &posPlayer, &playerWorkP->_unk3C);
+        MTXMultVec(
+            masuMtxInv, &posPlayer, &playerWorkP->colObj->trans);
+        mbPlayerRotYSet(i, 0.0f);
+        workP->rotYStart = 0.0f;
+        GwPlayer[i].moveF = FALSE;
+    }
 }
 
 void mbPlayerColSnapSet(BOOL snapF)
@@ -452,6 +1501,64 @@ void mbPlayerColFirstSet(int playerNo)
     }
 }
 
+void mbPlayerColOrderReset(void)
+{
+    s8 playerNo[GW_PLAYER_MAX];
+    s8 orderNo[GW_PLAYER_MAX];
+    s8 fixF[GW_PLAYER_MAX];
+    int i;
+    int j;
+    int k;
+    int num;
+    s16 masuId;
+    s8 temp;
+
+    memset(fixF, 0, GW_PLAYER_MAX);
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        PLAYERCOLWORK *workP;
+        BOOL restF = FALSE;
+
+        if (playerWork[i].colObj) {
+            workP = omObjGetWork(playerWork[i].colObj, PLAYERCOLWORK);
+
+            workP->restF = restF;
+        }
+        if (GwPlayer[i].masuId == 0) {
+            continue;
+        }
+        if (fixF[i]) {
+            continue;
+        }
+        masuId = GwPlayer[i].masuId;
+        playerNo[0] = i;
+        orderNo[0] = GwPlayer[i].orderNo;
+        num = 1;
+        for (j = 0; j < GW_PLAYER_MAX; j++) {
+            if (i != j && masuId == GwPlayer[j].masuId) {
+                playerNo[num] = j;
+                orderNo[num] = GwPlayer[j].orderNo;
+                num++;
+            }
+        }
+        if (num > 1) {
+            for (j = 0; j < num - 1; j++) {
+                for (k = j + 1; k < num; k++) {
+                    if (orderNo[j] > orderNo[k]) {
+                        temp = orderNo[j];
+                        orderNo[j] = orderNo[k];
+                        orderNo[k] = temp;
+                    }
+                }
+            }
+        }
+        for (j = 0; j < num; j++) {
+            GwPlayer[playerNo[j]].orderNo =
+                orderNo[mbPlayerMasuCornerGet(playerNo[j])];
+            fixF[playerNo[j]] = TRUE;
+        }
+    }
+}
+
 typedef struct PlayerMetalWork {
     u8 killF : 1;
     u8 _unk0_1 : 1;
@@ -492,8 +1599,8 @@ void mbPlayerEffectSet(int playerNo, BOOL effectF)
         PLAYERMETALWORK *workP = omObjGetWork(objP, PLAYERMETALWORK);
 
         workP->effectF = effectF;
-        PlayerBiriQEffectSet(playerNo, effectF);
     }
+    PlayerBiriQEffectSet(playerNo, effectF);
 }
 
 static void ResetMetalColor(void)
@@ -552,21 +1659,58 @@ static void PlayerBiriQEffectSet(int playerNo, BOOL effectF)
     }
 }
 
-BOOL mbPlayerRotateCheck(int playerNo)
-{
-    return playerWork[playerNo].rotateObj == NULL;
-}
+static char *eyeMatNameTbl[CHARNO_MAX][2] = {
+    { "eye1", "eye2" },
+    { "eye1", "eye2" },
+    { "mat14", "mat16" },
+    { "eye1", "eye2" },
+    { "Clswario_eye_l1_AUTO14", "Clswario_eye_l1_AUTO15" },
+    { "m_donkey_eye4", "m_donkey_eye5" },
+    { "mat65", "mat66" },
+    { "Clswaluigi_eye_l1_AUTO1", "Clswaluigi_eye_l1_AUTO2" }
+};
 
-BOOL mbPlayerRotateCheckAll(void)
+void mbPlayerEyeMatDarkSet(int playerNo, BOOL darkF)
 {
-    int i;
+    BOOL validF;
+    HU3D_MODELID modelId = mbObjModelIDGet(mbPlayerObjIDGet(playerNo));
+    HU3D_MODEL *modelP = &Hu3DData[modelId];
+    HSF_DATA *hsf = modelP->hsf;
+    HSF_MATERIAL *matP = hsf->material;
+    HSF_MATERIAL *matCopy = playerWork[playerNo].matCopy;
 
-    for (i = 0; i < GW_PLAYER_MAX; i++) {
-        if (playerWork[i].rotateObj != NULL) {
-            return FALSE;
+    if (darkF) {
+        char **name = &eyeMatNameTbl[GwPlayer[playerNo].charNo][0];
+        int i;
+        int j;
+
+        for (i = 0; i < hsf->materialNum; i++, matP++, matCopy++) {
+            validF = TRUE;
+            for (j = 0; j < matP->attrNum; j++) {
+                HSF_ATTRIBUTE *attrP = &hsf->attribute[matP->attr[j]];
+
+                if (strcmp(name[0], attrP->bitmap->name) == 0
+                    || strcmp(name[1], attrP->bitmap->name) == 0) {
+                    validF = FALSE;
+                }
+            }
+            if (validF) {
+                if (darkF) {
+                    matP->color[0] *= 0.0f;
+                    matP->color[1] *= 0.0f;
+                    matP->color[2] *= 0.0f;
+                } else {
+                    matP->color[0] = matCopy->color[0];
+                    matP->color[1] = matCopy->color[1];
+                    matP->color[2] = matCopy->color[2];
+                }
+            }
         }
+    } else {
+        memcpy(hsf->material, matCopy,
+            hsf->materialNum * sizeof(HSF_MATERIAL));
     }
-    return TRUE;
+    DCStoreRange(hsf->material, hsf->materialNum * sizeof(HSF_MATERIAL));
 }
 
 void mbPlayerMatClone(int playerNo)
@@ -580,6 +1724,34 @@ void mbPlayerMatClone(int playerNo)
 
     memcpy(matP, hsf->material, hsf->materialNum * sizeof(HSF_MATERIAL));
     playerWork[playerNo].matCopy = matP;
+}
+
+void mbPlayerSwap(int playerNo1, int playerNo2)
+{
+    GW_PLAYER player;
+    MBPLAYERWORK work;
+    GW_PLAYER_CONF playerConf;
+    OMOBJ *colObj1;
+    OMOBJ *colObj2;
+
+    colObj1 = mbPlayerWorkGet(playerNo1)->colObj;
+    colObj2 = mbPlayerWorkGet(playerNo2)->colObj;
+    playerConf = GwPlayerConf[playerNo1];
+    GwPlayerConf[playerNo1] = GwPlayerConf[playerNo2];
+    GwPlayerConf[playerNo2] = playerConf;
+    player = GwPlayer[playerNo1];
+    GwPlayer[playerNo1] = GwPlayer[playerNo2];
+    GwPlayer[playerNo2] = player;
+    memcpy(&work, mbPlayerWorkGet(playerNo1), sizeof(MBPLAYERWORK));
+    memcpy(mbPlayerWorkGet(playerNo1), mbPlayerWorkGet(playerNo2),
+        sizeof(MBPLAYERWORK));
+    memcpy(mbPlayerWorkGet(playerNo2), &work, sizeof(MBPLAYERWORK));
+    mbPlayerWorkGet(playerNo1)->colObj = colObj1;
+    mbPlayerWorkGet(playerNo2)->colObj = colObj2;
+    GwPlayer[playerNo1].padNo = GwPlayerConf[playerNo1].padNo;
+    GwPlayerConf[playerNo1].padNo = GwPlayerConf[playerNo1].padNo;
+    GwPlayer[playerNo2].padNo = GwPlayerConf[playerNo2].padNo;
+    GwPlayerConf[playerNo2].padNo = GwPlayerConf[playerNo2].padNo;
 }
 
 u32 mbPlayerNameMesGet(int playerNo)
@@ -735,20 +1907,10 @@ int mbPlayerTeamFindPlayer(int teamNo, int memberNo)
 
 int mbPlayerTeamFindOpp(int playerNo)
 {
-    int i;
-
     if (!GWTeamFGet()) {
         return playerNo;
     }
-    for (i = 0; i < GW_PLAYER_MAX; i++) {
-        if (i == playerNo) {
-            continue;
-        }
-        if (mbPlayerGrpGet(playerNo) == mbPlayerGrpGet(i)) {
-            break;
-        }
-    }
-    return i;
+    return mbPlayerTeamFind(playerNo);
 }
 
 BOOL mbPlayerTeamCheckSame(int playerNo1, int playerNo2)
@@ -796,6 +1958,45 @@ void mbPlayerCullRadiusSet(int playerNo, float radius)
 
 void mbPlayerStubValSet(int playerNo, BOOL value)
 {
+}
+
+void mbPlayerPosReset(int playerNo)
+{
+    HuVecF pos;
+
+    mbMasuPosGet(GwPlayer[playerNo].masuId, &pos);
+    mbPlayerPosSetV(playerNo, &pos);
+    PlayerColCornerSnap(playerNo, GwPlayer[playerNo].masuId, 0);
+}
+
+void mbPlayerPosResetAll(void)
+{
+    int i;
+    int j;
+    int cornerNo;
+    s16 masuId;
+    s8 orderNo;
+    HuVecF pos;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        orderNo = GwPlayer[i].orderNo;
+        masuId = GwPlayer[i].masuId;
+        cornerNo = 0;
+        for (j = 0; j < GW_PLAYER_MAX; j++) {
+            if (i != j && masuId == GwPlayer[j].masuId
+                && orderNo > GwPlayer[j].orderNo) {
+                cornerNo++;
+            }
+        }
+        mbPlayerMasuCornerSet(i, cornerNo);
+        if (cornerNo == 0) {
+            mbMasuPosGet(masuId, &pos);
+        } else {
+            mbMasuCornerRotPosGet(masuId, cornerNo - 1, &pos);
+        }
+        mbPlayerPosSetV(i, &pos);
+        PlayerColCornerSnap(i, masuId, cornerNo);
+    }
 }
 
 void mbPlayerMtxSet(int playerNo, Mtx *matrix)
@@ -1022,7 +2223,7 @@ void mbPlayerCoinAdd(int playerNo, int coinNum)
     if (GWTeamFGet()) {
         playerNo = mbPlayerTeamFindPlayer(mbPlayerGrpGet(playerNo), 0);
     }
-    playerP = &GwPlayer[playerNo];
+    playerP = GWPlayerGet(playerNo);
     if (coinNum > 0 && playerP->coinTotal < 999) {
         playerP->coinTotal += coinNum;
         if (playerP->coinTotal > 999) {
@@ -1078,12 +2279,14 @@ int mbPlayerStarGet(int playerNo)
 
 void mbPlayerStarAdd(int playerNo, int starNum)
 {
+    int star;
+
     mbAudFXPlay(8);
-    starNum += mbPlayerStarGet(playerNo);
-    if (starNum < 0) {
-        starNum = 0;
+    star = mbPlayerStarGet(playerNo) + starNum;
+    if (star < 0) {
+        star = 0;
     }
-    mbPlayerStarSet(playerNo, starNum);
+    mbPlayerStarSet(playerNo, star);
 }
 
 void mbPlayerGrpStarSet(int teamNo, int starNum)
@@ -1196,7 +2399,7 @@ static s8 *PlayerCapsulePtrGet(int playerNo, int index)
 
 int mbPlayerCapsuleAdd(int playerNo, int capsuleNo)
 {
-    GW_PLAYER *playerP = &GwPlayer[playerNo];
+    GW_PLAYER *playerP = GWPlayerGet(playerNo);
     int max = mbPlayerCapsuleMaxGet();
     int i;
 
@@ -1215,7 +2418,7 @@ int mbPlayerCapsuleAdd(int playerNo, int capsuleNo)
 int mbPlayerCapsuleRemove(int playerNo, int index)
 {
     int capsuleNo = mbPlayerCapsuleGet(playerNo, index);
-    GW_PLAYER *playerP = &GwPlayer[playerNo];
+    GW_PLAYER *playerP = GWPlayerGet(playerNo);
     int max;
     int i;
 

@@ -14,18 +14,20 @@ typedef struct MbPlayerWork_s {
     s16 motNo;
     u8 _unk04;
     s8 masuCorner;
-    u8 _unk06[4];
+    s16 _unk06;
+    s16 _unk08;
     s16 masuMoveF;
-    u8 _unk0C[2];
+    s16 _unk0C;
     s16 masuNext;
     u8 moveF : 1;
     u8 playerNo : 2;
+    u8 _unk10_3 : 1;
     u8 moveEndF : 1;
-    u8 _unk10 : 4;
+    u8 _unk10_5 : 3;
     u8 _unk11[3];
     OMOBJ *rotateObj;
     OMOBJ *moveObj;
-    void *_unk1C;
+    OMOBJ *posFixObj;
     OMOBJ *moveNumObj;
     OMOBJ *colObj;
     OMOBJ *metalObj;
@@ -33,7 +35,7 @@ typedef struct MbPlayerWork_s {
     MBPLAYERTURNHOOK startTurnHook;
     MBPLAYERTURNHOOK endTurnHook;
     MBPLAYERMOVEHOOK moveHook;
-    u8 _unk3C[0xC];
+    HuVecF _unk3C;
     struct Process_s *moveProc;
     HSF_MATERIAL *matCopy;
 } MBPLAYERWORK;
@@ -67,6 +69,8 @@ void mbPlayerLayerSet(int playerNo, int layer);
 void mbPlayerCameraSet(int playerNo, u16 cameraBit);
 void mbPlayerCullRadiusSet(int playerNo, float radius);
 void mbPlayerStubValSet(int playerNo, BOOL value);
+void mbPlayerPosReset(int playerNo);
+void mbPlayerPosResetAll(void);
 
 int mbPlayerBestPathGet(void);
 void mbPlayerMtxSet(int playerNo, Mtx *matrix);
@@ -85,7 +89,9 @@ void mbPlayerScaleGet(int playerNo, HuVecF *scale);
 void mbPlayerRotateStart(int playerNo, s16 endAngle, s16 maxTime);
 BOOL mbPlayerRotateCheck(int playerNo);
 BOOL mbPlayerRotateCheckAll(void);
+void mbPlayerEyeMatDarkSet(int playerNo, BOOL darkF);
 void mbPlayerMatClone(int playerNo);
+void mbPlayerSwap(int playerNo1, int playerNo2);
 u32 mbPlayerNameMesGet(int playerNo);
 char *mbPlayerNameGet(int playerNo);
 u32 mbPlayerTagNameMesGet(int teamNo);
@@ -114,21 +120,28 @@ void mbPlayerMasuMovePos(int playerNo, HuVecF *pos, BOOL waitF);
 void mbPlayerMasuMoveSpeed(int playerNo, int masuId, s16 maxTime, BOOL waitF);
 void mbPlayerMoveExec(int playerNo, HuVecF *srcPos, HuVecF *dstPos,
     s16 maxTime, HuVecF *rot, BOOL waitF);
-void mbPlayerMoveMain(int playerNo, HuVecF *srcPos, HuVecF *dstPos, int motNo,
+void mbPlayerMoveMain(int playerNo, HuVecF *srcPos, HuVecF *dstPos, u32 motNo,
     float motSpeed, u32 motAttr, s16 maxTime, HuVecF *rot, BOOL waitF);
 void mbPlayerDiceMotExec(int playerNo);
 void mbMoveNumCreateColor(int playerNo, BOOL carF, int color);
 void mbMoveNumCreate(int playerNo, BOOL carF);
 void mbMoveNumKill(int playerNo);
 void mbev_PlayerColMasuAllSet(int *masuId, BOOL waitF);
+void mbev_PlayerColMasu(int playerNo, int masuId, BOOL waitF);
+void mbev_PlayerColCircleAdd(
+    int playerNo, int masuId, BOOL waitF, float radius);
+void mbev_PlayerColMasuAdd(int playerNo, int masuId, BOOL waitF);
+void mbev_PlayerColBall(int masuId, int *playerNo, HuVecF *pos);
 void mbev_PlayerColMasuSet(int playerNo, int masuId, BOOL waitF);
 void mbev_PlayerColReserve(int playerNo, int masuId, BOOL waitF);
+void mbev_PlayerColSet(int playerNo, int masuId);
 BOOL mbPlayerColCheck(void);
 void mbPlayerColSnapSet(BOOL snapF);
 void mbPlayerColSnapPlayerSet(int playerNo, BOOL snapF);
 BOOL mbPlayerColSnapGet(int playerNo);
 void mbPlayerColRestSet(int playerNo, BOOL restF);
 void mbPlayerColFirstSet(int playerNo);
+void mbPlayerColOrderReset(void);
 void mbPlayerEffectSet(int playerNo, BOOL effectF);
 void mbPlayerMetalColorSet(const GXColor *shadowColor,
     const GXColor *hiliteColor);

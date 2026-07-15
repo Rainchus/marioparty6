@@ -117,7 +117,7 @@ s16 mbCoinCreate2(void)
     return objNo;
 }
 
-s16 mbCoinObjCreate(int modelNo, s8 motNo)
+s16 mbCoinObjCreate(int modelNo, int motNo)
 {
     MBCOINOBJBANK *bankP;
     MBCOINOBJ *objP;
@@ -157,7 +157,7 @@ s16 mbCoinObjCreate(int modelNo, s8 motNo)
     return objId;
 }
 
-s16 mbCoinObjCreate2(int modelNo, s8 motNo)
+s16 mbCoinObjCreate2(int modelNo, int motNo)
 {
     MBCOINOBJBANK *bankP;
     MBCOINOBJ *objP;
@@ -361,7 +361,7 @@ void mbCoinObjLayerSet(s16 objId, u16 layer)
     bankP->attr[objNo] |= layer;
 }
 
-void mbCoinObjMotSet(s16 objId, s8 motNo)
+void mbCoinObjMotSet(s16 objId, int motNo)
 {
     MBCOINOBJBANK *bankP;
     int bankNo;

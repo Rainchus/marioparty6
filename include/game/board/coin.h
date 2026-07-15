@@ -13,8 +13,8 @@ typedef struct MbCoinObj_s {
 
 s16 mbCoinCreate(void);
 s16 mbCoinCreate2(void);
-s16 mbCoinObjCreate(int modelNo, s8 motNo);
-s16 mbCoinObjCreate2(int modelNo, s8 motNo);
+s16 mbCoinObjCreate(int modelNo, int motNo);
+s16 mbCoinObjCreate2(int modelNo, int motNo);
 MBCOINOBJ *mbCoinObjGet(s16 objId);
 void mbCoinObjNumDec(s16 objId);
 void mbCoinObjKill(s16 objId);
@@ -32,7 +32,7 @@ float mbCoinObjAlphaGet(s16 objId);
 void mbCoinObjDispSet(s16 objId, BOOL dispF);
 BOOL mbCoinObjDispGet(s16 objId);
 void mbCoinObjLayerSet(s16 objId, u16 layer);
-void mbCoinObjMotSet(s16 objId, s8 motNo);
+void mbCoinObjMotSet(s16 objId, int motNo);
 void mbCoinDispKill(s16 no);
 BOOL mbCoinDispKillCheck(s16 no);
 
