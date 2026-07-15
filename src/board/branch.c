@@ -39,9 +39,9 @@ extern void mbConfigPadDisableSet(BOOL disableF);
 extern void mbev_Scroll(int playerNo, BOOL mapF);
 
 static OMOBJ *guideOMObj[GW_PLAYER_MAX];
-static u16 branchAttr;
-static u32 branchMAttr;
 static MBBRANCHCOMSTARHOOK branchComStarHook;
+static u32 branchMAttr;
+static u16 branchAttr;
 
 static void BranchGuideOMExec(OMOBJ *obj);
 static int BranchComChoiceGet(int playerNo, int linkNum, s16 *linkTbl, BOOL debugF);
@@ -244,8 +244,7 @@ static BOOL ev_Branch(int playerNo, s16 *masuId, BOOL debugF)
                 dir.y = 64.0f * mbSinDeg(angleTbl[choiceAuto]);
                 choiceTime = 30;
             } else {
-                choiceTime--;
-                if (choiceTime == 0) {
+                if (--choiceTime == 0) {
                     btnDown = PAD_BUTTON_A;
                 }
             }
@@ -265,8 +264,7 @@ static BOOL ev_Branch(int playerNo, s16 *masuId, BOOL debugF)
                 btnDown = 0;
                 choiceTime = 6;
             } else {
-                choiceTime--;
-                if (choiceTime == 0) {
+                if (--choiceTime == 0) {
                     btnDown = PAD_BUTTON_A;
                 }
             }

@@ -47,7 +47,7 @@ typedef struct MICControlBlock {
     u32 last_button;
     u32 button_time_delta;
     OSTick button_time_last;
-    OSTick timeout;
+    s32 timeout;
 } MICControlBlock;
 
 static s32 __MICDoMount(s32 chan);
@@ -76,11 +76,11 @@ static OSAlarm __alarm;
 static OSAlarm __timeout[2];
 static BOOL __init = FALSE;
 
-static u32 __MICTimeoutTable[] = {
-    0xE58D,  0x1CB1B, 0x39636, 0x39636,
-    0x72B2,  0xE58D,  0x1CB1B, 0x1CB1B,
-    0x3945,  0x72B2,  0xE58D,  0xE58D,
-    0x3945,  0x72B2,  0xE58D,  0xE58D,
+static u32 __MICTimeoutTable[4][4] = {
+    {0xE58D, 0x1CB1B, 0x39636, 0x39636},
+    {0x72B2, 0xE58D, 0x1CB1B, 0x1CB1B},
+    {0x3945, 0x72B2, 0xE58D, 0xE58D},
+    {0x3945, 0x72B2, 0xE58D, 0xE58D},
 };
 
 void MICInit(void) {
@@ -156,79 +156,83 @@ s32 MICProbeEx(s32 chan) {
 
 s32 MICMountAsync(s32 chan, s16* buffer, s32 size, MICCallback detachCallback,
                   MICCallback attachCallback) {
-    s32 result = MIC_RESULT_FATAL_ERROR;
+    MICControlBlock* cb;
+    BOOL enabled;
 
-    if (__init && chan >= 0 && chan < 2) {
-        MICControlBlock* cb = &__MICBlock[chan];
-        BOOL enabled = OSDisableInterrupts();
-
-        if (cb->result_code == MIC_RESULT_BUSY) {
-            OSRestoreInterrupts(enabled);
-            return MIC_RESULT_BUSY;
-        }
-
-        if (!cb->is_attached) {
-            if ((EXIGetState(chan) & EXI_STATE_ATTACHED) == 0) {
-                if (cb->is_attached || EXIAttach(chan, __MICExtHandler)) {
-                    cb->result_code = MIC_RESULT_BUSY;
-                    cb->is_active = FALSE;
-                    cb->exi_callback = NULL;
-                    cb->tx_callback = NULL;
-                    cb->detach_callback = detachCallback;
-                    cb->attach_callback = attachCallback;
-                    cb->mount_callback = NULL;
-                    cb->set_callback = NULL;
-                    cb->buff_ring_base = (s16*)(((u32)buffer + 31) & ~31);
-                    cb->buff_size = size - ((u32)cb->buff_ring_base - (u32)buffer);
-                    cb->buff_ring_cur = 0;
-
-                    EXISetExiCallback(chan, NULL);
-                    OSRestoreInterrupts(enabled);
-
-                    cb->mount_callback = __MICMountCallback;
-                    if (EXILock(chan, 0, __MICUnlockedCallback)) {
-                        cb->mount_callback = NULL;
-                        return __MICDoMount(chan);
-                    }
-                    return MIC_RESULT_READY;
-                }
-                result = MIC_RESULT_NOCARD;
-            } else {
-                result = MIC_RESULT_WRONGDEVICE;
-            }
-        } else {
-            result = MIC_RESULT_INVALID_STATE;
-        }
-
-        cb->result_code = result;
-        OSRestoreInterrupts(enabled);
+    if (!__init || chan < 0 || chan >= 2) {
+        return MIC_RESULT_FATAL_ERROR;
     }
 
-    return result;
+    cb = &__MICBlock[chan];
+    enabled = OSDisableInterrupts();
+    if (cb->result_code == MIC_RESULT_BUSY) {
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_BUSY;
+    }
+
+    if (cb->is_attached) {
+        cb->result_code = MIC_RESULT_INVALID_STATE;
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_INVALID_STATE;
+    }
+
+    if (!cb->is_attached && (EXIGetState(chan) & EXI_STATE_ATTACHED)) {
+        cb->result_code = MIC_RESULT_WRONGDEVICE;
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_WRONGDEVICE;
+    }
+
+    if (!cb->is_attached && !EXIAttach(chan, __MICExtHandler)) {
+        cb->result_code = MIC_RESULT_NOCARD;
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_NOCARD;
+    }
+
+    cb->result_code = MIC_RESULT_BUSY;
+    cb->is_active = FALSE;
+    cb->exi_callback = NULL;
+    cb->tx_callback = NULL;
+    cb->detach_callback = detachCallback;
+    cb->attach_callback = attachCallback;
+    cb->mount_callback = NULL;
+    cb->set_callback = NULL;
+    cb->buff_ring_base = (s16*)(((u32)buffer + 31) & ~31);
+    cb->buff_size = size - ((u32)cb->buff_ring_base - (u32)buffer);
+    cb->buff_ring_cur = 0;
+
+    EXISetExiCallback(chan, NULL);
+    OSRestoreInterrupts(enabled);
+
+    cb->mount_callback = __MICMountCallback;
+    if (!EXILock(chan, 0, __MICUnlockedCallback)) {
+        return MIC_RESULT_READY;
+    }
+    cb->mount_callback = NULL;
+    return __MICDoMount(chan);
 }
 
 s32 MICMount(s32 chan, s16* buffer, s32 size, MICCallback detachCallback) {
     s32 result = MICMountAsync(chan, buffer, size, detachCallback, __MICSyncCallback);
 
-    if (result >= MIC_RESULT_READY) {
-        result = __MICSync(chan);
+    if (result < MIC_RESULT_READY) {
+        return result;
     }
-    return result;
+    return __MICSync(chan);
 }
 
 s32 MICUnmount(s32 chan) {
-    s32 result = MIC_RESULT_FATAL_ERROR;
+    s32 result;
+    MICControlBlock* cb;
 
-    if (__init && chan >= 0 && chan < 2) {
-        MICControlBlock* cb = NULL;
-
-        if ((result = __MICGetControlBlock(chan, FALSE, &cb)) >= MIC_RESULT_READY) {
-            __MICDoUnmount(chan, MIC_RESULT_NOCARD);
-            result = MIC_RESULT_READY;
-        }
+    if (!__init || chan < 0 || chan >= 2) {
+        return MIC_RESULT_FATAL_ERROR;
     }
-
-    return result;
+    result = __MICGetControlBlock(chan, FALSE, &cb);
+    if (result < MIC_RESULT_READY) {
+        return result;
+    }
+    __MICDoUnmount(chan, MIC_RESULT_NOCARD);
+    return MIC_RESULT_READY;
 }
 
 s32 MICGetRingbuffsize(s32 chan, s32* size) {
@@ -274,32 +278,43 @@ s32 MICGetSampleRate(s32 chan, s32* rate) {
 s32 MICSetGain(s32 chan, s32 gain) {
     s32 result = MICSetGainAsync(chan, gain, __MICSyncCallback);
 
-    if (result >= MIC_RESULT_READY) {
-        result = __MICSync(chan);
+    if (result < MIC_RESULT_READY) {
+        return result;
     }
-    return result;
+    return __MICSync(chan);
 }
 
 s32 MICSetGainAsync(s32 chan, s32 gain, MICCallback callback) {
-    s32 result = MIC_RESULT_FATAL_ERROR;
+    MICControlBlock* cb;
+    BOOL enabled;
+    s32 result;
+    u32 status;
 
-    if (__init && chan >= 0 && chan < 2 && (gain == 0 || gain == 15)) {
-        MICControlBlock* cb = NULL;
-        BOOL enabled = OSDisableInterrupts();
-
-        if ((result = __MICGetControlBlock(chan, FALSE, &cb)) >= MIC_RESULT_READY) {
-            cb->status = cb->last_status & ~MIC_STATUS_GAIN15;
-            if (gain == 15) {
-                cb->status |= MIC_STATUS_GAIN15;
-            }
-            cb->attach_callback = callback;
-            cb->set_callback = __MICSetCallback;
-            result = MIC_RESULT_READY;
-        }
-        OSRestoreInterrupts(enabled);
+    if (!__init || chan < 0 || chan >= 2 || (gain != 0 && gain != 15)) {
+        return MIC_RESULT_FATAL_ERROR;
     }
 
-    return result;
+    enabled = OSDisableInterrupts();
+    result = __MICGetControlBlock(chan, FALSE, &cb);
+    if (result < MIC_RESULT_READY) {
+        OSRestoreInterrupts(enabled);
+        return result;
+    }
+
+    status = cb->last_status & ~MIC_STATUS_GAIN15;
+    switch (gain) {
+        case 15:
+            status |= MIC_STATUS_GAIN15;
+            break;
+        case 0:
+            break;
+    }
+
+    cb->status = status;
+    cb->attach_callback = callback;
+    cb->set_callback = __MICSetCallback;
+    OSRestoreInterrupts(enabled);
+    return MIC_RESULT_READY;
 }
 
 s32 MICGetButton(s32 chan, u32* button) {
@@ -345,68 +360,73 @@ s32 MICGetDeviceID(s32 chan, u32* id) {
 s32 MICStart(s32 chan) {
     s32 result = MICStartAsync(chan, __MICSyncCallback);
 
-    if (result >= MIC_RESULT_READY) {
-        result = __MICSync(chan);
+    if (result < MIC_RESULT_READY) {
+        return result;
     }
-    return result;
+    return __MICSync(chan);
 }
 
 s32 MICStartAsync(s32 chan, MICCallback callback) {
-    s32 result = MIC_RESULT_FATAL_ERROR;
+    MICControlBlock* cb;
+    BOOL enabled;
+    s32 result;
+    s32 rate;
+    s32 size;
 
-    if (__init && chan >= 0 && chan < 2) {
-        MICControlBlock* cb = NULL;
-        BOOL enabled = OSDisableInterrupts();
-
-        if ((result = __MICGetControlBlock(chan, FALSE, &cb)) >= MIC_RESULT_READY) {
-            s32 rate;
-            s32 size;
-
-            cb->status = cb->last_status | MIC_STATUS_ACTIVE;
-            cb->attach_callback = callback;
-            cb->set_callback = __MICSetCallback;
-            cb->error_count = 0;
-            cb->buff_ring_cur = 0;
-
-            rate = (cb->last_status >> 11) & 3;
-            size = (cb->last_status >> 13) & 3;
-            cb->timeout = __MICTimeoutTable[rate * 4 + size] * 92;
-
-            memset(cb->buff_ring_base, 0, cb->buff_ring_size);
-            result = MIC_RESULT_READY;
-        }
-        OSRestoreInterrupts(enabled);
+    if (!__init || chan < 0 || chan >= 2) {
+        return MIC_RESULT_FATAL_ERROR;
     }
 
-    return result;
+    enabled = OSDisableInterrupts();
+    if ((result = __MICGetControlBlock(chan, FALSE, &cb)) < MIC_RESULT_READY) {
+        OSRestoreInterrupts(enabled);
+        return result;
+    }
+
+    cb->status = cb->last_status | MIC_STATUS_ACTIVE;
+    cb->attach_callback = callback;
+    cb->set_callback = __MICSetCallback;
+    cb->error_count = 0;
+    cb->buff_ring_cur = 0;
+
+    rate = (cb->last_status >> 11) & 3;
+    size = (cb->last_status >> 13) & 3;
+    cb->timeout = __MICTimeoutTable[rate][size] * 92;
+
+    memset(cb->buff_ring_base, 0, cb->buff_ring_size);
+    OSRestoreInterrupts(enabled);
+    return MIC_RESULT_READY;
 }
 
 s32 MICStop(s32 chan) {
     s32 result = MICStopAsync(chan, __MICSyncCallback);
 
-    if (result >= MIC_RESULT_READY) {
-        result = __MICSync(chan);
+    if (result < MIC_RESULT_READY) {
+        return result;
     }
-    return result;
+    return __MICSync(chan);
 }
 
 s32 MICStopAsync(s32 chan, MICCallback callback) {
-    s32 result = MIC_RESULT_FATAL_ERROR;
+    MICControlBlock* cb;
+    BOOL enabled;
+    s32 result;
 
-    if (__init && chan >= 0 && chan < 2) {
-        MICControlBlock* cb = NULL;
-        BOOL enabled = OSDisableInterrupts();
-
-        if ((result = __MICGetControlBlock(chan, TRUE, &cb)) >= MIC_RESULT_READY) {
-            cb->status = cb->last_status & ~MIC_STATUS_ACTIVE;
-            cb->attach_callback = callback;
-            cb->set_callback = __MICSetCallback;
-            result = MIC_RESULT_READY;
-        }
-        OSRestoreInterrupts(enabled);
+    if (!__init || chan < 0 || chan >= 2) {
+        return MIC_RESULT_FATAL_ERROR;
     }
 
-    return result;
+    enabled = OSDisableInterrupts();
+    if ((result = __MICGetControlBlock(chan, TRUE, &cb)) < MIC_RESULT_READY) {
+        OSRestoreInterrupts(enabled);
+        return result;
+    }
+
+    cb->status = cb->last_status & ~MIC_STATUS_ACTIVE;
+    cb->attach_callback = callback;
+    cb->set_callback = __MICSetCallback;
+    OSRestoreInterrupts(enabled);
+    return MIC_RESULT_READY;
 }
 
 s32 MICGetCurrentTop(s32 chan) {
@@ -541,6 +561,7 @@ static s32 __MICDoMount(s32 chan) {
     BOOL enabled = OSDisableInterrupts();
 
     cb->is_attached = TRUE;
+
     if (!EXIGetID(chan, 0, &id)) {
         result = MIC_RESULT_NOCARD;
     } else if (id != MIC_EXI_ID) {
@@ -616,14 +637,17 @@ static void __MICUnlockedCallback(s32 chan, OSContext* context) {
 static void __MICMountCallback(s32 chan, s32 result) {
     MICControlBlock* cb = &__MICBlock[chan];
 
-    if (result == MIC_RESULT_UNLOCKED) {
+    switch (result) {
+    case MIC_RESULT_UNLOCKED:
         cb->mount_callback = __MICMountCallback;
         if (EXILock(chan, 0, __MICUnlockedCallback)) {
             cb->mount_callback = NULL;
             __MICDoMount(chan);
         }
-    } else if (result == MIC_RESULT_NOCARD) {
+        break;
+    case MIC_RESULT_NOCARD:
         __MICDoUnmount(chan, result);
+        break;
     }
 }
 
@@ -731,37 +755,49 @@ static void __MICExiHandler(s32 chan, OSContext* context) {
 }
 
 static void __MICTxHandler(s32 chan, OSContext* context) {
-    s32 result = MIC_RESULT_NOCARD;
+    s32 result;
     MICControlBlock* cb = &__MICBlock[chan];
+    MICCallback callback;
 
     cb->buff_ring_cur += cb->hw_buff_size;
     if (cb->buff_ring_cur >= cb->buff_ring_size) {
         cb->buff_ring_cur = 0;
     }
 
-    if (EXIDeselect(chan)) {
-        u32 status;
-
-        if ((result = __MICRawReadStatus(chan, &status)) >= MIC_RESULT_READY &&
-            __MICUpdateStatus(chan, status, TRUE)) {
-            if (status & MIC_STATUS_BUFOVRFLW) {
-                cb->error_count++;
-                status &= ~MIC_STATUS_BUFOVRFLW;
-            }
-
-            __MICUpdateButton(chan);
-            if (EXIProbe(chan)) {
-                OSSetAlarm(&__timeout[chan], cb->timeout, __MICTimeoutCallback);
-                result = MIC_RESULT_READY;
-            } else {
-                result = MIC_RESULT_NOCARD;
-            }
-        }
+    if (!EXIDeselect(chan)) {
+        result = MIC_RESULT_NOCARD;
+        goto unlock;
     }
 
+    {
+        u32 status;
+
+        result = __MICRawReadStatus(chan, &status);
+        if (result < MIC_RESULT_READY) {
+            goto unlock;
+        }
+        if (!__MICUpdateStatus(chan, status, TRUE)) {
+            goto unlock;
+        }
+        if (status & MIC_STATUS_BUFOVRFLW) {
+            cb->error_count++;
+            status &= ~MIC_STATUS_BUFOVRFLW;
+        }
+
+        __MICUpdateButton(chan);
+        if (!EXIProbe(chan)) {
+            result = MIC_RESULT_NOCARD;
+            goto unlock;
+        }
+        OSSetAlarm(&__timeout[chan], cb->timeout, __MICTimeoutCallback);
+        result = MIC_RESULT_READY;
+    }
+
+unlock:
     EXIUnlock(chan);
-    if (cb->tx_callback) {
-        cb->tx_callback(chan, result);
+    callback = cb->tx_callback;
+    if (callback) {
+        callback(chan, result);
     }
 }
 
@@ -797,132 +833,151 @@ static void __MICAlarmCallback(OSAlarm* alarm, OSContext* context) {
 }
 
 static void __MICTimeoutCallback(OSAlarm* alarm, OSContext* context) {
-    s32 chan = alarm == &__timeout[0] ? 0 : 1;
-    MICControlBlock* cb = &__MICBlock[chan];
+    s32 chan;
+    MICControlBlock* cb;
+
+    if (alarm == &__timeout[0]) {
+        chan = 0;
+    } else {
+        chan = 1;
+    }
+    cb = &__MICBlock[chan];
 
     if (cb->is_attached) {
-        if (EXILock(chan, 0, NULL)) {
-            u32 status;
+        u32 status;
 
-            cb->is_active = FALSE;
-            __MICRawReset(chan);
-            __MICRawReadStatus(chan, &status);
-            __MICUpdateStatus(chan, status, FALSE);
-            EXIUnlock(chan);
-        } else {
+        if (!EXILock(chan, 0, NULL)) {
             OSSetAlarm(&__timeout[chan], cb->timeout, __MICTimeoutCallback);
+            return;
         }
+
+        cb->is_active = FALSE;
+        __MICRawReset(chan);
+        __MICRawReadStatus(chan, &status);
+        __MICUpdateStatus(chan, status, FALSE);
+        EXIUnlock(chan);
     }
 }
 
 static s32 __MICRawReset(s32 chan) {
-    s32 result = MIC_RESULT_NOCARD;
     BOOL enabled = OSDisableInterrupts();
+    BOOL failed;
+    u16 command;
 
-    if (EXISelect(chan, 0, EXI_FREQ_16M)) {
-        BOOL failed = FALSE;
-        u16 command = MIC_RESET << 8;
-
-        failed |= !EXIImm(chan, &command, 1, EXI_WRITE, NULL);
-        failed |= !EXISync(chan);
-        failed |= !EXIDeselect(chan);
-        if (!failed) {
-            result = MIC_RESULT_READY;
-        }
+    if (!EXISelect(chan, 0, EXI_FREQ_16M)) {
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_NOCARD;
     }
 
+    failed = FALSE;
+    command = MIC_RESET << 8;
+    failed |= !EXIImm(chan, &command, 1, EXI_WRITE, NULL);
+    failed |= !EXISync(chan);
+    failed |= !EXIDeselect(chan);
     OSRestoreInterrupts(enabled);
-    return result;
+
+    if (failed) {
+        return MIC_RESULT_NOCARD;
+    }
+    return MIC_RESULT_READY;
 }
 
 static s32 __MICRawReadStatus(s32 chan, u32* status) {
-    s32 result = MIC_RESULT_NOCARD;
     BOOL enabled = OSDisableInterrupts();
+    BOOL failed;
+    u16 command;
+    u16 data;
 
-    if (EXISelect(chan, 0, EXI_FREQ_16M)) {
-        BOOL failed = FALSE;
-        u16 data = MIC_READ_STATUS << 8;
-
-        failed |= !EXIImm(chan, &data, 1, EXI_WRITE, NULL);
-        failed |= !EXISync(chan);
-        failed |= !EXIImm(chan, &data, 2, EXI_READ, NULL);
-        failed |= !EXISync(chan);
-        failed |= !EXIDeselect(chan);
-        *status = data;
-
-        if (!failed) {
-            result = MIC_RESULT_READY;
-        }
+    if (!EXISelect(chan, 0, EXI_FREQ_16M)) {
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_NOCARD;
     }
 
+    failed = FALSE;
+    command = MIC_READ_STATUS << 8;
+    failed |= !EXIImm(chan, &command, 1, EXI_WRITE, NULL);
+    failed |= !EXISync(chan);
+    failed |= !EXIImm(chan, &data, 2, EXI_READ, NULL);
+    failed |= !EXISync(chan);
+    failed |= !EXIDeselect(chan);
+    *status = data;
     OSRestoreInterrupts(enabled);
-    return result;
+
+    if (failed) {
+        return MIC_RESULT_NOCARD;
+    }
+    return MIC_RESULT_READY;
 }
 
 static s32 __MICRawWriteStatus(s32 chan, u32 status) {
-    s32 result = MIC_RESULT_NOCARD;
     BOOL enabled = OSDisableInterrupts();
+    BOOL failed;
+    u32 data;
 
-    if (EXISelect(chan, 0, EXI_FREQ_16M)) {
-        BOOL failed = FALSE;
-        u32 data = (MIC_WRITE_STATUS << 24) | ((status & 0xFFFF) << 8);
-
-        failed |= !EXIImm(chan, &data, 3, EXI_WRITE, NULL);
-        failed |= !EXISync(chan);
-        failed |= !EXIDeselect(chan);
-        if (!failed) {
-            result = MIC_RESULT_READY;
-        }
+    if (!EXISelect(chan, 0, EXI_FREQ_16M)) {
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_NOCARD;
     }
 
+    failed = FALSE;
+    data = MIC_WRITE_STATUS << 24;
+    data |= (status & 0xFFFF) << 8;
+    failed |= !EXIImm(chan, &data, 3, EXI_WRITE, NULL);
+    failed |= !EXISync(chan);
+    failed |= !EXIDeselect(chan);
     OSRestoreInterrupts(enabled);
-    return result;
+
+    if (failed) {
+        return MIC_RESULT_NOCARD;
+    }
+    return MIC_RESULT_READY;
 }
 
 static s32 __MICRawReadDataAsync(s32 chan, s16* data, u32 len, EXICallback callback) {
-    s32 result = MIC_RESULT_NOCARD;
     BOOL enabled;
+    BOOL failed;
+    u16 command;
 
     DCInvalidateRange(data, len);
     enabled = OSDisableInterrupts();
 
-    if (EXISelect(chan, 0, EXI_FREQ_16M)) {
-        BOOL failed = FALSE;
-        u16 command = MIC_DMA_DATA << 8;
+    if (!EXISelect(chan, 0, EXI_FREQ_16M)) {
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_NOCARD;
+    }
 
-        failed |= !EXIImm(chan, &command, 1, EXI_WRITE, NULL);
-        failed |= !EXISync(chan);
-        failed |= !EXIDma(chan, data, len, EXI_READ, callback);
+    failed = FALSE;
+    command = MIC_DMA_DATA << 8;
+    failed |= !EXIImm(chan, &command, 1, EXI_WRITE, NULL);
+    failed |= !EXISync(chan);
+    failed |= !EXIDma(chan, data, len, EXI_READ, callback);
 
-        if (!failed) {
-            result = MIC_RESULT_READY;
-        } else {
-            EXIDeselect(chan);
-        }
+    if (failed) {
+        EXIDeselect(chan);
+        OSRestoreInterrupts(enabled);
+        return MIC_RESULT_NOCARD;
     }
 
     OSRestoreInterrupts(enabled);
-    return result;
+    return MIC_RESULT_READY;
 }
 
 static s32 __MICGetControlBlock(s32 chan, BOOL skip_active_check, MICControlBlock** micblock) {
-    s32 result = MIC_RESULT_NOCARD;
+    s32 result;
     MICControlBlock* cb = &__MICBlock[chan];
     BOOL enabled = OSDisableInterrupts();
 
-    if (cb->is_attached) {
-        if (skip_active_check || !cb->is_active) {
-            if (cb->result_code != MIC_RESULT_BUSY) {
-                cb->result_code = MIC_RESULT_BUSY;
-                result = MIC_RESULT_READY;
-                cb->attach_callback = NULL;
-                *micblock = cb;
-            } else {
-                result = MIC_RESULT_BUSY;
-            }
-        } else {
-            result = MIC_RESULT_INVALID_STATE;
-        }
+    if (!cb->is_attached) {
+        result = MIC_RESULT_NOCARD;
+    } else if (!skip_active_check && cb->is_active) {
+        result = MIC_RESULT_INVALID_STATE;
+    } else if (cb->result_code == MIC_RESULT_BUSY) {
+        result = MIC_RESULT_BUSY;
+    } else {
+        cb->result_code = MIC_RESULT_BUSY;
+        cb->attach_callback = NULL;
+        result = MIC_RESULT_READY;
+        *micblock = cb;
     }
 
     OSRestoreInterrupts(enabled);
@@ -944,11 +999,11 @@ static BOOL __MICUpdateStatus(s32 chan, u32 status, BOOL check_change) {
     MICControlBlock* cb = &__MICBlock[chan];
     BOOL enabled = OSDisableInterrupts();
 
-    switch ((status >> 13) & 3) {
+    switch (status & (MIC_STATUS_64BYTES | MIC_STATUS_128BYTES)) {
         case 0:
             cb->hw_buff_size = 32;
             break;
-        case 1:
+        case MIC_STATUS_64BYTES:
             cb->hw_buff_size = 64;
             break;
         default:
@@ -956,11 +1011,11 @@ static BOOL __MICUpdateStatus(s32 chan, u32 status, BOOL check_change) {
             break;
     }
 
-    switch ((status >> 11) & 3) {
+    switch (status & (MIC_STATUS_22050HZ | MIC_STATUS_44100HZ)) {
         case 0:
             cb->sample_rate = 11025;
             break;
-        case 1:
+        case MIC_STATUS_22050HZ:
             cb->sample_rate = 22050;
             break;
         default:
@@ -968,7 +1023,11 @@ static BOOL __MICUpdateStatus(s32 chan, u32 status, BOOL check_change) {
             break;
     }
 
-    cb->gain = status & MIC_STATUS_GAIN15 ? 15 : 0;
+    if (status & MIC_STATUS_GAIN15) {
+        cb->gain = 15;
+    } else {
+        cb->gain = 0;
+    }
     cb->buff_ring_size = cb->hw_buff_size * (cb->buff_size / cb->hw_buff_size);
 
     if (status & MIC_STATUS_ACTIVE) {
@@ -995,19 +1054,28 @@ static BOOL __MICUpdateStatus(s32 chan, u32 status, BOOL check_change) {
 }
 
 static void __MICUpdateButton(s32 chan) {
-    MICControlBlock* cb = &__MICBlock[chan];
-    BOOL enabled = OSDisableInterrupts();
-    OSTick ticks = OSGetTick();
-    OSTick delta = ticks - cb->button_time_last + cb->button_time_delta;
+    MICControlBlock* cb;
+    BOOL enabled;
+    OSTick ticks;
+    OSTick delta;
+    u32 button_bits;
+    u32 button;
+    u32 button_changed;
+    u32 new_button;
+
+    cb = &__MICBlock[chan];
+    enabled = OSDisableInterrupts();
+    ticks = OSGetTick();
+    delta = ticks - cb->button_time_last + cb->button_time_delta;
 
     if (delta >= 10000) {
-        u32 button_bits = (cb->last_status >> 4) & 0x1F;
-        u32 button_changed;
-        u32 new_button;
+        button_bits = (cb->last_status >> 4) & 0x1F;
 
         button_bits &= ~1;
-        button_changed = cb->button ^ cb->last_button;
-        new_button = (button_bits & ~button_changed) | (cb->button & button_changed);
+        button = cb->button;
+        button_changed = cb->last_button ^ button;
+        new_button =
+            (button_bits & ~button_changed) | (button_changed & button);
         cb->button = new_button;
         cb->last_button = button_bits;
         delta = 0;

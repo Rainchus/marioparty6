@@ -3,6 +3,24 @@
 This is an evidence snapshot, not a completion claim. It was last verified on
 2026-07-15 with the pinned project toolchain.
 
+## Recovery target
+
+The active target is the byte-identical non-minigame game loop: boot, menus,
+party mode, boards, results, and ending. Minigame DLLs, instruction DLLs,
+minigame-mode wrappers, and mic-quiz modes are excluded; their native-port
+black-screen stubs are outside this decompilation repository's work.
+
+The evidence-backed target ledger at this build is:
+
+- DOL `game/` plus `board/`: `696000 / 1431136` target `.text` bytes Matching
+  (48.63%), across 70/97 owners. `game/` is 57/57 and `board/` is 13/40;
+  Branch is the latest Board promotion.
+- required board/flow RELs: `5084 / ~3100000` target `.text` bytes in fully
+  source-linked modules (approximately 0.16%). The conservative done set is
+  `actmanDLL` (`2412`) plus `sequencedll` (`2672`). `bootDll`, `selmenuDll`,
+  and `fileseldll` are not counted because each still links a fallback runtime
+  owner. No auto-generated text owner is counted as recovered source.
+
 ## Verification
 
 - `ninja -j1`: `137 files OK` (the DOL and all configured REL outputs)
@@ -11,12 +29,12 @@ This is an evidence snapshot, not a completion claim. It was last verified on
 - `cmp orig/GP6E01/sys/main.dol build/GP6E01/main.dol`: byte-identical
 - `build/GP6E01/main.dol` SHA-1:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
-- DTK progress at that build: 9.17% code and 31.33% data overall; 47.07% code
-  and 74.48% data in the DOL
-- Matching owners at that build: 301 of 895 overall, 292 of 396 in the DOL,
+- DTK progress at that build: 9.24% code and 31.37% data overall; 47.42% code
+  and 74.59% data in the DOL
+- Matching owners at that build: 303 of 895 overall, 294 of 396 in the DOL,
   and 9 of 499 in the REL modules
-- DOL policy split: 253 matching owners without the assembly exception, 39
-  matching owners admitted under the source-authentication exception, 103
+- DOL policy split: 255 matching owners without the assembly exception, 39
+  matching owners admitted under the source-authentication exception, 101
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
   awaiting target proof. These four numbers total all 396 DOL owners.
 
@@ -350,6 +368,27 @@ serialized build and explicit DTK checksum both report `137 files OK`; the
 rebuilt and original `main.dol` compare byte-identical, and the final build
 leaves `config/GP6E01/symbols.txt` unchanged.
 
+Wave 61 promotes two clean-C DOL owners. `board/branch.c` is now 17/17 exact
+with `.text 0x10E0`, all 210 text relocations, and every semantic data section
+exact after assigning the six-byte `.data` and four-byte `.sbss` tails to
+linker alignment. The authentic `if (--choiceTime == 0)` spelling recovers the
+last `choice`/`choiceTime` register cycle. `dolphin/mic/m2s.c` is now 14/14
+exact with `.text 0xD50` and all 143 relocations exact; restoring indexed
+debug-buffer copying and placing `__M2SCalibration` after the public functions
+recovers the target translation-unit order. Its target-only four-byte BSS tail
+is the proven eight-byte alignment gap before `msm/msmsys.o`, not fake source
+storage. `dolphin/mic/mic.c` remains fallback-linked but rises from 20/41 to
+36/41 strict-exact functions and 98.147860% `.text` after recovering the real
+two-dimensional timeout table, signed timeout field, early-return MIC/EXI
+control flow, raw transactions, and callback lifetimes. The two near-exact
+async residuals were not padded: MWCC `StackFrame.c` proves an unused local is
+removed before final stack assignment, and no authenticated live aggregate
+explains the target's four-byte slot displacement. Evidence is retained in
+[`docs/native_matching_wave61.md`](docs/native_matching_wave61.md). The final
+serialized build and explicit DTK checksum both report `137 files OK`; the
+rebuilt and original `main.dol` compare byte-identical, and the final build
+leaves `config/GP6E01/symbols.txt` unchanged.
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -367,9 +406,9 @@ still-fallback-linked `board/board.c`.
 
 `game/mic.c` is matching and is linked from recovered C.
 
-All configured `src/dolphin/` owners other than `dolphin/mic/mic.c` and
-`dolphin/mic/m2s.c` are now Matching. Those two MIC owners remain real C
-decompilation work and are tagged `SRC-DIVERGES` below.
+All configured `src/dolphin/` owners other than `dolphin/mic/mic.c` are now
+Matching. `dolphin/mic/m2s.c` closes in Wave 61; `mic.c` remains real C
+decompilation work and is tagged `SRC-DIVERGES` below.
 
 ## Assembly fallback boundary
 
@@ -435,9 +474,9 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 | --- | --- | --- |
 | `TRK_MINNOW_DOLPHIN/__exception.s` (`ASM-GATE-PENDING`) | [Mario Party 4 `src/TRK_MINNOW_DOLPHIN/__exception.s` at `147b165`](https://github.com/mariopartyrd/marioparty4/blob/147b165a83187ac9e6cfdc3bf52f2e73437b1ffd/src/TRK_MINNOW_DOLPHIN/__exception.s), `MatchingFor(USA,PAL)` | M4 authenticates the standalone `.init` exception-vector form and `0x1F34` size, but MP6 starts at a different address and has different vector/padding offsets. M5 has the MP6 bounds but is `NonMatching` with no source. A target-specific reconstruction and full gate are still required. |
 
-#### Bucket 2: `C-not-yet-matched` (103 current fallback owners)
+#### Bucket 2: `C-not-yet-matched` (101 current fallback owners)
 
-Eighty-seven owners have current source candidates and are tagged
+Eighty-five owners have current source candidates and are tagged
 `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-15; percentages are raw `.text` scores unless
@@ -488,14 +527,12 @@ otherwise noted.
 | `musyx/runtime/hardware.c` | Fifty-five hardware/voice/studio/stream functions restore real callback and state ownership. Target/source `.text` are `0x1094/0x1130`; 15/41 mapped functions are exact and 26 remain 93.775510%-99.829270%. Target/source `.rodata` are both `0x100`. |
 | `musyx/runtime/hw_aramdma.c` | Fourteen active Dolphin functions restore typed ARAM transfer jobs, stream buffers, queues, and callbacks. Target/source `.text` are `0xCE0/0xCF4`; 7/11 mapped functions are exact. Init/store/remove/stream allocation are 73.500000%-98.594600%, and three helpers remain unpaired. |
 | `musyx/runtime/StdReverb/reverb.c` | The typed delay-line/reverb owner compiles nine functions; create/callback/free are exact, target/source `.text` are `0xD38/0x1058`, and `.data 0x20` is exact. M4 `147b165` configures the owner `MatchingFor(USA,PAL)` from pinned [upstream MusyX `reverb.c` at `adc8df9`](https://github.com/AxioDL/musyx/blob/adc8df9a959f1e37f71bdf3155e229f9f87ad166/src/musyx/runtime/StdReverb/reverb.c), authenticating both inline-assembly bodies. Donor `DoCrossTalk` is `0x190` versus the remaining target placeholder's `0x184`; the mixed owner stays `NonMatching`, fallback-linked, and excluded from clean-C totals. |
-| `dolphin/mic/mic.c` | A five-version MWCC matrix proves the owner compiler is GC/1.2.5n; changing only the compiler raises the pre-fix M2S score to 98.561035% and immediately exacts 12/14 functions, while neighboring 1.2.5, 1.2.5e, 1.3, and the old GC/2.6 assignment are materially worse. Target-CFG recovery then exacts the MIC probe, simple getters, ring-index/sample APIs, active/attached queries, and callback/control-block helpers. Target/source `.text` are `0x2020/0x1F10`, at 85.376945% strict and 85.413420% data-value; 20/41 functions are strict-exact. Target/source `.data 0x40` and `.bss 0x150` compare at 100%; source `.sbss 0x4` covers the target value before its four-byte alignment tail. Twenty-one functions and seven target relocations still diverge, so the owner remains fallback-linked. |
-| `dolphin/mic/m2s.c` | GC/1.2.5n plus target-proven source lifetimes make 13/14 functions strict-exact, including `M2SSetPrerecordSamples`; all 143 relocations pair. `M2SAdvanceBuffer` is the sole residual at 95.037970%, retaining the bounded debug-copy loop proved by the target CFG. Target/source `.text` are both `0xD50`, at 99.539910% strict and data-value. The target BSS order remains `__M2SBlock` at `0x0`, `__M2STmpHistory` at `0x1A0`, and `__M2SDebug` at `0x250`; source `.bss 0x25C` differs from target `0x260` only by its four-byte alignment tail. The one divergent function keeps the complete owner fallback-linked. |
+| `dolphin/mic/mic.c` | The GC/1.2.5n compiler assignment remains proven by the five-version matrix. Wave 61 recovers the two-dimensional timeout table, signed timeout field, synchronous and asynchronous early-return CFGs, mount/gain switch shapes, all four raw EXI transactions, timeout and transmit callbacks, control-block acquisition, and button-update lifetimes. Target/source `.text` are `0x2020/0x1FC0`, at 98.147860% in both strict and data-value modes; 36/41 functions are strict-exact. `.data 0x40` and `.bss 0x150` are exact, and source `.sbss 0x4` covers the named value before the target alignment tail. `MICStartAsync` and `MICStopAsync` are 99.885710%/99.918365% with only eight/four uses of one stack-slot offset divergent; `__MICDoMount`, `__MICExiHandler`, and `__MICUpdateStatus` remain 89.031910%-91.986755%. MWCC stack compression proves a dead local cannot lawfully reserve the missing word, and no sibling authenticates a live aggregate, so fakematching was rejected. Three target text relocations remain unmatched and the owner stays fallback-linked. |
 | `msm/msmsys.c` | 99.734%; 18/23 functions exact. |
 | `msm/msmstream.c` | 99.487020%; 23/28 functions exact. `msmStreamDvdCallback` and `msmStreamDvdCallback2` are exact. `msmStreamData` is now target/source `0x2EC/0x2EC` at 99.759360% after recovering the target pause/linked-slot/ARAM-update control flow; `msmStreamSlotInit` is `0x224/0x224` at 99.635040% after recovering its three distinct size/offset lifetimes. Five functions still diverge, so the owner remains fallback-linked. |
 | `board/player.c` | The target-proven `0x50` `MBPLAYERWORK` names `masuMoveF` at `0x0A` and `moveProc` at `0x48`, while exact `.bss 0x140` retains the four-player bank. Full-turn execution, player-view setup, metal/Biri-Q teardown, dice-type lookup, and the exact 110-byte tag-name table raise coverage to 129 mapped/105 strict-exact/116 data-value-exact functions. `mbPlayerClose`, model-ID lookup, attribute setters, and motion lifetimes are corrected from target register evidence; Matching Mario Party 5 `include/game/gamework.h` at `e246f9d9` authenticates the `GWPlayerGet` inline shape used by the corresponding Player paths. Target/source `.text` are `0xBEB0/0x484C`, at 37.015240% strict and 37.092266% data-value. `mbPlayerTagNameMesGet` and `mbPlayerDiceTypeGet` are data-value exact; `mbPlayerMatClone` improves to 94.100000% data-value. Thirty-six target functions, including the remaining movement/render/state-machine closure, remain unpaired. |
 | `board/audio.c` | 99.995735%; 48/49 functions exact. Recovering the unsigned board-number field and the Matching `board/camera.c` `BoardNoGet` inline makes `mbMusBoardPlay` (`0x12C`) and `MusBoardFade` (`0x1AC`) exact. Only `mbMusBoardFadeOut` remains: target/source are both `0x3F0` at 99.952380%, with twelve stack-slot operand differences. Whole target/source `.text` remain `0x2BF0/0x2BF0`, and all 444 text relocations match. |
 | `board/masu.c` | All 119 target functions are represented after recovering the two GX draw paths, three space/event transitions, player-color logic, and bounded PKinoko route search with its real two-byte result entry and shared `MBPLAYERWORK::masuNext` owner. Target/source `.text` are `0x5DC8/0x5DD4`, at 96.772575% strict and 96.905030% data-value; 103/119 functions are strict-exact and 110/119 are data-value-exact. Target/source `.rodata 0x40`, `.data 0x128`, `.bss 0x700`, and `.sdata 0x10` have exact sizes; `.sbss 0x78/0x74` covers the named values plus target alignment tail. The seven new functions score 72.373240%-96.662740%; sixteen strict-divergent functions remain, so the source-complete owner stays fallback-linked. |
-| `board/branch.c` | 99.902780%; 16/17 functions exact. `ev_Branch` is target/source `0x8F0`/`0x8F0`; its remaining differences are one `choice`/`choiceTime` register cycle, with no inserted, deleted, or replaced instructions. Whole-owner `.text` is `0x10E0`/`0x10E0` and all 210 relocations match; configured `.data` remains `0x18`/`0x12`. The player-space field now comes from the shared target-proven `MBPLAYERWORK::masuNext` owner. |
 | `board/effect.c` | 59.766%; 1/35 functions exact, target/source text sizes `0x3050`/`0x3074`, plus `.sdata` and `.sdata2` divergence. The restored FastCast header is not its blocker. |
 | `gssdk_lib/asrpho/common/blocks/fft_maye.c` | The complete target-derived Mayer fast-Hartley and real-FFT pair is recovered, including both exact `0x40` trigonometric tables. Whole target/source `.text` is `0x8F0/0x8BC` at 79.104900%; `fht` is `0x73C/0x75C` at 85.051834% and `realfft` is `0x1B4/0x160` at 53.844036%. `.rodata 0x80` is exact, while target `.sdata2 0x18` remains 71.428570%. |
 | `gssdk_lib/asrpho/common/blocks/fftmod.c` | The complete target-derived `0x4C` FFT block recovers its power/amplitude modes, queue processing, control, initialization, and construction. `ControlFFTMod` (`0xA4`) is exact. Whole target/source `.text` is `0xC84/0xC78` at 93.288390%; the other functions range from 80.234180% to 97.250000%, and target `.sdata2 0x48` is 80.000000%. |

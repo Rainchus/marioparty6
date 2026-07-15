@@ -858,7 +858,7 @@ config.libs = [
                 extra_cflags=["-use_lmw_stmw on"],
             ),
             Object(
-                NonMatching,
+                Matching,
                 "dolphin/mic/m2s.c",
                 extra_cflags=["-use_lmw_stmw on"],
             ),
@@ -1010,7 +1010,7 @@ config.libs = [
             Object(NonMatching, "board/capevent.c"),
             Object(NonMatching, "board/shopevent.c"),
             Object(Matching, "board/guide.c"),
-            Object(NonMatching, "board/branch.c"),
+            Object(Matching, "board/branch.c"),
             Object(NonMatching, "board/mgcall.c"),
             Object(NonMatching, "board/effect.c", extra_cflags=["-O4,p"]),
             Object(NonMatching, "board/config.c"),
