@@ -3,6 +3,7 @@
 #include "dolphin/math.h"
 
 #include "game/board/audio.h"
+#include "game/board/camera.h"
 #include "game/board/main.h"
 #include "game/board/masu.h"
 #include "game/board/object.h"
@@ -30,14 +31,30 @@ enum {
     MESS_CHARANAME_MINIKOOPAB
 };
 
+#define FLAG_BOARD_WALKDONE FLAGNUM(FLAG_GROUP_COMMON, 16)
+
 static MBPLAYERWORK playerWork[GW_PLAYER_MAX];
+static BOOL turnIntrF;
 static BOOL blackoutF;
 static void (*turnInitHook)(int playerNo);
 static void (*turnCloseHook)(int playerNo);
+static GXColor metalShadowColor;
+static GXColor metalHiliteColor;
+static BOOL playerColSnapF;
 
+static GXColor metalDefaultColor[2] = {
+    { 128, 190, 140, 255 },
+    { 100, 50, 130, 255 }
+};
+
+static void PlayerColKill(int playerNo);
 static void PlayerMetalKill(int playerNo);
 static void PlayerBiriQKill(int playerNo);
+static void PlayerMove(void);
+static void PlayerTurn(int playerNo);
+static void MasuCoinExec(int playerNo, int coinNum);
 void mbDiceNumKill(int playerNo);
+void mbDiceObjHit(int playerNo);
 
 void mbPlayerClose(void)
 {
@@ -92,6 +109,327 @@ void mbPlayerEndTurnHookSet(int playerNo, MBPLAYERTURNHOOK hook)
 void mbPlayerMoveHookSet(int playerNo, MBPLAYERMOVEHOOK hook)
 {
     playerWork[playerNo].moveHook = hook;
+}
+
+void mbSingleTurnExec(BOOL intrF)
+{
+    turnIntrF = intrF;
+    blackoutF = FALSE;
+    GwSystem.turnPlayerNo = 0;
+    GwPlayer[0].orderNo = 0;
+    mbPlayerMotionSet(0, 1, HU3D_MOTATTR_LOOP);
+    PlayerTurn(0);
+    turnIntrF = FALSE;
+}
+
+static void PlayerMoveDestroy(void)
+{
+    MBPLAYERWORK *workP = HuPrcCurrentGet()->property;
+
+    workP->moveProc = NULL;
+}
+
+static void PlayerMoveCall(int playerNo)
+{
+    MBPLAYERWORK *workP = &playerWork[playerNo];
+
+    mbPlayerColSnapSet(TRUE);
+    workP->moveProc =
+        HuPrcChildCreate(PlayerMove, 0x200D, 0x6000, 0, mbMainProc);
+    workP->moveProc->property = workP;
+    HuPrcDestructorSet2(workP->moveProc, PlayerMoveDestroy);
+    while (workP->moveProc) {
+        HuPrcVSleep();
+    }
+    _SetFlag(FLAG_BOARD_WALKDONE);
+}
+
+static void ev_PlayerStartTurn(int playerNo)
+{
+    if (playerWork[playerNo].startTurnHook) {
+        if (playerWork[playerNo].startTurnHook()) {
+            playerWork[playerNo].startTurnHook = NULL;
+        }
+    }
+}
+
+static void ev_PlayerEndTurn(int playerNo)
+{
+    if (playerWork[playerNo].endTurnHook) {
+        if (playerWork[playerNo].endTurnHook()) {
+            playerWork[playerNo].endTurnHook = NULL;
+        }
+    }
+}
+
+void mbPlayerMasuMoveTo(int playerNo, int masuId, BOOL waitF)
+{
+    GwPlayer[playerNo].masuIdNext = masuId;
+    mbPlayerMasuMove(playerNo, waitF);
+}
+
+void mbPlayerMasuMove(int playerNo, BOOL waitF)
+{
+    MBPLAYERWORK *workP = &playerWork[playerNo];
+    MBPLAYERWORK *workP2;
+
+    workP->masuMoveF = TRUE;
+    mbPlayerMoveExec(
+        playerNo, NULL, NULL, mbPlayerWalkSpeedGet(), NULL, waitF);
+    workP2 = &playerWork[playerNo];
+    workP2->masuMoveF = FALSE;
+}
+
+void mbPlayerMasuMovePos(int playerNo, HuVecF *pos, BOOL waitF)
+{
+    mbPlayerMoveExec(
+        playerNo, NULL, pos, mbPlayerWalkSpeedGet(), NULL, waitF);
+}
+
+void mbPlayerMasuMoveSpeed(
+    int playerNo, int masuId, s16 maxTime, BOOL waitF)
+{
+    MBPLAYERWORK *workP;
+    MBPLAYERWORK *workP2;
+    HuVecF pos;
+
+    mbMasuPosGet(masuId, &pos);
+    workP = &playerWork[playerNo];
+    workP->masuMoveF = TRUE;
+    mbPlayerMoveExec(playerNo, NULL, &pos, maxTime, NULL, waitF);
+    workP2 = &playerWork[playerNo];
+    workP2->masuMoveF = FALSE;
+}
+
+void mbPlayerMoveExec(int playerNo, HuVecF *srcPos, HuVecF *dstPos,
+    s16 maxTime, HuVecF *rot, BOOL waitF)
+{
+    mbPlayerMoveMain(playerNo, srcPos, dstPos, 0, 1.0f, HU3D_MOTATTR_LOOP,
+        maxTime, rot, waitF);
+}
+
+void mbPlayerDiceMotExec(int playerNo)
+{
+    int time;
+
+    mbPlayerMotionSet(playerNo, 11, HU3D_MOTATTR_NONE);
+    time = 0;
+    do {
+        if (time++ == 27) {
+            mbDiceObjHit(playerNo);
+        }
+        HuPrcVSleep();
+    } while (!mbPlayerMotionEndCheck(playerNo));
+    mbPlayerMotIdleSet(playerNo);
+}
+
+typedef struct MoveNumWork {
+    u8 killF : 1;
+    u8 dispF : 1;
+    u8 playerNo : 2;
+    u8 carF : 1;
+} MOVENUMWORK;
+
+void mbMoveNumCreate(int playerNo, BOOL carF)
+{
+    mbMoveNumCreateColor(playerNo, carF, 0);
+}
+
+void mbMoveNumKill(int playerNo)
+{
+    if (playerWork[playerNo].moveNumObj) {
+        MOVENUMWORK *workP =
+            omObjGetWork(playerWork[playerNo].moveNumObj, MOVENUMWORK);
+
+        workP->killF = TRUE;
+    }
+}
+
+void mbMoveNumDispSet(int playerNo, BOOL dispF)
+{
+    if (playerWork[playerNo].moveNumObj) {
+        MOVENUMWORK *workP =
+            omObjGetWork(playerWork[playerNo].moveNumObj, MOVENUMWORK);
+
+        workP->dispF = dispF;
+    }
+}
+
+typedef struct PlayerColWork {
+    u8 killF : 1;
+    u8 _unk0_1 : 1;
+    u8 snapF : 1;
+    u8 restF : 1;
+    u8 _unk0_4 : 2;
+    u8 state : 2;
+} PLAYERCOLWORK;
+
+void mbev_PlayerColMasuSet(int playerNo, int masuId, BOOL waitF)
+{
+    int masuIdTbl[GW_PLAYER_MAX];
+    int i;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        masuIdTbl[i] = -1;
+    }
+    masuIdTbl[playerNo] = masuId;
+    mbev_PlayerColMasuAllSet(masuIdTbl, waitF);
+}
+
+BOOL mbPlayerColCheck(void)
+{
+    int i;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        PLAYERCOLWORK *workP =
+            omObjGetWork(playerWork[i].colObj, PLAYERCOLWORK);
+
+        if (workP->state) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+static void PlayerColKill(int playerNo)
+{
+}
+
+void mbev_PlayerColReserve(int playerNo, int masuId, BOOL waitF)
+{
+    int masuIdTbl[GW_PLAYER_MAX];
+    int i;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        masuIdTbl[i] = -1;
+    }
+    masuIdTbl[playerNo] = masuId;
+    mbev_PlayerColMasuAllSet(masuIdTbl, waitF);
+}
+
+void mbPlayerColSnapSet(BOOL snapF)
+{
+    BOOL snap = snapF ? TRUE : FALSE;
+    int i;
+
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        if (playerWork[i].colObj) {
+            PLAYERCOLWORK *workP =
+                omObjGetWork(playerWork[i].colObj, PLAYERCOLWORK);
+
+            workP->snapF = snap;
+        }
+    }
+    playerColSnapF = snapF;
+}
+
+void mbPlayerColSnapPlayerSet(int playerNo, BOOL snapF)
+{
+    BOOL snap = snapF ? TRUE : FALSE;
+
+    if (playerWork[playerNo].colObj) {
+        PLAYERCOLWORK *workP =
+            omObjGetWork(playerWork[playerNo].colObj, PLAYERCOLWORK);
+
+        workP->snapF = snap;
+    }
+}
+
+BOOL mbPlayerColSnapGet(int playerNo)
+{
+    PLAYERCOLWORK *workP =
+        omObjGetWork(playerWork[playerNo].colObj, PLAYERCOLWORK);
+
+    return workP->snapF;
+}
+
+void mbPlayerColRestSet(int playerNo, BOOL restF)
+{
+    BOOL rest = restF ? FALSE : TRUE;
+
+    if (playerWork[playerNo].colObj) {
+        PLAYERCOLWORK *workP =
+            omObjGetWork(playerWork[playerNo].colObj, PLAYERCOLWORK);
+
+        workP->restF = rest;
+    }
+}
+
+void mbPlayerColFirstSet(int playerNo)
+{
+    int orderNo = 1;
+    int i;
+
+    GwPlayer[playerNo].orderNo = 0;
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        if (playerNo != i) {
+            GwPlayer[i].orderNo = orderNo++;
+        }
+    }
+}
+
+typedef struct PlayerMetalWork {
+    u8 killF : 1;
+    u8 _unk0_1 : 1;
+    u8 _unk0_2 : 1;
+    u8 effectF : 1;
+} PLAYERMETALWORK;
+
+typedef struct PlayerBiriQWork {
+    u8 killF : 1;
+    u8 _unk0_1 : 1;
+    u8 flashF : 1;
+    u8 _unk0_3 : 1;
+    u8 effectF : 1;
+} PLAYERBIRIQWORK;
+
+static void PlayerBiriQEffectSet(int playerNo, BOOL effectF);
+
+void mbPlayerEffectSet(int playerNo, BOOL effectF)
+{
+    OMOBJ *objP = playerWork[playerNo].metalObj;
+
+    if (objP) {
+        PLAYERMETALWORK *workP = omObjGetWork(objP, PLAYERMETALWORK);
+
+        workP->effectF = effectF;
+        PlayerBiriQEffectSet(playerNo, effectF);
+    }
+}
+
+static void ResetMetalColor(void)
+{
+    metalShadowColor = metalDefaultColor[0];
+    metalHiliteColor = metalDefaultColor[1];
+}
+
+void mbPlayerMetalColorSet(
+    const GXColor *shadowColor, const GXColor *hiliteColor)
+{
+    metalShadowColor = *shadowColor;
+    metalHiliteColor = *hiliteColor;
+}
+
+static void PlayerBiriQFlashSet(int playerNo)
+{
+    OMOBJ *objP = playerWork[playerNo].biriQObj;
+
+    if (objP != NULL) {
+        PLAYERBIRIQWORK *workP = omObjGetWork(objP, PLAYERBIRIQWORK);
+
+        workP->flashF = TRUE;
+    }
+}
+
+static void PlayerBiriQEffectSet(int playerNo, BOOL effectF)
+{
+    OMOBJ *objP = playerWork[playerNo].biriQObj;
+
+    if (objP) {
+        PLAYERBIRIQWORK *workP = omObjGetWork(objP, PLAYERBIRIQWORK);
+
+        workP->effectF = effectF;
+    }
 }
 
 BOOL mbPlayerRotateCheck(int playerNo)
@@ -878,4 +1216,25 @@ void mbPlayerMasuCornerSet(int playerNo, s8 cornerNo)
 s8 mbPlayerMasuCornerGet(int playerNo)
 {
     return playerWork[playerNo].masuCorner;
+}
+
+void mbPlayerPlusMasuExec(int playerNo)
+{
+    mbCameraMoveOnSet(TRUE);
+    mbCameraPlayerViewSet(playerNo, MB_CAMERA_VIEW_ZOOMIN);
+    MasuCoinExec(playerNo, 3);
+}
+
+void mbPlayerCapCoinMasuExec(int playerNo)
+{
+    mbCameraMoveOnSet(TRUE);
+    mbCameraPlayerViewSet(playerNo, MB_CAMERA_VIEW_ZOOMIN);
+    MasuCoinExec(playerNo, 5);
+}
+
+void mbPlayerMinusMasuExec(int playerNo)
+{
+    mbCameraMoveOnSet(TRUE);
+    mbCameraPlayerViewSet(playerNo, MB_CAMERA_VIEW_ZOOMIN);
+    MasuCoinExec(playerNo, -3);
 }

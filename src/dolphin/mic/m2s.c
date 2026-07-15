@@ -351,7 +351,6 @@ void M2SStop(void) {
 
 s32 M2SGetSamples(s16** buffer, s32 samples) {
     M2SControlBlock* cb;
-    s32 result;
 
     if (!__init || !__open) {
         return -1;
@@ -366,8 +365,7 @@ s32 M2SGetSamples(s16** buffer, s32 samples) {
     }
 
     if (!MICIsAttached(__M2SChannel)) {
-        cb->is_attached = FALSE;
-        cb->is_active = FALSE;
+        cb->is_active = cb->is_attached = FALSE;
         return -1;
     }
 
@@ -378,10 +376,10 @@ s32 M2SGetSamples(s16** buffer, s32 samples) {
     if (samples > M2S_BUFFER_SAMPLES) {
         samples = M2S_BUFFER_SAMPLES;
     }
-    result = MICGetSamples(__M2SChannel, __M2SBuffer, cb->sample_index, samples);
-    __M2SCalibration(__M2SBuffer, result);
+    samples = MICGetSamples(__M2SChannel, __M2SBuffer, cb->sample_index, samples);
+    __M2SCalibration(__M2SBuffer, samples);
     *buffer = __M2SBuffer;
-    return result;
+    return samples;
 }
 
 s32 M2SGetSamplesLeft(void) {

@@ -14,7 +14,9 @@ typedef struct MbPlayerWork_s {
     s16 motNo;
     u8 _unk04;
     s8 masuCorner;
-    u8 _unk06[8];
+    u8 _unk06[4];
+    s16 masuMoveF;
+    u8 _unk0C[2];
     s16 masuNext;
     u8 moveF : 1;
     u8 playerNo : 2;
@@ -31,7 +33,8 @@ typedef struct MbPlayerWork_s {
     MBPLAYERTURNHOOK startTurnHook;
     MBPLAYERTURNHOOK endTurnHook;
     MBPLAYERMOVEHOOK moveHook;
-    u8 _unk3C[0x10];
+    u8 _unk3C[0xC];
+    struct Process_s *moveProc;
     HSF_MATERIAL *matCopy;
 } MBPLAYERWORK;
 
@@ -47,6 +50,7 @@ MBPLAYERWORK *mbPlayerWorkGet(int playerNo);
 void mbPlayerStartTurnHookSet(int playerNo, MBPLAYERTURNHOOK hook);
 void mbPlayerEndTurnHookSet(int playerNo, MBPLAYERTURNHOOK hook);
 void mbPlayerMoveHookSet(int playerNo, MBPLAYERMOVEHOOK hook);
+void mbSingleTurnExec(BOOL intrF);
 void mbPlayerAmbSet(int playerNo, float ambR, float ambG, float ambB);
 MBMODELID mbPlayerObjIDGet(int playerNo);
 HU3D_MODELID mbPlayerModelIDGet(int playerNo);
@@ -101,6 +105,30 @@ BOOL mbPlayerMotionEndCheck(int playerNo);
 BOOL mbPlayerMotionEndCheckAll(void);
 void mbPlayerMotionEndWait(int playerNo);
 void mbPlayerMotIdleSet(int playerNo);
+void mbPlayerMasuMoveTo(int playerNo, int masuId, BOOL waitF);
+void mbPlayerMasuMove(int playerNo, BOOL waitF);
+void mbPlayerMasuMovePos(int playerNo, HuVecF *pos, BOOL waitF);
+void mbPlayerMasuMoveSpeed(int playerNo, int masuId, s16 maxTime, BOOL waitF);
+void mbPlayerMoveExec(int playerNo, HuVecF *srcPos, HuVecF *dstPos,
+    s16 maxTime, HuVecF *rot, BOOL waitF);
+void mbPlayerMoveMain(int playerNo, HuVecF *srcPos, HuVecF *dstPos, int motNo,
+    float motSpeed, u32 motAttr, s16 maxTime, HuVecF *rot, BOOL waitF);
+void mbPlayerDiceMotExec(int playerNo);
+void mbMoveNumCreateColor(int playerNo, BOOL carF, int color);
+void mbMoveNumCreate(int playerNo, BOOL carF);
+void mbMoveNumKill(int playerNo);
+void mbev_PlayerColMasuAllSet(int *masuId, BOOL waitF);
+void mbev_PlayerColMasuSet(int playerNo, int masuId, BOOL waitF);
+void mbev_PlayerColReserve(int playerNo, int masuId, BOOL waitF);
+BOOL mbPlayerColCheck(void);
+void mbPlayerColSnapSet(BOOL snapF);
+void mbPlayerColSnapPlayerSet(int playerNo, BOOL snapF);
+BOOL mbPlayerColSnapGet(int playerNo);
+void mbPlayerColRestSet(int playerNo, BOOL restF);
+void mbPlayerColFirstSet(int playerNo);
+void mbPlayerEffectSet(int playerNo, BOOL effectF);
+void mbPlayerMetalColorSet(const GXColor *shadowColor,
+    const GXColor *hiliteColor);
 void mbPlayerCoinSet(int playerNo, int coinNum);
 int mbPlayerCoinGet(int playerNo);
 void mbPlayerCoinAdd(int playerNo, int coinNum);
@@ -136,5 +164,8 @@ void mbPlayerBlackoutSet(BOOL value);
 BOOL mbPlayerBlackoutGet(void);
 void mbPlayerMasuCornerSet(int playerNo, s8 cornerNo);
 s8 mbPlayerMasuCornerGet(int playerNo);
+void mbPlayerPlusMasuExec(int playerNo);
+void mbPlayerCapCoinMasuExec(int playerNo);
+void mbPlayerMinusMasuExec(int playerNo);
 
 #endif
