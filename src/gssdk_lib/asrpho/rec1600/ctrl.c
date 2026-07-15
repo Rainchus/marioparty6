@@ -1,27 +1,5 @@
 #include "gssdk/tos.h"
 
-typedef u32 (*TosControlCallback)(TosContext *context, u8 blockIndex,
-                                  u8 control, void *argument,
-                                  u32 argumentSize);
-
-typedef struct TosControlTarget {
-    u8 blockIndex;
-    u8 control;
-} TosControlTarget;
-
-typedef struct TosControlCommand {
-    u8 control;
-    u8 runBetweenTargets;
-    u16 nextState;
-    TosControlCallback callback;
-} TosControlCommand;
-
-typedef struct TosControlBlock {
-    u8 blockIndex;
-    u8 padding[3];
-    const TosControlCommand *const *commands;
-} TosControlBlock;
-
 extern u32 cbAskCurrentGain(TosContext *, u8, u8, void *, u32);
 extern u32 cbCancelUserWordTraining(TosContext *, u8, u8, void *, u32);
 extern u32 cbDoSecondPassIfEnabled(TosContext *, u8, u8, void *, u32);

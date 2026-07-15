@@ -2,15 +2,7 @@
 
 #include <string.h>
 
-typedef struct FastAllocator {
-    void *heap;
-    u16 chunkBytes;
-    u16 wordsLeft;
-    u32 chunkCount;
-    void **chunks;
-    void *current;
-    void *freeLists[65];
-} FastAllocator;
+#include "gssdk/fastallo.h"
 
 extern void *heap_Realloc(void *heap, void *ptr, u32 size);
 extern void *heap_Alloc(void *heap, u32 size);

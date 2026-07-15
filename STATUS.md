@@ -181,6 +181,17 @@ is byte-exact. The whole object remains structurally divergent and therefore
 stays `NonMatching` and fallback-linked. Evidence is retained in
 [`docs/native_matching_wave47.md`](docs/native_matching_wave47.md).
 
+Wave 48 recovers the complete 16-function GSSDK `mqueue.c` owner and the
+complete 25-function `tinyos.c` owner as one shared-runtime slice. The target-
+derived source closes the real `0x118` `FastAllocator`, `0x16C` `TosContext`,
+`0x28` `TosBaseBlock`, queue/reader, architecture-definition, profile, and
+control-table layouts used throughout GSSDK. `qQueueInit`, `qQueueNbrElements`,
+`tosDestruct`, and `DisabledProcess` are byte-exact, and the already-Matching
+`fastallo.c` remains exact after moving its ABI into a shared header. Both new
+complete owners still diverge as whole objects, so they remain `NonMatching`
+and fallback-linked. Evidence is retained in
+[`docs/native_matching_wave48.md`](docs/native_matching_wave48.md).
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -261,7 +272,7 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 
 #### Bucket 2: `C-not-yet-matched` (111 current fallback owners)
 
-Eighty-eight owners have current source candidates and are tagged
+Eighty-nine owners have current source candidates and are tagged
 `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-15; percentages are raw `.text` scores unless
@@ -356,22 +367,22 @@ otherwise noted.
 | `gssdk_lib/gsapi/callbacks.c` | Six callback wrappers totaling `0x260` are exact, as are `AsrSpiSignalCallBacks` (`0x18`) and `AsrSpiRecogCallBacks` (`0x8`) with their relocation order. The target's `0x580` `asrspi_cbResult` remains unrecovered, so the complete owner stays fallback-linked. |
 | `gssdk_lib/gsapi/ctxfuncs.c` | Five small target-derived routines are materialized. `SessionDataFree`, `ContextAPIDeActivate`, `ContextSetActiveWords`, and `ContextSetCtxData` are exact; `ContextGetParam` is `0x50` at 84.500000%. Ten larger context/session routines remain absent, so the owner stays fallback-linked. |
 | `gssdk_lib/asrpho/common/ctxdata/langdata.c` | The real `LanguageDataV2` prefix and code-book layouts support 36 exact field/pointer accessors. The target's `0x13C` language-method object and the code-book method slots consumed by `vq1500.c` are now typed in the shared header. `_langGetpErgodicPenalty` is `0x64` at 77.040000%; the deeper packed-layout functions and virtual-table source closure remain unrecovered. |
-| `gssdk_lib/asrpho/common/tos/mqueue.c` | The target queue/list/reader prefix and three routines are recovered. `qQueueNbrElements` (`0x20`) is exact; `qDeQueueOne` (`0x50`) is 89.500000% and `qQueueConstruct` (`0x8C`) is 84.200000%. The remaining queue control, enqueue, reset, resize, and destruction routines are absent, so the owner remains fallback-linked. |
+| `gssdk_lib/asrpho/common/tos/mqueue.c` | All 16 target queue functions are recovered against the real queue element, reader-array, `TosContext`, and embedded allocator layouts. `qQueueInit` (`0xF0`) and `qQueueNbrElements` (`0x20`) are exact. Whole target/source `.text` is `0x102C/0xFD4` at 82.081160%; both objects have 29 text relocations. The complete owner remains fallback-linked because its control, enqueue, reader-update, resize, and allocation compiler shapes still diverge. |
+| `gssdk_lib/asrpho/common/tos/tinyos.c` | All 25 target TinyOS functions are recovered with typed architecture construction/destruction, block and queue definitions, profiles, control tables, scheduling, callbacks, and ownership. The target proves `TosContext` size `0x16C`, `TosBaseBlock` size `0x28`, and the shared profile-owner prefix. `tosDestruct` (`0x48`) and `DisabledProcess` (`0x4`) are exact. Whole target/source `.text` is `0x1D90/0x1D88` at 74.948204%, `.sdata2 0x8` is exact, and both objects have 70 text relocations. The complete owner remains fallback-linked because the larger construction, run, control, and base-block compiler shapes diverge. |
 
-The other 23 owners are tagged `NO-SOURCE`. Each explicit brace group below
-expands to the named owner files; the count audit is `1 + 22 = 23`.
+The other 22 owners are tagged `NO-SOURCE`. Each explicit brace group below
+expands to the named owner files; the count audit is `1 + 21 = 22`.
 
 - `musyx/runtime/` (1): `dsp_import.c`. The authenticated donor is a DSP
   firmware byte array, so it is preserved as reference evidence rather than
   counted as clean source recovery.
-- `gssdk_lib/` (22):
+- `gssdk_lib/` (21):
   - `gsapi/gsapi.c`;
   - `asrpho/asrspi.c` and
     `asrpho/rec1600/{convert,creasp,creaspch,creaspt,creatree,crsptrch,spi1600,train,userword}.c`;
   - `asrpho/common/blocks/{dpgenuw,dpscruw,isoword,nbestdp,pitchdp}.c`;
   - `asrpho/common/blocks/flblocks/{gender,vad}.c`;
-  - `asrpho/common/blocks/flfxblks/{dist16,pitchco,shs_vuv}.c`;
-  - `asrpho/common/tos/tinyos.c`.
+  - `asrpho/common/blocks/flfxblks/{dist16,pitchco,shs_vuv}.c`.
 
 Mixed C/assembly owners stay in the C bucket until all retained C and assembly
 passes the appropriate proof. `TRK_MINNOW_DOLPHIN/targimpl.c` no longer appears
