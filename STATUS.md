@@ -417,6 +417,18 @@ is retained in [`docs/native_matching_wave63.md`](docs/native_matching_wave63.md
 This was an object-only WIP slice; no full-DOL gate or Matching promotion is
 claimed.
 
+Wave 64 advances the source-complete `board/board.c` main loop to exact owner
+size and 99.902960% strict/data-value `.text` similarity. All 35 target
+functions pair and 31 are exact. `mbMain` rises from `0x744/0x740` at
+99.541940% to `0x744/0x744` at 99.935486% after recovering the separate
+current-time/night lifetimes, function-scope minigame-call result, short-lived
+day predicate, and explicit party comparisons. The remaining four functions
+are exact-size and differ only in 34 register-color operands, so the owner
+stays `NonMatching` and does not change the clean-C target ledger. Evidence is
+retained in [`docs/native_matching_wave64.md`](docs/native_matching_wave64.md).
+This was an object-only WIP slice; no full-DOL gate or Matching promotion is
+claimed.
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -520,7 +532,7 @@ otherwise noted.
 | `MSL_C.PPCEABI.bare.H/alloc.c` | Matching FFCC and Super Mario Strikers sources authenticate the allocator family. The recovered `Block`, `SubBlock`, fixed-pool, and `0x34` pool layouts plus all 11 target routines compile, and the six fixed sizes in `.rodata 0x18` are exact. The MP6 GC/2.6 object still diverges substantially from the GC/2.7 donor shape: mapped text scores range from 29.324675% to 61.834644%, and six target-local helpers retain address names, so the owner remains fallback-linked. |
 | `MSL_C.PPCEABI.bare.H/qsort.c` | Matching Super Mario Strikers commit `795ee483` authenticates the MSL heapsort. Target/source are `0x170/0x16C` at 98.260870%; the target retains `li 2; mullw` where the donor compiler emits `slwi`. GC/2.7 was byte-neutral and authenticated multiplication spellings did not close the difference, so the real source is retained without forcing a match. |
 | `MSL_C.PPCEABI.bare.H/e_exp.c` | Matching Pikmin 2 commit `46aecad6` authenticates the fdlibm source. All `.rodata 0x30`, `.sdata2 0x78`, and 21 relocations match. `__ieee754_exp` remains target/source `0x21C/0x224` at 91.592590%, so exact constants do not justify promotion. |
-| `board/board.c` | Target/source `.text` are `0x1CFC/0x1CF8`, all 618 relocations pair, and 31/35 functions are exact. `mbMain` improves from 99.133330% to 99.541940% at `0x744/0x740` after restoring target-proven time synchronization, party-only return cleanup, the typed `GWTeamFGet` test, tutorial/no-minigame loop joins, and the story-only player reset, all corroborated by fully matching MP5 source shape. Its residual is 24 operand-color differences plus one missing target `mr`. `mbObjectSetup`, `mbMain`, `mbNextTime`, and `mbSaveInit` still diverge, so the owner remains fallback-linked. |
+| `board/board.c` | `SRC-DIVERGES`; `f15ed033` corrected a stale duplicate `Object()` configuration that had silently linked the wrong side and de-flipped the unproved owner. Target/source `.text` are now `0x1CFC/0x1CFC` at 99.902960% in both strict and data-value comparison; all 35 functions pair, 31 are exact, and all 618 relocations pair. `mbMain` is `0x744/0x744` at 99.935486% after recovering its current-time, night, day-predicate, and minigame-call lifetimes. `mbObjectSetup`, `mbMain`, `mbNextTime`, and `mbSaveInit` retain only 34 register-color operand differences, so the owner remains fallback-linked. |
 | `board/math.c` | All 56 target functions are represented. The additions recover the multiply-high random scaler, real HSF min/max scan, eight-corner camera/shadow frustum test, transform hook, object walk, and two target-exact `HuVecF[8]` BSS banks. Target/source `.text` are `0x2A44/0x2F00`; strict score rises from 35.577080% to 47.086136% and data-value score from 35.699078% to 47.239555%, while all prior 51 scores are unchanged. `.bss 0xC0` is exact; source `.sbss 0x4` covers the target's named value before its four-byte alignment tail. `mbRandMod` is 91.941180%, `mbObjCullInit` is exact-size at 75.714290%, and the cull hook inherits major differences from the divergent matrix helpers. `mbMathClose` remains the sole strict-exact body, so the complete owner stays fallback-linked. |
 | `board/telop.c` | Sixteen pad, taunt, language, board-directory, telop-check, and time-display routines plus their real tables/globals are recovered. Target/source `.text` are `0x329C/0x8E0`; 6/16 mapped functions are exact, including five wave-38 additions. The large telop/time/taunt OM execution closure remains absent. |
 | `board/coin.c` | Twenty-four allocation, lifecycle, transform, alpha, display, layer, motion, and display-teardown routines are recovered. The target proves the `0x40` public object, its caller-work tail used by `board/last5.c`, the `0x1144` 64-slot bank, the `0x160` model/bank owner, and the initialized five-entry `coinDispOMObj` bank. Target/source `.text` are `0x4550/0x103C`, at 17.055681% strict and 17.064697% data-value; 6/24 mapped functions are exact. The target-proven `int motNo` ABI closes `mbCoinObjMotSet` at `0x58`; both create paths still diverge, and the renderer/effect/display closure remains absent. |

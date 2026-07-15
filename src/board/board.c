@@ -279,8 +279,9 @@ static void mbMain(void)
 {
     s32 i;
     s32 interruptF = FALSE;
-    s16 nightF;
-    BOOL dayF;
+    s32 mgCallF;
+    s32 curTime;
+    s32 nightF;
 
     mbWipeWait();
     if (GwSystem.turnNo > GwSystem.turnMax && !_CheckFlag(FLAG_BOARD_TUTORIAL)) {
@@ -291,7 +292,7 @@ static void mbMain(void)
     mbInit();
     if (!_CheckFlag(FLAG_BOARD_OPENING)) {
         if (_CheckFlag(FLAG_BOARD_DEBUG) && !_CheckFlag(FLAG_BOARD_TUTORIAL)) {
-            if (GWPartyGet()) {
+            if (GWPartyGet() != FALSE) {
                 s32 starNo = mbStarNoRandGet();
                 if (starNo >= 0) {
                     mbStarNoSet(starNo);
@@ -307,7 +308,7 @@ static void mbMain(void)
                 mbTutorialCall(0);
             }
         }
-        if (GWPartyGet()) {
+        if (GWPartyGet() != FALSE) {
             if (!GWTeamFGet()) {
                 for (i = 0; i < 4; i++) {
                     mbPlayerCoinSet(i, 10);
@@ -327,7 +328,8 @@ static void mbMain(void)
     }
     if (GwSystem.curTime != GwSystem.nextTime) {
         GwSystem.timeTurn = 0;
-        GwMgNightF = GwSystem.curTime;
+        curTime = GwSystem.curTime;
+        GwMgNightF = curTime;
         if (ev_NextTime != NULL) {
             mbMusBoardPlay();
             _ClearFlag(FLAG_BOARD_STAR_RESET);
@@ -337,11 +339,15 @@ static void mbMain(void)
         }
         GwSystem.nextTime = GwSystem.curTime;
     }
-    dayF = (GwSystem.curTime == 0);
-    nightF = dayF ? FALSE : TRUE;
-    GwMgNightF = nightF;
+    {
+        BOOL dayF;
+
+        dayF = (GwSystem.curTime == 0);
+        nightF = dayF ? FALSE : TRUE;
+        GwMgNightF = nightF;
+    }
     if (mbReturnMgCheck()) {
-        if (!GWPartyGet()) {
+        if (GWPartyGet() == FALSE) {
             interruptF = mbev_SingleMgEnd(0);
         } else {
             if (_CheckFlag(FLAG_BOARD_MG)) {
@@ -373,13 +379,13 @@ static void mbMain(void)
         ev_TurnStart();
     }
     if (GwSystem.turnPlayerNo == 0 && !interruptF && GwSystem.turnMax - GwSystem.turnNo < 5) {
-        if (!_CheckFlag(FLAG_BOARD_LAST5) && GWPartyGet()) {
+        if (!_CheckFlag(FLAG_BOARD_LAST5) && GWPartyGet() != FALSE) {
             mbev_Last5();
             _SetFlag(FLAG_BOARD_LAST5);
         } else {
             mbTelopLastTurnCreate();
             if (!_CheckFlag(FLAG_BOARD_LAST5)) {
-                if (!GWPartyGet()) {
+                if (GWPartyGet() == FALSE) {
                     mbSingleCall(12, 0);
                     _SetFlag(FLAG_BOARD_LAST5);
                 }
@@ -394,7 +400,7 @@ static void mbMain(void)
             HuPrcSleep(-1);
         }
     }
-    if (GWPartyGet()) {
+    if (GWPartyGet() != FALSE) {
         mbStatusDispForceSetAll(TRUE);
         mbTurnExec(interruptF);
         if (ev_TurnEnd) {
@@ -414,7 +420,6 @@ static void mbMain(void)
             mbNextTime();
             continue;
         } else {
-            s32 mgCallF;
             GwSystem.turnPlayerNo = -1;
             mgCallF = mbev_MgCall();
             mbStatusColorAllSet(0);
