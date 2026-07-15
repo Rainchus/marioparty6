@@ -1077,6 +1077,19 @@ config.libs = [
         },
     ),
     Rel(
+        "mdseldll",
+        objects={
+            Object(NonMatching, "REL/mdseldll/mdsel.c"),
+            Object(
+                NonMatching,
+                "REL/mdseldll/runtime.c",
+                source="REL/mdseldll/runtime.c",
+                mw_version=config.linker_version,
+                extra_cflags=["-DMP6_REL_RUNTIME=1", "-DMP6_MDSEL_RUNTIME=1", "-proc 7400"],
+            ),
+        },
+    ),
+    Rel(
         "sequencedll",
         objects={
             Object(

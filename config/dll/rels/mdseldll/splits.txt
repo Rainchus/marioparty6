@@ -5,3 +5,13 @@ Sections:
 	.rodata     type:rodata align:32
 	.data       type:data align:8
 	.bss        type:bss align:8
+
+REL/mdseldll/mdsel.c:
+	.text       start:0x00000000 end:0x00010010
+	.rodata     start:0x00000000 end:0x00000260
+	.data       start:0x00000000 end:0x00000370
+	.bss        start:0x00000000 end:0x00001A4E
+
+REL/mdseldll/runtime.c:
+	.text       start:0x00010010 end:0x00010A54
+	.rodata     start:0x00000260 end:0x00000278

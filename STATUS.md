@@ -13,10 +13,13 @@ black-screen stubs are outside this decompilation repository's work.
 The immediate Priority 1a milestone is now `mdseldll.rel`, ahead of the
 remaining board owners. `include/ovl_table.h` places `mdseldll` at zero-based
 overlay 93, and the Matching `selmenuDll` mode table maps `***:MODE SEL`
-directly to `DLL_mdseldll`. No `mdseldll` source or `Rel()` owner exists yet,
-so it is the current boot-to-mode-select blocker. Its sibling base is the MP5
-`mdsel`/mode framework; recovery and any future Matching promotion still
-require MP6 object/relocation evidence and the complete REL plus DOL gate.
+directly to `DLL_mdseldll`. Wave 67 opens its `Rel()` and source ownership:
+16 target functions are represented, 15 are byte-exact, and `0x1660` target
+text bytes are exact. The application owner and its separated compiler runtime
+both remain `NonMatching`, so `mdseldll` is still the boot-to-mode-select
+blocker. Its sibling base is the MP5 `mdsel`/mode framework; recovery and any
+future Matching promotion still require MP6 object/relocation evidence and the
+complete REL plus DOL gate.
 
 The evidence-backed target ledger at this build is:
 
@@ -39,8 +42,8 @@ The evidence-backed target ledger at this build is:
   `b897e6ade6b3a0cd2f9907689f38a3b19c327e70`
 - DTK progress at that build: 9.24% code and 31.37% data overall; 47.42% code
   and 74.59% data in the DOL
-- Matching owners at that build: 303 of 895 overall, 294 of 396 in the DOL,
-  and 9 of 499 in the REL modules
+- Matching owners at that build: 303 of 897 overall, 294 of 396 in the DOL,
+  and 9 of 501 in the REL modules
 - DOL policy split: 255 matching owners without the assembly exception, 39
   matching owners admitted under the source-authentication exception, 101
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
@@ -461,6 +464,21 @@ path. Twenty-one compiler/source-shape residuals remain, so `dice.c` stays
 [`docs/native_matching_wave66.md`](docs/native_matching_wave66.md). This was
 an object-only WIP slice; no full-DOL gate or Matching promotion is claimed.
 
+Wave 67 opens the Priority 1a `mdseldll.rel` owner and separates its application
+range from the compiler runtime. The first slice represents 16 target
+functions, of which 15 are data-value-exact for `0x1660` target text bytes.
+Target/source `.text` is `0x10010/0x17BC` at 9.266537%; the sole represented
+residual, `fn_1_2080`, has exact `0x15C` size and differs in two register-color
+operands. The exact closure includes both module entry points, `ObjectSetup`,
+the initial overlay and child-process transitions, window-message helpers, and
+the first mode-flow state handlers. The source also recovers the retained
+camera offsets, menu permutation, report strings, window IDs, stream handle,
+and camera vectors from target data and relocation evidence. A full `rtk ninja`
+after the final split/configuration changes reports `137 files OK`; both owners
+remain `NonMatching`, no REL promotion is claimed, and no fallback-linked byte
+is counted as recovered source. Evidence is retained in
+[`docs/native_matching_wave67.md`](docs/native_matching_wave67.md).
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -864,6 +882,20 @@ diverged. `New.cp`, `NewMore.cp`, and `NMWException.cpp` therefore remain
 decompiled owners. Evidence is retained in
 [`docs/native_matching_wave24.md`](docs/native_matching_wave24.md).
 
+### Active REL fallback taxonomy
+
+The same two buckets apply to every configured REL fallback owner. These six
+owners are separate from the 396-owner DOL ledger:
+
+| Owner | Bucket and reason | Authentication or current evidence |
+| --- | --- | --- |
+| `REL/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; longstanding fallback, never de-flipped | MP5 `src/Runtime.PPCEABI.H/runtime.c` authenticates the compiler-assembly source family. This sibling checkout does not provide a locally runnable Matching manifest for the owner, so the exception has not been exercised. |
+| `REL/selmenuDll/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; longstanding fallback, never de-flipped | Same MP5 Runtime source authentication; MP6 object/link proof remains pending. |
+| `REL/fileseldll/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; longstanding fallback, never de-flipped | Same MP5 Runtime source authentication; MP6 object/link proof remains pending. |
+| `REL/mdseldll/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; newly split in Wave 67, never de-flipped | Its target text and rodata are byte-identical to the same-game `fileseldll` and `selmenuDll` runtime blocks, and MP5 authenticates the assembly source family. The exception gate remains pending. |
+| `REL/mdseldll/mdsel.c` | `C-not-yet-matched`; `SRC-DIVERGES`; newly split in Wave 67, never de-flipped | 16 target functions are represented, 15 are exact, and `fn_1_2080` retains a two-register residue; the rest of the `0x10010` application range remains real C work. |
+| `REL/meschkdll/meschkdll.c` | `C-not-yet-matched`; `SRC-DIVERGES`; never de-flipped | Five functions are exact; `fn_1_188` remains divergent, so the owner stays fallback-linked. |
+
 ## Named DOL ownership
 
 The current snapshot descends from fork commit `353fa30`, which replaced every
@@ -976,7 +1008,7 @@ configured data/BSS bytes.
   `synthFlags`, `vs`, and `gWriteBuf`. The address, definition, and target
   relocation ledger is retained in `docs/easy_ports_wave.md`.
 
-The 111 current DOL fallback owners and their causes are exhaustive in the
-two-bucket ledger above. Three REL Runtime variants also remain `NonMatching`;
-they are outside this main-DOL-first taxonomy and are not included in the 110
-C-work/1-assembly-policy remaining counts.
+The 102 current DOL fallback owners and their causes are exhaustive in the
+two-bucket ledger above: 101 are C work and one is an assembly-policy decision.
+The six configured REL fallback owners are catalogued separately above and are
+not included in those DOL counts.
