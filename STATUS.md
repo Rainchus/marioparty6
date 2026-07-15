@@ -203,6 +203,17 @@ the linked owner byte-identical, and improves `vq1500.c` by separating the two
 vector-search lifetimes without forcing registers. Evidence is retained in
 [`docs/native_matching_wave49.md`](docs/native_matching_wave49.md).
 
+Wave 50 moves five more GSSDK owners from `NO-SOURCE` to complete,
+target-derived C: `dpscruw.c`, `dpgenuw.c`, `pitchdp.c`, `pitchco.c`, and
+`shs_vuv.c`. The batch recovers all 58 retained functions and the real
+`0x80`, `0xF4`, `0x68`, `0xC4`, and `0x60` owner layouts, including typed
+user-word lattices/backtraces, pitch Viterbi state, pitch-combiner history,
+and SHS/VUV spline and harmonic state. Twenty-one functions are byte-exact,
+but no complete owner is exact, so all five remain `NonMatching` and
+fallback-linked. The same evidence expands the shared `LanguageData` method
+table with target-proven slots used by the user-word scorers. Evidence is
+retained in [`docs/native_matching_wave50.md`](docs/native_matching_wave50.md).
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is
@@ -283,7 +294,7 @@ not "de-flipped." Historical corrections use `ASM-BLANKET-REMOVAL` and
 
 #### Bucket 2: `C-not-yet-matched` (110 current fallback owners)
 
-Eighty-nine owners have current source candidates and are tagged
+Ninety-four owners have current source candidates and are tagged
 `SRC-DIVERGES`.
 These DTK 0.9.2 object comparisons were regenerated from the current source
 and target splits on 2026-07-15; percentages are raw `.text` scores unless
@@ -353,6 +364,11 @@ otherwise noted.
 | `gssdk_lib/asrpho/common/blocks/fft_maye.c` | The complete target-derived Mayer fast-Hartley and real-FFT pair is recovered, including both exact `0x40` trigonometric tables. Whole target/source `.text` is `0x8F0/0x8BC` at 79.104900%; `fht` is `0x73C/0x75C` at 85.051834% and `realfft` is `0x1B4/0x160` at 53.844036%. `.rodata 0x80` is exact, while target `.sdata2 0x18` remains 71.428570%. |
 | `gssdk_lib/asrpho/common/blocks/fftmod.c` | The complete target-derived `0x4C` FFT block recovers its power/amplitude modes, queue processing, control, initialization, and construction. `ControlFFTMod` (`0xA4`) is exact. Whole target/source `.text` is `0xC84/0xC78` at 93.288390%; the other functions range from 80.234180% to 97.250000%, and target `.sdata2 0x48` is 80.000000%. |
 | `gssdk_lib/asrpho/common/blocks/pitchwin.c` | The complete target-derived `0x44` pitch-window block recovers its Hamming coefficients, circular signed-sample history, queue lifecycle, and all five functions. `ConstructPitchWindow` (`0x44`) is exact. Whole target/source `.text` is `0x5C4/0x5C0`; `.sdata2 0x40` and all 37 relocations align. `ProcessPitchWindow` is `0x148/0x140` at 93.512190%, `ControlPitchWindow` is exact-size `0xF4` at 99.016396%, `CreateWindow` is exact-size `0x16C` at 76.703300%, and `InitPitchWindow` is `0x1D8/0x1DC` at 96.652540%. |
+| `gssdk_lib/asrpho/common/blocks/dpscruw.c` | The complete target-derived `0x80` user-word scoring owner recovers all 14 functions, typed 12-byte backtrace entries, recognition-language state, Viterbi initialization, dynamic programming, active-distance construction, result scoring, and controls. Seven functions are exact: `InitBacktrace`, `FreeBacktrace`, `InitViterbi`, `InitDpScoreUw`, `IdleDpScoreUwProcess`, `DpScoreUwProcess`, and `ConstructDpScoreUw`. Whole target/source `.text` is `0x11B4/0x129C` at 73.921450%; `.sdata2 0x10` is exact and relocations are 60/62. |
+| `gssdk_lib/asrpho/common/blocks/dpgenuw.c` | The complete target-derived `0xF4` user-word generator recovers all 12 functions, a 22-state lattice, typed 12-byte backtrace cells, free-list ownership, dynamic programming, result emission, and control/lifecycle paths. `FreeBacktrace`, `InitDpGenUw`, `MakeUserWordsActiveDist`, `IdleDpGenUwProcess`, and `ConstructDpGenUw` are exact. Target/source `.text` is `0x1330/0x1484`, `.sdata2` is exact at `0x10`, and relocations are 64/66; `DpGenUwProcess` is `0x160/0x15C` at 95.602270%, while the larger DP/control shapes still diverge. |
+| `gssdk_lib/asrpho/common/blocks/pitchdp.c` | The complete target-derived `0x68` pitch dynamic-programming owner recovers all 11 functions, typed 12-byte Viterbi cells, state/jump factors, DP/backtracking, buffering, flush, reset, control, and initialization. `ConstructPitchDP` (`0x44`) is exact; `Output` is exact-size `0xFC` at 99.603170% and `InitPitchDP` is `0x36C/0x368` at 99.086760%. Target/source `.text` is `0x15C0/0x15CC` at approximately 63.19% target-byte-weighted similarity, `.sdata2` is `0x30/0x2C` at 78.260870%, and all 70 relocations pair. |
+| `gssdk_lib/asrpho/common/blocks/flfxblks/pitchco.c` | The complete target-derived `0xC4` pitch combiner recovers all 13 functions, voiced-boundary checks, energy normalization, logarithmic pitch, output buffering, reset/control, and initialization. Six functions are exact: `MaxFloatInArray`, `CheckBeginVoicedFlag`, `CheckEndVoicedFlag`, `OutputProcedure`, `ControlPitchCombiner`, and `ConstructPitchCombiner`. Whole target/source `.text` is `0x13F8/0x13C8` at 96.021910%, `.sdata2` is `0x48/0x40` at 91.176470%, and all 81 relocations pair. |
+| `gssdk_lib/asrpho/common/blocks/flfxblks/shs_vuv.c` | The complete target-derived `0x60` SHS/VUV owner recovers all eight functions: 65-bin spectrum handling, peak enhancement, cubic-spline work arrays, five-octave log interpolation, harmonic summation, V/UV thresholding, process, and initialization. `ControlSHS_VUV` (`0x10C`) and `ConstructSHS_VUV` (`0x44`) are exact. Target/source `.text` is `0x151C/0x14F0`, `.sdata2` is `0x78/0x74`, and 92/93 relocations pair; `ProcessSHS_VUV` is exact-size `0x290` at 91.975610% while the larger numerical kernels remain divergent. |
 | `gssdk_lib/asrpho/common/blocks/delaybl.c` | The target-derived `DelayBlock` and shared `TosBaseBlock` ABI recover all four functions. `ProcessDelayBlock`, `InitDelayBlock`, and `ConstructDelayBlock` are exact. `ControlDelayBlock` is target/source `0xE4/0xE4` at 98.947365%; its only retained instruction difference is target `addi r4,r5,0` versus source `li r4,0` in the clear loop. Evidence-backed declaration and assignment variants did not reproduce it, so the owner remains fallback-linked. |
 | `gssdk_lib/asrpho/common/blocks/undersam.c` | The target-derived `0x2C` undersampler, signed-sample grouping, profile defaults, and error path are recovered. `ProcessUndersampler`, `ControlUndersampler`, and `ConstructUndersampler` are exact. `InitUndersampler` is target/source `0xC0/0xC0` at 99.687500%; only the quotient's volatile register differs (`r5` target, `r4` source), so the whole owner remains fallback-linked. |
 | `gssdk_lib/asrpho/common/blocks/flfxblks/genfilt.c` | The target-derived `0x30` gender filter, first-non-null input selection, profile-sized ports, and destructor control are recovered. `ProcessGenderFilter`, `ControlGenderFilter`, and `InitGenderFilter` are exact. The `0x7C` constructor remains at 79.000000% because its profile-probe and callback-address scheduling diverge; the owner remains fallback-linked. |
@@ -377,23 +393,23 @@ otherwise noted.
 | `gssdk_lib/asrpho/common/blocks/flblocks/mtxopt.c` | The shared recovered `0x18` `FloatMatrix` replaces the old private prefix and preserves existing object evidence. `mtxFillCopy` (`0x30`) and `mtxFillX` (`0x80`) are exact. `QrPreMult` is target/source `0x1A8/0x1A4` at 92.528305%, with the same unrolled arithmetic but divergent register allocation and outer-loop closure, so the owner remains fallback-linked. |
 | `gssdk_lib/gsapi/callbacks.c` | Six callback wrappers totaling `0x260` are exact, as are `AsrSpiSignalCallBacks` (`0x18`) and `AsrSpiRecogCallBacks` (`0x8`) with their relocation order. The target's `0x580` `asrspi_cbResult` remains unrecovered, so the complete owner stays fallback-linked. |
 | `gssdk_lib/gsapi/ctxfuncs.c` | Five small target-derived routines are materialized. `SessionDataFree`, `ContextAPIDeActivate`, `ContextSetActiveWords`, and `ContextSetCtxData` are exact; `ContextGetParam` is `0x50` at 84.500000%. Ten larger context/session routines remain absent, so the owner stays fallback-linked. |
-| `gssdk_lib/asrpho/common/ctxdata/langdata.c` | The real `LanguageDataV2` prefix and code-book layouts support 36 exact field/pointer accessors. The target's `0x13C` language-method object and the code-book method slots consumed by `vq1500.c` and `gender.c` are now typed in the shared header. `_langGetpErgodicPenalty` is `0x64` at 77.040000%; the deeper packed-layout functions and virtual-table source closure remain unrecovered. |
+| `gssdk_lib/asrpho/common/ctxdata/langdata.c` | The real `LanguageDataV2` prefix and code-book layouts support 36 exact field/pointer accessors. The target's `0x13C` language-method object and the code-book slots consumed by `vq1500.c` and `gender.c` remain typed; Wave 50 additionally names the target-proven recognition, phenome, speech-unit, user-word, ergodic-state, and penalty slots consumed by `dpscruw.c` and `dpgenuw.c`. `_langGetpErgodicPenalty` is `0x64` at 77.040000%; the deeper packed-layout functions and virtual-table source closure remain unrecovered. |
 | `gssdk_lib/asrpho/common/tos/mqueue.c` | All 16 target queue functions are recovered against the real queue element, reader-array, `TosContext`, and embedded allocator layouts. `qQueueInit` (`0xF0`) and `qQueueNbrElements` (`0x20`) are exact. Whole target/source `.text` is `0x102C/0xFD4` at 82.081160%; both objects have 29 text relocations. The complete owner remains fallback-linked because its control, enqueue, reader-update, resize, and allocation compiler shapes still diverge. |
 | `gssdk_lib/asrpho/common/tos/tinyos.c` | All 25 target TinyOS functions are recovered with typed architecture construction/destruction, block and queue definitions, profiles, control tables, scheduling, callbacks, and ownership. The target proves `TosContext` size `0x16C`, `TosBaseBlock` size `0x28`, and the shared profile-owner prefix. `tosDestruct` (`0x48`) and `DisabledProcess` (`0x4`) are exact. Whole target/source `.text` is `0x1D90/0x1D88` at 74.948204%, `.sdata2 0x8` is exact, and both objects have 70 text relocations. The complete owner remains fallback-linked because the larger construction, run, control, and base-block compiler shapes diverge. |
 
-The other 21 owners are tagged `NO-SOURCE`. Each explicit brace group below
-expands to the named owner files; the count audit is `1 + 20 = 21`.
+The other 16 owners are tagged `NO-SOURCE`. Each explicit brace group below
+expands to the named owner files; the count audit is `1 + 15 = 16`.
 
 - `musyx/runtime/` (1): `dsp_import.c`. The authenticated donor is a DSP
   firmware byte array, so it is preserved as reference evidence rather than
   counted as clean source recovery.
-- `gssdk_lib/` (20):
+- `gssdk_lib/` (15):
   - `gsapi/gsapi.c`;
   - `asrpho/asrspi.c` and
     `asrpho/rec1600/{convert,creasp,creaspch,creaspt,creatree,crsptrch,spi1600,train,userword}.c`;
-  - `asrpho/common/blocks/{dpgenuw,dpscruw,isoword,nbestdp,pitchdp}.c`;
+  - `asrpho/common/blocks/{isoword,nbestdp}.c`;
   - `asrpho/common/blocks/flblocks/vad.c`;
-  - `asrpho/common/blocks/flfxblks/{dist16,pitchco,shs_vuv}.c`.
+  - `asrpho/common/blocks/flfxblks/dist16.c`.
 
 Mixed C/assembly owners stay in the C bucket until all retained C and assembly
 passes the appropriate proof. `TRK_MINNOW_DOLPHIN/targimpl.c` no longer appears
