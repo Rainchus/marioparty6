@@ -1,3 +1,9 @@
+/* Use the SDK math inline bodies without math.h's reconstructed weak-local
+ * sqrtf constants; this object was compiled with literal pooling disabled. */
+#define _MATH_H
+#include "dolphin/math.h"
+#pragma pool_data off
+
 #include <string.h>
 
 #include "dolphin/os.h"
@@ -388,7 +394,7 @@ void fn_1_40AC8(void)
 }
 
 void fn_1_40AEC(
-    s16 arg0, float arg1, float arg2, HuVecF *arg3, GXColor *arg4)
+    s16 arg0, float arg1, float arg2, HuVecF *arg3, GXColor arg4)
 {
     HU3D_MODEL *model;
     HU3D_PARTICLE *particle;
@@ -402,14 +408,14 @@ void fn_1_40AEC(
     data->pos.y = arg3->y;
     data->pos.z = arg3->z;
     data->scale = 0.0f;
-    data->color.r = arg4->r;
-    data->color.g = arg4->g;
-    data->color.b = arg4->b;
-    data->color.a = arg4->a;
+    data->color.r = arg4.r;
+    data->color.g = arg4.g;
+    data->color.b = arg4.b;
+    data->color.a = arg4.a;
     data->vel.x = 0.0f;
     data->vel.y = arg1;
     data->accel.x = arg2;
-    data->accel.y = arg4->a;
+    data->accel.y = arg4.a;
     particle->dataCnt++;
     model->attr &= ~HU3D_ATTR_DISPOFF;
 }
@@ -458,7 +464,7 @@ void fn_1_40FC0(void)
     Hu3DModelKill(lbl_1_bss_AEC);
 }
 
-void fn_1_40FEC(s16 arg0, float arg1, HuVecF *arg2, GXColor *arg3)
+void fn_1_40FEC(s16 arg0, float arg1, HuVecF *arg2, GXColor arg3)
 {
     HU3D_MODEL *model;
     HU3D_PARTICLE *particle;
@@ -469,14 +475,71 @@ void fn_1_40FEC(s16 arg0, float arg1, HuVecF *arg2, GXColor *arg3)
     Hu3DModelPosSetV(lbl_1_bss_AE4[arg0], arg2);
     data = particle->data;
     data->time = 1;
-    data->color.r = arg3->r;
-    data->color.g = arg3->g;
-    data->color.b = arg3->b;
-    data->color.a = arg3->a;
+    data->color.r = arg3.r;
+    data->color.g = arg3.g;
+    data->color.b = arg3.b;
+    data->color.a = arg3.a;
     data->time = 0;
     data->parManId = arg1;
     particle->dataCnt = 1;
     model->attr &= ~HU3D_ATTR_DISPOFF;
+}
+
+void fn_1_410D4(HU3D_MODEL *model, HU3D_PARTICLE *particle, Mtx matrix)
+{
+    HU3D_PARTICLE_DATA *first;
+    HU3D_PARTICLE_DATA *data;
+    s16 i;
+
+    if (particle->dataCnt <= 0) {
+        model->attr |= HU3D_ATTR_DISPOFF;
+        return;
+    }
+    if (particle->dataCnt == 1) {
+        first = particle->data;
+        for (i = 0, data = particle->data; i < particle->maxCnt; i++, data++) {
+            data->attr |= HU3D_PARTICLE_ATTR_SCALEY;
+            data->zRot = MTXDegToRad(frandmod(360));
+            data->vel.z = frandmod(25) + 50;
+            data->vel.x =
+                -sind(MTXRadToDeg(data->zRot)) * data->vel.z;
+            data->vel.y =
+                cosd(MTXRadToDeg(data->zRot)) * data->vel.z;
+            data->scale = 0.1f * data->vel.z;
+            data->scaleY = 3.0f * data->vel.z;
+            data->color.r = first->color.r;
+            data->color.g = first->color.g;
+            data->color.b = first->color.b;
+            data->color.a = first->color.a;
+            data->pos.x = data->vel.x;
+            data->pos.y = data->vel.y;
+            data->pos.z = 0.0f;
+        }
+        particle->dataCnt = 2;
+    } else if (particle->dataCnt == 2) {
+        first = particle->data;
+        for (i = 0, data = particle->data; i < particle->maxCnt; i++, data++) {
+            if ((i % 2) == 0) {
+                data->zRot += i / 500.0f;
+            } else {
+                data->zRot -= i / 500.0f;
+            }
+            data->vel.x =
+                -sind(MTXRadToDeg(data->zRot)) * data->vel.z;
+            data->vel.y =
+                cosd(MTXRadToDeg(data->zRot)) * data->vel.z;
+            data->pos.x = data->vel.x;
+            data->pos.y = data->vel.y;
+            data->pos.z = 0.0f;
+            data->color.a = fn_1_3F424(
+                255.0f, 0.0f, first->time, first->parManId);
+        }
+        if ((first->time += 1.0f) > first->parManId) {
+            particle->dataCnt = 0;
+        }
+    }
+    DCFlushRangeNoSync(
+        particle->data, particle->maxCnt * sizeof(HU3D_PARTICLE_DATA));
 }
 
 void fn_1_4161C(void)
@@ -633,6 +696,74 @@ void fn_1_4218C(s16 arg0, float arg1, HuVecF *arg2)
     model->attr &= ~HU3D_ATTR_DISPOFF;
 }
 
+void fn_1_42258(HU3D_MODEL *model, HU3D_PARTICLE *particle, Mtx matrix)
+{
+    HU3D_PARTICLE_DATA *first;
+    HU3D_PARTICLE_DATA *data;
+    HuVecF random;
+    HuVecF direction;
+    float speed;
+    s16 i;
+    s16 color;
+
+    if (particle->dataCnt == 1) {
+        for (i = 0, data = particle->data; i < particle->maxCnt; i++, data++) {
+            random.x = frandmod(100) - 50;
+            random.y = frandmod(100) - 50;
+            random.z = frandmod(100) - 50;
+            PSVECNormalize(&random, &direction);
+            speed = 200.0f;
+            data->vel.x = direction.x * speed;
+            data->vel.y = direction.y * speed;
+            data->vel.z = direction.z * speed;
+            color = rand8() + 128;
+            color &= 0xFF;
+            data->color.r = color;
+            color = rand8() + 128;
+            color &= 0xFF;
+            data->color.g = color;
+            color = rand8() % 128;
+            color &= 0xFF;
+            data->color.b = color;
+            data->color.a = 204;
+            data->pos.x = data->accel.x = frandmod(4) - 2;
+            data->pos.y = data->accel.y = frandmod(4) - 2;
+            data->pos.z = data->accel.z = frandmod(4) - 2;
+            data->scale = 0.0f;
+        }
+        particle->dataCnt = 2;
+    } else if (particle->dataCnt == 2) {
+        first = particle->data;
+        for (i = 0, data = particle->data; i < particle->maxCnt; i++, data++) {
+            data->scale = fn_1_3F424(
+                0.0f, 125.0f, first->time, 5.0f);
+        }
+        if ((first->time += 1.0f) > 15) {
+            first->time = 0;
+            particle->dataCnt = 3;
+        }
+    } else if (particle->dataCnt == 3) {
+        first = particle->data;
+        for (i = 0, data = particle->data; i < particle->maxCnt; i++, data++) {
+            data->pos.x = fn_1_3F424(
+                data->accel.x, data->vel.x, first->time,
+                first->parManId);
+            data->pos.y = fn_1_3F424(
+                data->accel.y, data->vel.y, first->time,
+                first->parManId);
+            data->pos.z = fn_1_3F424(
+                data->accel.z, data->vel.z, first->time,
+                first->parManId);
+            data->scale = fn_1_3F50C(
+                50.0f, 0.0f, first->time, first->parManId);
+        }
+        if ((first->time += 1.0f) > first->parManId) {
+            particle->dataCnt = 0;
+            model->attr |= HU3D_ATTR_DISPOFF;
+        }
+    }
+}
+
 void fn_1_42B40(void)
 {
     s16 i;
@@ -705,6 +836,58 @@ void fn_1_42EAC(s16 arg0)
     }
 }
 
+void fn_1_42F34(HU3D_MODEL *model, HU3D_PARTICLE *particle, Mtx matrix)
+{
+    u8 dataTbl[5][2] = {
+        { 0x10, 0xFF },
+        { 0x10, 0xFF },
+        { 0x30, 0x80 },
+        { 0x80, 0x40 },
+        { 0xFF, 0x20 },
+    };
+    HU3D_PARTICLE_DATA *data;
+    float velX1;
+    float velY1;
+    float velX2;
+    float velY2;
+    s16 i;
+
+    if (particle->count == 0) {
+        for (i = 0, data = particle->data; i < particle->maxCnt; i++, data++) {
+            data->time = 0;
+        }
+    }
+    for (i = 0, data = particle->data; i < particle->maxCnt; i++, data++) {
+        if (data->time == 1) {
+            data->pos.x = 0.0f;
+            data->pos.y = 0.0f;
+            data->pos.z = 0.0f;
+            data->vel.x = dataTbl[i % 5][1];
+            data->vel.y = dataTbl[i % 5][0];
+            velX1 = data->vel.x;
+            data->color.a =
+                fn_1_3F550(data->color.a, velX1, 10.0f);
+            velY1 = data->vel.y;
+            data->scale = fn_1_3F550(data->scale, velY1, 10.0f);
+        } else if (data->time == 2) {
+            data->pos.x = 0.0f;
+            data->pos.y = 0.0f;
+            data->pos.z = 0.0f;
+            data->vel.x = 0.0f;
+            data->vel.y = 0.0f;
+            velX2 = data->vel.x;
+            data->color.a = fn_1_3F550(data->color.a, velX2, 10.0f);
+            velY2 = data->vel.y;
+            data->scale = fn_1_3F550(data->scale, velY2, 10.0f);
+        } else {
+            data->color.a = 0;
+            data->scale = 0.0f;
+        }
+    }
+    DCFlushRangeNoSync(
+        particle->data, particle->maxCnt * sizeof(HU3D_PARTICLE_DATA));
+}
+
 void fn_1_433AC(void)
 {
     s16 i;
@@ -768,6 +951,78 @@ void fn_1_43724(s16 arg0)
     model = &Hu3DData[lbl_1_bss_AD2[arg0]];
     particle = model->hookData;
     particle->dataCnt = 0;
+}
+
+void fn_1_43778(HU3D_MODEL *model, HU3D_PARTICLE *particle, Mtx matrix)
+{
+    HU3D_PARTICLE_DATA *data;
+    s16 i;
+    s16 spawnCount = 0;
+    float color;
+    float random;
+
+    if (particle->count == 0) {
+        for (i = 0, data = particle->data; i < particle->maxCnt; i++, data++) {
+            data->time = 0;
+        }
+        particle->dataCnt = 1;
+        particle->pos.x = 255.0f;
+        particle->pos.y = 255.0f;
+        particle->pos.z = 255.0f;
+    }
+
+    for (i = 0, data = particle->data; i < particle->maxCnt; i++, data++) {
+        if (data->time == 0 && particle->dataCnt == 1 && spawnCount <= 3) {
+            spawnCount++;
+            data->time = 1;
+            data->vel.x = 0.0f;
+            data->vel.y = frandmod(30) + 60;
+            data->accel.x = frandmod(100) - 50;
+            data->accel.y = -frandmod(100) - 50;
+            data->accel.z = frandmod(100) - 50;
+            PSVECNormalize(&data->accel, &data->accel);
+            data->accel.x *= 2.0f;
+            data->accel.y *= 5.0f;
+            data->accel.z *= 2.0f;
+            data->pos.x = particle->unk_10.x + frandmod(100) - 50;
+            data->pos.y = particle->unk_10.y + frandmod(100) - 50;
+            data->pos.z = particle->unk_10.z + frandmod(100) - 50;
+            random = frandmod(128);
+            color = particle->pos.x + random;
+            if (color > 255.0f) {
+                color = 255.0f;
+            }
+            data->color.r = color;
+            color = particle->pos.y + random;
+            if (color > 255.0f) {
+                color = 255.0f;
+            }
+            data->color.g = color;
+            color = particle->pos.z + random;
+            if (color > 255.0f) {
+                color = 255.0f;
+            }
+            data->color.b = color;
+            data->color.a = 0;
+        } else if (data->time == 1) {
+            data->pos.x += data->accel.x;
+            data->pos.y += data->accel.y;
+            data->pos.z += data->accel.z;
+            if (rand8() % 5 == 0) {
+                data->zRot = MTXDegToRad(frandmod(360));
+                data->color.a = frandmod(127) + 128;
+            }
+            random = fn_1_3F50C(1.0f, 0.0f, data->vel.x, data->vel.y);
+            data->scale = frandmod(90) * random;
+            if ((data->vel.x += 1.0f) > data->vel.y) {
+                data->time = 0;
+                data->scale = 0.0f;
+                data->color.a = 0;
+            }
+        }
+    }
+    DCFlushRangeNoSync(
+        particle->data, particle->maxCnt * sizeof(HU3D_PARTICLE_DATA));
 }
 
 void fn_1_43D78(void)
@@ -867,6 +1122,76 @@ void fn_1_4451C(s16 groupNo)
     }
 }
 
+void fn_1_4459C(HU3D_MODEL *model, HU3D_PARTICLE *particle, Mtx matrix)
+{
+    HU3D_PARTICLE_DATA *data;
+    s16 i;
+    s16 spawnCount = 0;
+    float color;
+    float random;
+
+    if (particle->count == 0) {
+        for (i = 0, data = particle->data; i < particle->maxCnt; i++, data++) {
+            data->time = 0;
+        }
+        particle->dataCnt = 1;
+        particle->pos.x = 255.0f;
+        particle->pos.y = 255.0f;
+        particle->pos.z = 255.0f;
+    }
+
+    for (i = 0, data = particle->data; i < particle->maxCnt; i++, data++) {
+        if (data->time == 0 && particle->dataCnt == 1 && spawnCount < 1) {
+            spawnCount++;
+            data->time = 1;
+            data->vel.x = 0.0f;
+            data->vel.y = frandmod(30) + 30;
+            data->accel.x = frandmod(100) - 50;
+            data->accel.y = -frandmod(100) - 50;
+            data->accel.z = frandmod(100) - 50;
+            PSVECNormalize(&data->accel, &data->accel);
+            data->accel.x *= 2.0f;
+            data->accel.y *= 2.0f;
+            data->accel.z *= 2.0f;
+            data->pos.x = particle->unk_10.x + frandmod(100) - 50;
+            data->pos.y = particle->unk_10.y;
+            data->pos.z = particle->unk_10.z + frandmod(100) - 50;
+            random = frandmod(32);
+            color = particle->pos.x + random;
+            if (color > 255.0f) {
+                color = 255.0f;
+            }
+            data->color.r = color;
+            color = particle->pos.y + random;
+            if (color > 255.0f) {
+                color = 255.0f;
+            }
+            data->color.g = color;
+            color = particle->pos.z + random;
+            if (color > 255.0f) {
+                color = 255.0f;
+            }
+            data->color.b = color;
+            data->color.a = 0;
+        } else if (data->time == 1) {
+            data->pos.y += data->accel.y;
+            if (rand8() % 5 == 0) {
+                data->zRot = MTXDegToRad(frandmod(360));
+                data->color.a = frandmod(127) + 128;
+            }
+            random = fn_1_3F50C(1.0f, 0.0f, data->vel.x, data->vel.y);
+            data->scale = 40.0f * random;
+            if (++data->vel.x > data->vel.y) {
+                data->time = 0;
+                data->scale = 0.0f;
+                data->color.a = 0;
+            }
+        }
+    }
+    DCFlushRangeNoSync(
+        particle->data, particle->maxCnt * sizeof(HU3D_PARTICLE_DATA));
+}
+
 void fn_1_44B1C(void)
 {
     s16 particleCount[5] = { 10, 10, 10, 10, 256 };
@@ -940,10 +1265,80 @@ void fn_1_4581C(void)
     fn_1_3FF44();
 }
 
+void fn_1_45A48(HuVecF *arg0)
+{
+    fn_1_3FB6C(0, arg0);
+    fn_1_40AEC(
+        5, 120.0f, 3000.0f, arg0, (GXColor) { 128, 128, 255, 128 });
+}
+
+void fn_1_45C40(s16 arg0, HuVecF *arg1, s16 arg2)
+{
+    GXColor colors[5] = {
+        { 254, 77, 75, 255 },
+        { 50, 127, 200, 255 },
+        { 199, 175, 0, 255 },
+        { 52, 192, 63, 255 },
+        { 159, 93, 200, 255 },
+    };
+    HuVecF pos;
+
+    pos.x = arg1->x;
+    pos.y = arg1->y;
+    pos.z = arg1->z + 10.0f;
+    fn_1_40AEC(arg0, 10.0f, 500.0f, &pos, colors[arg2]);
+    fn_1_40FEC(arg0, 10.0f, &pos, colors[arg2]);
+}
+
+void fn_1_45F3C(s16 arg0, HuVecF *arg1, s16 arg2, s16 arg3)
+{
+    GXColor colors[5] = {
+        { 254, 77, 75, 255 },
+        { 50, 127, 200, 255 },
+        { 199, 175, 0, 255 },
+        { 52, 192, 63, 255 },
+        { 159, 93, 200, 255 },
+    };
+    HuVecF pos;
+
+    pos.x = arg1->x;
+    pos.y = arg1->y;
+    pos.z = arg1->z;
+    Hu3DZClearLayerSet(7);
+    if (arg3 == 0) {
+        fn_1_40AEC(arg0, 20.0f, 300.0f, &pos, colors[arg2]);
+        fn_1_4218C(arg0, 30.0f, &pos);
+    } else {
+        fn_1_40AEC(arg0, 60.0f, 300.0f, &pos, colors[arg2]);
+        fn_1_40FEC(arg0, 30.0f, &pos, colors[arg2]);
+    }
+}
+
 void fn_1_463E0(void)
 {
     fn_1_40A9C();
     fn_1_41834();
+}
+
+void fn_1_464A0(s16 groupNo, HuVecF *pos, s16 mode, s16 colorNo)
+{
+    GXColor colors[7] = {
+        { 254, 77, 75, 0 },
+        { 50, 127, 200, 0 },
+        { 199, 175, 0, 0 },
+        { 52, 192, 63, 0 },
+        { 159, 93, 200, 0 },
+        { 255, 114, 46, 0 },
+        { 109, 207, 246, 0 },
+    };
+
+    if (mode == 1) {
+        fn_1_443B4(groupNo, pos, &colors[colorNo]);
+    } else if (mode == 0) {
+        fn_1_4451C(groupNo);
+    } else if (mode == 2) {
+        fn_1_44300(groupNo, FALSE);
+    }
 }
 
 u32 lbl_1_data_F10[9] = {
