@@ -237,7 +237,7 @@ int mbStarObjCreate(void)
     objNo = StarObjCreate(NULL);
     obj = starOMObj[objNo];
     work = obj->data;
-    work->playerNo = work->masuId = -1;
+    work->masuId = work->playerNo = -1;
     work->signF = 2;
     return objNo;
 }

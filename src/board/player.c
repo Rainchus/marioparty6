@@ -1796,9 +1796,9 @@ static void PlayerColCornerSnap(int playerNo, int masuId, int cornerNo)
     HuVecF pos;
 
     if (workP->snapF) {
-        workP->killF = FALSE;
-        workP->state = 0;
         workP->motStartF = FALSE;
+        workP->state = 0;
+        workP->killF = FALSE;
         workP->masuId = masuId;
         playerWorkP->masuCorner = cornerNo;
         mbMasuMtxGet(workP->masuId, masuMtx);

@@ -72,7 +72,7 @@ void mbTelopTimeStarSet(s16 grpId, s32 starNum)
     for (i = 0; i < 3; i++) {
         s32 bank = 0;
 
-        if (GwSystem.nextTime) {
+        if (GwSystem.curTime) {
             bank += 2;
         }
         if (i < emptyNum) {

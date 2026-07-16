@@ -32,6 +32,7 @@ static void ScrollCreate(u32 dataNum);
 static void ScrollKill(void);
 static BOOL ScrollMain(int playerNo);
 static BOOL ScrollExec(int playerNo, s16 starMasuId);
+static void RotateScrollView(HuVecF *rot, HuVecF *pos, HuVecF *posOut);
 static s16 StarMasuGet(int playerNo);
 static void InitScrollCol(void);
 static void MapViewCreate(void);
@@ -166,6 +167,13 @@ static BOOL ScrollMain(int playerNo)
     return result;
 }
 
+static void RotateScrollView(HuVecF *rot, HuVecF *pos, HuVecF *posOut)
+{
+    posOut->x = pos->x + (HuSin(rot->y) * (pos->y / (HuSin(rot->x) / HuCos(rot->x))));
+    posOut->z = pos->z + (HuCos(rot->y) * (pos->y / (HuSin(rot->x) / HuCos(rot->x))));
+    posOut->y = 0.0f;
+}
+
 static s16 StarMasuGet(int playerNo)
 {
     return mbMasuFind_TypeIdGet(GwPlayer[playerNo].masuId, 7, TRUE, TRUE);
@@ -245,4 +253,9 @@ void mbMapSprAdd(int type, int id)
     } else {
         MapSprCreate(type, id, 5);
     }
+}
+
+void mbev_ScrollCapsule(int playerNo)
+{
+    mbev_Scroll(playerNo, FALSE);
 }
