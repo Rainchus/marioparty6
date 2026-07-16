@@ -1,0 +1,91 @@
+#ifndef MESSNUM_MG_NAME_H
+#define MESSNUM_MG_NAME_H
+
+#include "messdir_enum.h"
+
+enum {
+    MG_NAME_M601 = MESSNUM(MESS_MG_NAME, 0),
+    MG_NAME_M602, //1
+    MG_NAME_M603, //2
+    MG_NAME_M604, //3
+    MG_NAME_M605, //4
+    MG_NAME_M606, //5
+    MG_NAME_M607, //6
+    MG_NAME_M608, //7
+    MG_NAME_M609, //8
+    MG_NAME_M610, //9
+    MG_NAME_M611, //10
+    MG_NAME_M612, //11
+    MG_NAME_M613, //12
+    MG_NAME_M614, //13
+    MG_NAME_M615, //14
+    MG_NAME_M616, //15
+    MG_NAME_M617, //16
+    MG_NAME_M618, //17
+    MG_NAME_M619, //18
+    MG_NAME_M620, //19
+    MG_NAME_M621, //20
+    MG_NAME_M622, //21
+    MG_NAME_M623, //22
+    MG_NAME_M624, //23
+    MG_NAME_M625, //24
+    MG_NAME_M626, //25
+    MG_NAME_M627, //26
+    MG_NAME_M628, //27
+    MG_NAME_M629, //28
+    MG_NAME_M630, //29
+    MG_NAME_M631, //30
+    MG_NAME_M632, //31
+    MG_NAME_M633, //32
+    MG_NAME_M634, //33
+    MG_NAME_M635, //34
+    MG_NAME_M636, //35
+    MG_NAME_M637, //36
+    MG_NAME_M638, //37
+    MG_NAME_M639, //38
+    MG_NAME_M640, //39
+    MG_NAME_M641, //40
+    MG_NAME_M642, //41
+    MG_NAME_M643, //42
+    MG_NAME_M644, //43
+    MG_NAME_M645, //44
+    MG_NAME_M646, //45
+    MG_NAME_M647, //46
+    MG_NAME_M648, //47
+    MG_NAME_M649, //48
+    MG_NAME_M650, //49
+    MG_NAME_M651, //50
+    MG_NAME_M652, //51
+    MG_NAME_M653, //52
+    MG_NAME_M654, //53
+    MG_NAME_M655, //54
+    MG_NAME_M656, //55
+    MG_NAME_M657, //56
+    MG_NAME_M658, //57
+    MG_NAME_M659, //58
+    MG_NAME_M660, //59
+    MG_NAME_M661, //60
+    MG_NAME_M662, //61
+    MG_NAME_M663, //62
+    MG_NAME_M664, //63
+    MG_NAME_M665, //64
+    MG_NAME_M666, //65
+    MG_NAME_M667, //66
+    MG_NAME_M668, //67
+    MG_NAME_M669, //68
+    MG_NAME_M670, //69
+    MG_NAME_M671, //70
+    MG_NAME_M672, //71
+    MG_NAME_M673, //72
+    MG_NAME_M674, //73
+    MG_NAME_M675, //74
+    MG_NAME_M676, //75
+    MG_NAME_M677, //76
+    MG_NAME_M678, //77
+    MG_NAME_M679, //78
+    MG_NAME_M680, //79
+    MG_NAME_M681, //80
+    MG_NAME_M699, //81
+};
+
+#endif

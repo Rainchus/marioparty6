@@ -5,19 +5,19 @@
 
 enum {
     EFFECT_ANM_star = DATANUM(DATA_effect, 0),
-    EFFECT_ANM_glow = DATANUM(DATA_effect, 1),
-    EFFECT_ANM_dust = DATANUM(DATA_effect, 2),
-    EFFECT_ANM_smoke = DATANUM(DATA_effect, 3),
-    EFFECT_ANM_land_dust = DATANUM(DATA_effect, 4),
-    EFFECT_ANM_circle = DATANUM(DATA_effect, 5),
-    EFFECT_ANM_hatena = DATANUM(DATA_effect, 6),
-    EFFECT_ANM_danger = DATANUM(DATA_effect, 7),
-    EFFECT_ANM_bird = DATANUM(DATA_effect, 8),
-    EFFECT_ANM_cry = DATANUM(DATA_effect, 9),
-    EFFECT_ANM_water_bump = DATANUM(DATA_effect, 10),
-    EFFECT_ANM_water_sky = DATANUM(DATA_effect, 11),
-    EFFECT_ANM_water_surface = DATANUM(DATA_effect, 12),
-    EFFECT_ANM_water_wave = DATANUM(DATA_effect, 13),
+    EFFECT_ANM_glow, //1
+    EFFECT_ANM_dust, //2
+    EFFECT_ANM_smoke, //3
+    EFFECT_ANM_land_dust, //4
+    EFFECT_ANM_circle, //5
+    EFFECT_ANM_hatena, //6
+    EFFECT_ANM_danger, //7
+    EFFECT_ANM_bird, //8
+    EFFECT_ANM_cry, //9
+    EFFECT_ANM_water_bump, //10
+    EFFECT_ANM_water_sky, //11
+    EFFECT_ANM_water_surface, //12
+    EFFECT_ANM_water_wave, //13
 };
 
 #endif

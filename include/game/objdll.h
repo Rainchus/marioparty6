@@ -5,7 +5,7 @@
 
 #define OMDLLINFO_MAX 20
 
-typedef struct omDllinfo_s {
+typedef struct omDllInfo_s {
 	char *name;
 	OSModuleHeader *module;
 	void *bss;

@@ -41,7 +41,8 @@ typedef enum {
 } GW_PLAYER_COM_DIF;
 
 typedef enum {
-    GW_RECORD_M606, //0
+    GW_RECORD_NONE = -1,
+    GW_RECORD_M606 = 0, //0
     GW_RECORD_M608, //1
     GW_RECORD_M618, //2
     GW_RECORD_M638, //3

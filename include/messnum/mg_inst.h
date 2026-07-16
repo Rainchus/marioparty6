@@ -1,0 +1,132 @@
+#ifndef MESSNUM_MG_INST_H
+#define MESSNUM_MG_INST_H
+
+#include "messdir_enum.h"
+
+#define MG_INST_MESS_5(mgId) \
+    MG_INST_##mgId##_1, \
+    MG_INST_##mgId##_2, \
+    MG_INST_##mgId##_3, \
+    MG_INST_##mgId##_4, \
+    MG_INST_##mgId##_5
+
+#define MG_INST_MESS_4(mgId) \
+    MG_INST_##mgId##_1, \
+    MG_INST_##mgId##_2, \
+    MG_INST_##mgId##_3, \
+    MG_INST_##mgId##_4
+
+#define MG_INST_DECA_MESS(mgId) \
+    MG_INST_DECA_##mgId##_1, \
+    MG_INST_DECA_##mgId##_2, \
+    MG_INST_DECA_##mgId##_3, \
+    MG_INST_DECA_##mgId##_4, \
+    MG_INST_DECA_##mgId##_5
+
+enum {
+    MG_INST_DUMMY_MESS = MESSNUM(MESS_MG_INST, 0)-1,
+    MG_INST_MESS_5(m601), //0
+    MG_INST_MESS_4(m602), //5
+    MG_INST_MESS_5(m603), //9
+    MG_INST_MESS_5(m604), //14
+    MG_INST_MESS_5(m604n), //19
+    MG_INST_MESS_5(m605), //24
+    MG_INST_MESS_5(m606), //29
+    MG_INST_MESS_5(m607), //34
+    MG_INST_MESS_5(m608), //39
+    MG_INST_MESS_5(m609), //44
+    MG_INST_MESS_5(m610), //49
+    MG_INST_MESS_5(m611), //54
+    MG_INST_MESS_5(m612), //59
+    MG_INST_MESS_5(m613), //64
+    MG_INST_MESS_5(m614), //69
+    MG_INST_MESS_5(m615), //74
+    MG_INST_MESS_5(m616), //79
+    MG_INST_MESS_5(m618), //84
+    MG_INST_MESS_5(m619), //89
+    MG_INST_MESS_5(m620), //94
+    MG_INST_MESS_5(m621), //99
+    MG_INST_MESS_5(m622), //104
+    MG_INST_MESS_5(m648), //109
+    MG_INST_MESS_5(m650), //114
+    MG_INST_MESS_5(m623), //119
+    MG_INST_MESS_5(m625), //124
+    MG_INST_MESS_5(m626), //129
+    MG_INST_MESS_5(m627), //134
+    MG_INST_MESS_5(m628), //139
+    MG_INST_MESS_5(m629), //144
+    MG_INST_MESS_5(m630), //149
+    MG_INST_MESS_5(m631), //154
+    MG_INST_MESS_5(m631n), //159
+    MG_INST_MESS_5(m632), //164
+    MG_INST_MESS_5(m633), //169
+    MG_INST_MESS_5(m634), //174
+    MG_INST_MESS_5(m665), //179
+    MG_INST_MESS_5(m666), //184
+    MG_INST_MESS_5(m667), //189
+    MG_INST_MESS_5(m669), //194
+    MG_INST_MESS_5(m670), //199
+    MG_INST_MESS_5(m635), //204
+    MG_INST_MESS_5(m636), //209
+    MG_INST_MESS_5(m637), //214
+    MG_INST_MESS_5(m638), //219
+    MG_INST_MESS_5(m639), //224
+    MG_INST_MESS_5(m640), //229
+    MG_INST_MESS_5(m641), //234
+    MG_INST_MESS_5(m641n), //239
+    MG_INST_MESS_5(m642), //244
+    MG_INST_MESS_5(m643), //249
+    MG_INST_MESS_5(m644), //254
+    MG_INST_MESS_5(m645), //259
+    MG_INST_MESS_5(m668), //264
+    MG_INST_MESS_5(m646), //269
+    MG_INST_MESS_5(m647), //274
+    MG_INST_MESS_5(m649), //279
+    MG_INST_MESS_5(m664), //284
+    MG_INST_MESS_5(m680), //289
+    MG_INST_MESS_5(m681), //294
+    MG_INST_MESS_5(m617), //299
+    MG_INST_MESS_5(m624), //304
+    MG_INST_MESS_5(m651), //309
+    MG_INST_MESS_5(m652), //314
+    MG_INST_MESS_5(m653), //319
+    MG_INST_MESS_5(m654), //324
+    MG_INST_MESS_5(m655), //329
+    MG_INST_MESS_5(m656), //334
+    MG_INST_MESS_5(m657), //339
+    MG_INST_MESS_5(m658), //344
+    MG_INST_MESS_5(m659), //349
+    MG_INST_MESS_5(m660), //354
+    MG_INST_MESS_5(m661), //359
+    MG_INST_MESS_5(m662), //364
+    MG_INST_MESS_5(m663), //369
+    MG_INST_MESS_5(m671), //374
+    MG_INST_MESS_5(m672), //379
+    MG_INST_MESS_5(m673), //384
+    MG_INST_MESS_5(m674), //389
+    MG_INST_MESS_5(m675), //394
+    MG_INST_MESS_5(m676), //399
+    MG_INST_MESS_5(m677), //404
+    MG_INST_MESS_5(m678), //409
+    MG_INST_MESS_5(m678_1), //414
+    MG_INST_MESS_5(m679), //419
+    MG_INST_MESS_5(m699), //424
+    MG_INST_DECA_MESS(m601), //429
+    MG_INST_DECA_MESS(m604), //434
+    MG_INST_DECA_MESS(m606), //439
+    MG_INST_DECA_MESS(m608), //444
+    MG_INST_DECA_MESS(m615), //449
+    MG_INST_DECA_MESS(m621), //454
+    MG_INST_DECA_MESS(m648), //459
+    MG_INST_DECA_MESS(m650), //464
+    MG_INST_DECA_MESS(m646), //469
+    MG_INST_DECA_MESS(m649), //474
+    
+};
+
+#undef MG_INST_MESS_5
+#undef MG_INST_MESS_4
+#undef MG_INST_DECA_MESS
+
+
+#endif
