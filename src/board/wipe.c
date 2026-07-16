@@ -1073,26 +1073,27 @@ void mbWipeDissolveFadeInTime(int time)
 
 void mbWipeSpecialInit(void)
 {
+    WIPE_SPECIAL_DATA *wipeData = &wipeSpecialData;
     int i;
 
-    memset(&wipeSpecialData, 0, sizeof(wipeSpecialData));
+    memset(wipeData, 0, sizeof(*wipeData));
     for (i = 0; i < 3; i++) {
-        wipeSpecialData.masuModelId[i] = Hu3DModelCreate(
+        wipeData->masuModelId[i] = Hu3DModelCreate(
             HuDataSelHeapReadNum(wipeMasuFileTbl[i], HU_MEMNUM_OVL, HEAP_MODEL));
-        Hu3DModelAttrSet(wipeSpecialData.masuModelId[i], HU3D_ATTR_DISPOFF);
-        Hu3DModelMatHookSet(wipeSpecialData.masuModelId[i], WipeMasuMatHook);
-        Hu3DModelPosSet(wipeSpecialData.masuModelId[i], 0.0f, 0.0f, -100.0f);
-        Hu3DModelCameraSet(wipeSpecialData.masuModelId[i], HU3D_CAM2);
-        Hu3DModelLayerSet(wipeSpecialData.masuModelId[i], 7);
+        Hu3DModelAttrSet(wipeData->masuModelId[i], HU3D_ATTR_DISPOFF);
+        Hu3DModelMatHookSet(wipeData->masuModelId[i], WipeMasuMatHook);
+        Hu3DModelPosSet(wipeData->masuModelId[i], 0.0f, 0.0f, -100.0f);
+        Hu3DModelCameraSet(wipeData->masuModelId[i], HU3D_CAM2);
+        Hu3DModelLayerSet(wipeData->masuModelId[i], 7);
     }
-    wipeSpecialData.texSize = GXGetTexBufferSize(320, 240, GX_TF_RGB565,
+    wipeData->texSize = GXGetTexBufferSize(320, 240, GX_TF_RGB565,
         GX_FALSE, 0);
-    wipeSpecialData.texData = HuMemDirectMallocNum(HEAP_HEAP,
-        wipeSpecialData.texSize, HU_MEMNUM_OVL);
-    DCFlushRange(wipeSpecialData.texData, wipeSpecialData.texSize);
-    wipeSpecialData.hookModelId = Hu3DHookFuncCreate(WipeSpecialDraw);
-    Hu3DModelCameraSet(wipeSpecialData.hookModelId, HU3D_CAM2);
-    Hu3DModelLayerSet(wipeSpecialData.hookModelId, 6);
+    wipeData->texData = HuMemDirectMallocNum(HEAP_HEAP,
+        wipeData->texSize, HU_MEMNUM_OVL);
+    DCFlushRange(wipeData->texData, wipeData->texSize);
+    wipeData->hookModelId = Hu3DHookFuncCreate(WipeSpecialDraw);
+    Hu3DModelCameraSet(wipeData->hookModelId, HU3D_CAM2);
+    Hu3DModelLayerSet(wipeData->hookModelId, 6);
     for (i = 0; i < 3; i++) {
         wipeImageAnim[i] = HuSprAnimRead(
             HuDataSelHeapReadNum(wipeImageFileTbl[i], HU_MEMNUM_OVL, HEAP_MODEL));
@@ -1102,12 +1103,15 @@ void mbWipeSpecialInit(void)
 
 void mbWipeSpecialClose(void)
 {
+    WIPE_SPECIAL_DATA *wipeData = &wipeSpecialData;
+    void *texData;
     int i;
 
     mbWipeSpecialKill();
-    if (wipeSpecialData.texData != NULL) {
-        HuMemDirectFree(wipeSpecialData.texData);
-        wipeSpecialData.texData = NULL;
+    if (wipeData->texData) {
+        texData = wipeData->texData;
+        HuMemDirectFree(texData);
+        wipeData->texData = NULL;
     }
     for (i = 0; i < 3; i++) {
         HuSprAnimKill(wipeImageAnim[i]);
@@ -1117,45 +1121,56 @@ void mbWipeSpecialClose(void)
 
 void mbWipeSpecialKill(void)
 {
-    if (wipeSpecialData.work != NULL) {
-        HuMemDirectFree(wipeSpecialData.work);
-        wipeSpecialData.work = NULL;
+    WIPE_SPECIAL_DATA *wipeData = &wipeSpecialData;
+    void *work;
+
+    if (wipeData->work) {
+        work = wipeData->work;
+        HuMemDirectFree(work);
+        wipeData->work = NULL;
     }
-    wipeSpecialData.fadeType = 0;
-    wipeSpecialData.active = FALSE;
-    wipeSpecialData.type = 0;
-    wipeSpecialData.stat = 0;
+    wipeData->fadeType = 0;
+    wipeData->active = FALSE;
+    wipeData->type = 0;
+    wipeData->stat = 0;
 }
 
 void mbWipeSpecialCreate(int state, int type, int time)
 {
+    WIPE_SPECIAL_DATA *wipeData = &wipeSpecialData;
+    void *work;
+
     if (!_CheckFlag(FLAG_BOARD_TUTORIAL) || !mbTutorialExitReqGet()) {
-        wipeSpecialData.state = state;
-        wipeSpecialData.fadeType = type;
-        wipeSpecialData.time = 0;
-        wipeSpecialData.duration = time;
-        wipeSpecialData.active = TRUE;
-        wipeSpecialData.type = type;
-        if (state == WIPE_MODE_IN && wipeSpecialData.work != NULL) {
-            HuMemDirectFree(wipeSpecialData.work);
-            wipeSpecialData.work = NULL;
+        wipeData->state = state;
+        wipeData->fadeType = type;
+        wipeData->time = 0;
+        wipeData->duration = time;
+        wipeData->active = TRUE;
+        wipeData->type = type;
+        if (state == WIPE_MODE_IN) {
+            if (wipeData->work) {
+                work = wipeData->work;
+                HuMemDirectFree(work);
+            }
+            wipeData->work = NULL;
         }
     }
 }
 
 void mbWipeSpecialFadeOutCreate(int type, int time)
 {
+    WIPE_SPECIAL_DATA *wipeData = &wipeSpecialData;
     BOOL wipeF;
 
     if (_CheckFlag(FLAG_BOARD_TUTORIAL) && mbTutorialExitReqGet()) {
         wipeF = FALSE;
     } else {
-        wipeSpecialData.state = WIPE_MODE_OUT;
-        wipeSpecialData.fadeType = type;
-        wipeSpecialData.time = 0;
-        wipeSpecialData.duration = time;
-        wipeSpecialData.active = TRUE;
-        wipeSpecialData.type = type;
+        wipeData->state = WIPE_MODE_OUT;
+        wipeData->fadeType = type;
+        wipeData->time = 0;
+        wipeData->duration = time;
+        wipeData->active = TRUE;
+        wipeData->type = type;
         wipeF = TRUE;
     }
     if (wipeF) {
@@ -1165,21 +1180,24 @@ void mbWipeSpecialFadeOutCreate(int type, int time)
 
 void mbWipeSpecialFadeInCreate(int type, int time)
 {
+    WIPE_SPECIAL_DATA *wipeData = &wipeSpecialData;
+    void *work;
     BOOL wipeF;
 
     if (_CheckFlag(FLAG_BOARD_TUTORIAL) && mbTutorialExitReqGet()) {
         wipeF = FALSE;
     } else {
-        wipeSpecialData.state = WIPE_MODE_IN;
-        wipeSpecialData.fadeType = type;
-        wipeSpecialData.time = 0;
-        wipeSpecialData.duration = time;
-        wipeSpecialData.active = TRUE;
-        wipeSpecialData.type = type;
-        if (wipeSpecialData.work != NULL) {
-            HuMemDirectFree(wipeSpecialData.work);
-            wipeSpecialData.work = NULL;
+        wipeData->state = WIPE_MODE_IN;
+        wipeData->fadeType = type;
+        wipeData->time = 0;
+        wipeData->duration = time;
+        wipeData->active = TRUE;
+        wipeData->type = type;
+        if (wipeData->work) {
+            work = wipeData->work;
+            HuMemDirectFree(work);
         }
+        wipeData->work = NULL;
         wipeF = TRUE;
     }
     if (wipeF) {
@@ -1189,12 +1207,14 @@ void mbWipeSpecialFadeInCreate(int type, int time)
 
 BOOL mbWipeSpecialCheck(void)
 {
-    return wipeSpecialData.active | WipeCheck();
+    WIPE_SPECIAL_DATA *wipeData = &wipeSpecialData;
+
+    return wipeData->active | WipeCheck();
 }
 
 void mbWipeSpecialWait(void)
 {
-    while (wipeSpecialData.active | WipeCheck()) {
+    while (mbWipeSpecialCheck()) {
         HuPrcVSleep();
     }
 }

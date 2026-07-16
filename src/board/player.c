@@ -12,6 +12,7 @@
 #include "game/board/object.h"
 #include "game/board/player.h"
 #include "game/audio.h"
+#include "game/data.h"
 #include "game/process.h"
 #include "game/msm.h"
 
@@ -53,6 +54,15 @@ static GXColor metalDefaultColor[2] = {
 static void PlayerColKill(int playerNo);
 static void PlayerMetalKill(int playerNo);
 static void PlayerBiriQKill(int playerNo);
+static void PlayerBiriQFlashSet(int playerNo);
+static void PlayerBiriQOMExec(OMOBJ *objP);
+static float GetBiriQEffectRadius(
+    OMOBJ *objP, int playerNo, int *effectCount);
+static void BiriQEffectCreate(OMOBJ *objP);
+static void BiriQEffect1Hook(
+    HU3D_MODEL *modelP, MBPARTICLE *particleP, Mtx matrix);
+static void BiriQEffect2Hook(
+    HU3D_MODEL *modelP, MBPARTICLE *particleP, Mtx matrix);
 static void PlayerMove(void);
 static void PlayerTurn(int playerNo);
 static BOOL PlayerViewSet(
@@ -61,7 +71,10 @@ static void MasuCoinExec(int playerNo, int coinNum);
 void mbDiceNumKill(int playerNo);
 void mbDiceObjHit(int playerNo);
 void mbObjMetalKill(MBMODELID modelId);
+void mbObjBiriQCreate(MBMODELID modelId);
 void mbObjBiriQKill(MBMODELID modelId);
+void mbObjBiriQColorSet(
+    MBMODELID modelId, BOOL enableF, float level, GXColor color);
 BOOL mbWipeSpecialStatGet(void);
 void mbWipeFadeIn(void);
 BOOL mbPauseEnableCheck(void);
@@ -1621,6 +1634,41 @@ void mbPlayerMetalColorSet(
     metalHiliteColor = *hiliteColor;
 }
 
+void mbPlayerBiriQSet(int playerNo, BOOL biriQF)
+{
+    OMOBJ *objP;
+    PLAYERBIRIQWORK *workP;
+
+    if (biriQF) {
+        if (playerWork[playerNo].biriQObj != NULL) {
+            OSReport("------------already BiriQ!!----------");
+        }
+        GwPlayer[playerNo].biriQF = TRUE;
+        objP = playerWork[playerNo].biriQObj;
+        if (objP == NULL) {
+            GXColor color = { 255, 255, 255, 255 };
+
+            objP = playerWork[playerNo].biriQObj = omAddObjEx(mbObjMan,
+                0x100, 2, 0, -1, PlayerBiriQOMExec);
+            omSetStatBit(objP, OM_STAT_MODELPAUSE);
+            objP->mdlId[0] = objP->mdlId[1] = MB_MODEL_NONE;
+            mbObjBiriQCreate(mbPlayerObjIDGet(playerNo));
+            mbObjBiriQColorSet(
+                mbPlayerObjIDGet(playerNo), TRUE, 0.0f, color);
+        }
+        workP = omObjGetWork(objP, PLAYERBIRIQWORK);
+        workP->playerNo = playerNo;
+        workP->_unk0_3 = FALSE;
+        workP->_unk0_1 = FALSE;
+        workP->time = 0;
+        workP->maxTime = 20;
+        workP->effectF = TRUE;
+        PlayerBiriQFlashSet(playerNo);
+    } else {
+        GwPlayer[playerNo].biriQF = FALSE;
+    }
+}
+
 static void PlayerBiriQFlashSet(int playerNo)
 {
     OMOBJ *objP = playerWork[playerNo].biriQObj;
@@ -1661,6 +1709,49 @@ static void PlayerBiriQEffectSet(int playerNo, BOOL effectF)
         PLAYERBIRIQWORK *workP = omObjGetWork(objP, PLAYERBIRIQWORK);
 
         workP->effectF = effectF;
+    }
+}
+
+static void BiriQEffectCreate(OMOBJ *objP)
+{
+    PLAYERBIRIQWORK *workP = omObjGetWork(objP, PLAYERBIRIQWORK);
+    MBPARTICLE *particleP;
+    int effectCount[2];
+    float radius;
+    int particleNum;
+
+    radius = GetBiriQEffectRadius(objP, workP->playerNo, effectCount);
+    workP->_unk06 = effectCount[0];
+    workP->_unk08 = effectCount[1];
+    particleNum = 21.0f * (0.006666667f * radius);
+    objP->mdlId[0] = mbParticleCreate(HuSprAnimRead(HuDataReadNum(
+        mbBoardDataNumGet(DATANUM(DATA_board, 107)), HU_MEMNUM_OVL)),
+        (s16)particleNum);
+    objP->mdlId[1] = mbParticleCreate(HuSprAnimRead(HuDataReadNum(
+        mbBoardDataNumGet(DATANUM(DATA_board, 108)), HU_MEMNUM_OVL)),
+        (s16)particleNum);
+    mbParticleHookSet(objP->mdlId[0], BiriQEffect1Hook);
+    mbParticleHookSet(objP->mdlId[1], BiriQEffect2Hook);
+    Hu3DModelLayerSet(objP->mdlId[0], 3);
+    Hu3DModelLayerSet(objP->mdlId[1], 3);
+    {
+        HU3D_MODELID modelId = objP->mdlId[0];
+
+        particleP = (MBPARTICLE *)Hu3DData[modelId].hookData;
+        particleP->hookData = objP;
+        particleP->mode = 0;
+    }
+    {
+        HU3D_MODELID modelId = objP->mdlId[1];
+
+        particleP = (MBPARTICLE *)Hu3DData[modelId].hookData;
+        {
+            HU3D_MODELID sourceModelId = objP->mdlId[0];
+
+            particleP->hookData =
+                (MBPARTICLE *)Hu3DData[sourceModelId].hookData;
+        }
+        particleP->mode = 0;
     }
 }
 

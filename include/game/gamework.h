@@ -23,6 +23,8 @@ typedef struct GwPlayer_s {
     u16 team : 1; //0x02 Bit 7
     u16 skipEventF : 1;  //0x02 Bit 6
     u16 playerNo : 2;  //0x02 Bits 4-5
+    u16 biriQF : 1; //0x02 Bit 3
+    u16 metalF : 1; //0x02 Bit 2
     s8 handicap; //0x03
     s8 padNo; //0x04
     s8 capsule[3]; //0x05-0x07
