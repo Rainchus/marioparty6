@@ -2,10 +2,16 @@
 
 #include "datanum/effect.h"
 #include "game/board/audio.h"
+#include "game/board/camera.h"
+#include "game/board/comchoice.h"
 #include "game/board/effect.h"
 #include "game/board/masu.h"
 #include "game/board/object.h"
+#include "game/board/opening.h"
+#include "game/board/pause.h"
 #include "game/board/player.h"
+#include "game/board/status.h"
+#include "game/board/window.h"
 #include "game/flag.h"
 #include "game/hsfex.h"
 #include "game/memory.h"
@@ -79,6 +85,8 @@ static OMOBJ *starDispObj[4];
 static OMOBJ *ztarOMObj[STAR_OBJ_MAX];
 
 static int starAddNum = 1;
+static s8 starGuideMotTbl[] = { 3, 12, 11, 23, -1 };
+static s8 starMasuGuideMotTbl[] = { 3, 12, 11, 23, -1 };
 static void (*starMasuFunc)(void);
 static void (*starMoveHook)(void);
 static ANIMDATA *starEffAnim2;
@@ -93,6 +101,8 @@ static int starNum;
 static HUPROCESS *starFreeProc;
 static HUPROCESS *starMasuProc;
 
+static HuVecF starGuidePos = { -0.73f, -0.77f, -750.0f };
+
 static int numberFileTbl[] = {
     DATANUM(DATA_board, 11),
     DATANUM(DATA_board, 12),
@@ -106,6 +116,8 @@ static int numberFileTbl[] = {
     DATANUM(DATA_board, 20),
 };
 
+static HuVecF starMasuGuidePos = { -0.73f, -0.77f, -750.0f };
+
 static const int SignMdlTbl[] = {
     DATANUM(DATA_board, 21),
     DATANUM(DATA_board, 22),
@@ -115,7 +127,6 @@ static void StarObjKill(OMOBJ *obj);
 static int StarObjCreate(HuVecF *pos);
 static void StarObjOMExec(OMOBJ *obj);
 static void StarObjRotate(STARWORK *work, OMOBJ *obj);
-static int StarMasuNoGet(int masuId);
 static void StarAddAllProc(int *addNum, BOOL fastF, int *result);
 static void StarDispUpdate(OMOBJ *obj);
 static void StarDispObjUpdate(STARDISPWORK *work, int modelNo,
@@ -150,12 +161,27 @@ void mbZtarObjClose(void);
 void mbStarGetMain(int playerNo, HuVecF *pos, int num, BOOL focusF);
 int mbStarDispCreate(int playerNo, HuVecF *pos, int num);
 void mbZtarGetMain(int playerNo, HuVecF *pos, int num, BOOL focusF);
+void mbStarMapViewProcExec(void);
+void mbStarFlagReset(int no);
+void mbStarNextNoSet(s8 nextNo);
+void mbCoinAddExec(int playerNo, int coin);
+void mbWipeFadeOut(void);
+void mbWipeFadeIn(void);
+void mbNormPosto3D(HuVecF *src, s16 cameraMask, HuVecF *dst);
+void mbev_StarScroll(HuVecF *startPos, HuVecF *endPos, int time);
+int mbGuideNoGet(void);
+OMOBJ *mbGuideCreateFlag(HuVecF *pos, s8 *motTbl, BOOL screenF,
+    BOOL altMtxF, BOOL layerF);
+void mbGuideMotionNextSet(OMOBJ *obj, s16 motNo);
+void mbGuideMotionShiftSet(OMOBJ *obj, s16 motNo, BOOL shiftF);
+void mbGuideKill(OMOBJ *obj);
 int mbGuideModelGet(OMOBJ *obj);
 float mbSinDeg(float angle);
 float mbAngleWrap(float angle);
-int mbStatTeamMinValGet(int teamNo, s16 value, int max,
+int mbStatTeamMinValGet(int teamNo, int value, int max,
     int *addNum, int *result);
 
+static const HuVecF starViewOfs = { 0.0f, 100.0f, 0.0f };
 static const HuVecF lbl_8021AB24 = { 0.5f, -0.5f, -1.0f };
 
 void mbStarReset(void)
@@ -378,6 +404,32 @@ static int StarObjCreate(HuVecF *pos)
     return -1;
 }
 
+static inline int StarMasuNoGet(int masuId)
+{
+    int i;
+
+    for (i = 0; i < STAR_OBJ_MAX; i++) {
+        if (starOMObj[i]) {
+            STARWORK *work = starOMObj[i]->data;
+
+            if (work->masuId == masuId) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+static inline OMOBJ *StarMasuObjGet(int masuId)
+{
+    int objNo = StarMasuNoGet(masuId);
+
+    if (objNo >= 0) {
+        return starOMObj[objNo];
+    }
+    return NULL;
+}
+
 void mbStarMoveHookSet(void (*hook)(void))
 {
     starMoveHook = hook;
@@ -498,6 +550,183 @@ static void ev_StarMasuKill(void)
 static void ev_StarFreeMasuKill(void)
 {
     starFreeProc = NULL;
+}
+
+void mbStarGetMain(int playerNo, HuVecF *pos, int num, BOOL focusF)
+{
+    int time;
+    OMOBJ *obj;
+    STARWORK *work;
+    int objNo;
+    int masuId;
+    int seNo;
+    int no;
+    int streamNo;
+    int i;
+    HuVecF playerPos;
+
+    masuId = GwPlayer[playerNo].masuId;
+    seNo = -1;
+    if (pos == NULL) {
+        obj = StarMasuObjGet(masuId);
+        if (obj == NULL) {
+            for (i = 0; i < STAR_OBJ_MAX; i++) {
+                if (starOMObj[i]) {
+                    STARWORK *objWork = starOMObj[i]->data;
+
+                    if (objWork->playerNo == playerNo) {
+                        objNo = i;
+                        break;
+                    }
+                }
+            }
+            if (i >= STAR_OBJ_MAX) {
+                objNo = -1;
+            }
+            if (objNo >= 0) {
+                obj = starOMObj[objNo];
+            } else {
+                obj = NULL;
+            }
+        }
+        if (obj == NULL) {
+            mbPlayerPosGet(playerNo, &playerPos);
+            playerPos.y += 300.0f;
+            objNo = StarObjCreate(&playerPos);
+            obj = starOMObj[objNo];
+            work = obj->data;
+            work->playerNo = playerNo;
+            work->masuId = -1;
+            work->signF = FALSE;
+            work->baseY = playerPos.y - 300.0f;
+            work->pos = playerPos;
+            obj = starOMObj[objNo];
+        }
+        work = obj->data;
+        no = work->no;
+    } else {
+        objNo = StarObjCreate(pos);
+        obj = starOMObj[objNo];
+        work = obj->data;
+        work->playerNo = playerNo;
+        work->masuId = -1;
+        work->signF = FALSE;
+        work->baseY = pos->y - 300.0f;
+        work->pos = *pos;
+        obj = starOMObj[objNo];
+        work = obj->data;
+        mbPlayerPosGet(playerNo, &playerPos);
+        work->baseY = playerPos.y;
+        no = -1;
+        seNo = mbAudFXPlay(1095);
+        mbAudFXPlay(1096);
+        HuPrcVSleep();
+    }
+    if (work->signF == TRUE && work->effectDispF == FALSE) {
+        int growSeNo;
+
+        mbObjDispSet(obj->mdlId[0], TRUE);
+        work->modelDispF = TRUE;
+        work->effectDispF = TRUE;
+        growSeNo = mbAudFXPlay(1095);
+        mbAudFXPlay(1096);
+        StarObjGrowSet(obj);
+        StarObjGrowWait(obj);
+        mbAudFXStop(growSeNo);
+    }
+    _SetFlag(FLAG_BOARD_TURN_NOSTART);
+    mbMusFadeOutSpeed(0, 1000);
+    HuPrcSleep(60);
+    StarObjShrinkIdleSet(obj);
+    StarObjShrinkIdleWait(obj);
+    mbPlayerMotionSet(playerNo, 11, 0);
+    time = 0;
+    while (1) {
+        if (time++ == 27) {
+            StarObjShrinkSet(obj);
+        }
+        if (time == 30) {
+            if (seNo >= 0) {
+                mbAudFXStop(seNo);
+            }
+            mbAudFXPlay(1097);
+            ((STARWORK *)starOMObj[work->objNo]->data)->effectDispF = FALSE;
+        }
+        HuPrcVSleep();
+        if (mbPlayerMotionEndCheck(playerNo)) {
+            break;
+        }
+    }
+    mbPlayerMotIdleSet(playerNo);
+    omVibrate((s16)playerNo, 20, 7, 3);
+    streamNo = mbMusJinglePlay(39);
+    mbPlayerWinLoseVoicePlay(playerNo, 7, 573);
+    mbPlayerMotionShiftSet(playerNo, 7, 0.0f, 8.0f, 0);
+    if (focusF) {
+        HuVecF cameraRot;
+        HuVecF objPos;
+        float weight;
+        float deltaZoom;
+        float zoom;
+        float zoomBase;
+
+        mbCameraMoveOnSet(FALSE);
+        zoom = 1600.0f;
+        mbCameraRotGet(&cameraRot);
+        cameraRot.x -= 15.0f;
+        mbObjPosGet(obj->mdlId[0], &objPos);
+        mbCameraMovePlayer((s16)playerNo, &cameraRot,
+            (HuVecF *)&starViewOfs, zoom, -1.0f, 102);
+        mbCameraMoveWait();
+        zoomBase = mbCameraZoomGet();
+        mbCameraFocusObjSet(MB_MODEL_NONE);
+        for (time = 0; time < 30u; time++) {
+            weight = time / 30.0f;
+            deltaZoom = (1 + HuSin(weight * 720.0f)) * 0.5;
+            zoom = zoomBase + (-500.0f * deltaZoom);
+            mbCameraZoomSet(zoom);
+            HuPrcVSleep();
+        }
+    }
+    mbPlayerStarAdd(playerNo, num);
+    GwSystem.starTotal = GwSystem.starTotal + num;
+    if (no >= 0) {
+        mbStarNextNoSet(no);
+        mbStarFlagReset(no);
+    }
+    mbMusJingleWait(streamNo);
+    mbPlayerMotionEndWait(playerNo);
+    if (focusF) {
+        mbCameraMoveWait();
+    }
+    HuPrcSleep(30);
+    _ClearFlag(FLAG_BOARD_TURN_NOSTART);
+    if (work->signF == FALSE) {
+        for (i = 0; i < STAR_OBJ_MAX; i++) {
+            if (starOMObj[i]) {
+                STARWORK *objWork = starOMObj[i]->data;
+
+                if (playerNo == objWork->playerNo) {
+                    StarObjKill(starOMObj[i]);
+                    break;
+                }
+            }
+        }
+    } else if (work->signF == TRUE) {
+        masuId = GwPlayer[playerNo].masuId;
+        for (i = 0; i < STAR_OBJ_MAX; i++) {
+            if (starOMObj[i]) {
+                STARWORK *objWork = starOMObj[i]->data;
+
+                if (masuId == objWork->masuId) {
+                    StarObjKill(starOMObj[i]);
+                    break;
+                }
+            }
+        }
+    }
+    HuPrcSleep(12);
+    starAddNum = 1;
 }
 
 void mbStarGetPosExec(int playerNo, HuVecF *pos)
@@ -660,7 +889,7 @@ static void StarObjShrinkIdleSet(OMOBJ *obj)
     }
 }
 
-static void StarObjGrowSet(OMOBJ *obj)
+static inline void StarObjGrowSet(OMOBJ *obj)
 {
     STARWORK *work = obj->data;
 
@@ -788,6 +1017,69 @@ void mbStarStub2(void)
 {
 }
 
+void mbStarMapViewProcExec(void)
+{
+    OMOBJ *guideObj = NULL;
+    s16 startMasuId;
+    int starMasuNum;
+    s16 starMasuList[12];
+    int i;
+    HuVecF startPos;
+    HuVecF endPos;
+    HuVecF cameraCenter;
+    HuVecF cameraRot;
+    HuVecF guidePos;
+    float cameraZoom;
+    int winNo;
+
+    starMasuNum = mbMasuTypeListGet(7, starMasuList);
+    if (starMasuNum <= 0) {
+        return;
+    }
+    mbWipeFadeOut();
+    mbMusPauseFadeOut(0, TRUE, 1000);
+    HuPrcSleep(120);
+    for (i = 0; i < 4; i++) {
+        mbPlayerMotionShiftSet(i, 1, 0.0f, 1.0f, 0x40000001);
+    }
+    mbCameraZoomSet(2400.0f);
+    mbCameraRotSet(325.0f, 0.0f, 0.0f);
+    startMasuId = mbMasuFind_AttrIdGet(-1, 0x8000);
+    mbMasuPosGet(startMasuId, &startPos);
+    mbMasuPosGet(starMasuList[0], &endPos);
+    mbNormPosto3D(&starGuidePos, 4, &guidePos);
+    guideObj = mbGuideCreateFlag(&guidePos, starGuideMotTbl,
+        TRUE, FALSE, TRUE);
+    mbGuideMotionNextSet(guideObj, 1);
+    mbStatusDispForceSetAll(FALSE);
+    mbMusPlay(1, 12, 127, 0);
+    mbWipeFadeIn();
+    mbAudGuidePlay(952);
+    mbGuideMotionShiftSet(guideObj, 12, TRUE);
+    winNo = mbWinCreateTime(4, 0x270010, -1);
+    mbWinPause((s16)winNo);
+    mbev_StarScroll(&startPos, &endPos, 150);
+    mbWinKill((s16)winNo);
+    mbAudGuidePlay(952);
+    mbGuideMotionShiftSet(guideObj, 12, TRUE);
+    mbWinCreateTime(4, 0x27000E, -1);
+    mbWinTopWait();
+    mbWipeFadeOut();
+    mbMusFadeOutSpeed(1, 1000);
+    HuPrcSleep(60);
+    mbStatusDispForceSetAll(TRUE);
+    mbGuideKill(guideObj);
+    guideObj = NULL;
+    cameraZoom = mbOpeningZoomGet();
+    mbOpeningRotGet(&cameraRot);
+    mbOpeningPosGet(&cameraCenter);
+    mbCameraZoomSet(cameraZoom);
+    mbCameraRotSetV(&cameraRot);
+    mbCameraCenterSetV(&cameraCenter);
+    mbMusPauseFadeOut(0, FALSE, 1000);
+    mbWipeFadeIn();
+}
+
 void mbStarMapViewExec(int playerNo, int no)
 {
 }
@@ -843,22 +1135,6 @@ int mbStarNoRandGet(void)
 
 void mbStarNoDispSet(void)
 {
-}
-
-static int StarMasuNoGet(int masuId)
-{
-    int i;
-
-    for (i = 0; i < STAR_OBJ_MAX; i++) {
-        if (starOMObj[i]) {
-            STARWORK *work = starOMObj[i]->data;
-
-            if (work->masuId == masuId) {
-                return i;
-            }
-        }
-    }
-    return -1;
 }
 
 void mbStarMasuDispSet(int masuId, BOOL dispF)
@@ -1483,6 +1759,195 @@ static void StarDispObjUpdate(STARDISPWORK *work, int modelNo,
     mbObjPosSet(work->modelId[modelNo], pos.x, pos.y, pos.z);
 }
 
+static void ev_StarMasuRun(BOOL freeF)
+{
+    int guideNo = mbGuideNoGet();
+    int speakerNo;
+    int messNo;
+    int playerNo;
+    int winNo;
+    s16 masuId;
+    HuVecF startPos;
+    HuVecF endPos;
+    HuVecF guidePos;
+    OMOBJ *obj;
+    STARWORK *work;
+    int seNo;
+
+    starGuideObj = NULL;
+    if (GwSystem.curTime == 0) {
+        speakerNo = HUWIN_SPEAKER_SUN;
+        messNo = 0;
+    } else {
+        speakerNo = HUWIN_SPEAKER_MOON;
+        messNo = 1;
+    }
+    playerNo = GwSystem.turnPlayerNo;
+    mbAudFXPlay(1098);
+    mbPlayerMotIdleSet(playerNo);
+    mbPlayerRotateStart(playerNo, 0, 15);
+    while (!mbPlayerRotateCheck(playerNo)) {
+        HuPrcVSleep();
+    }
+    mbCameraMoveWait();
+    if (mbPlayerStarGet(playerNo) >= 999) {
+        mbAudGuidePlay(951);
+        mbWinCreate(MBWIN_TYPE_EVENT,
+            0x27000A + messNo, speakerNo);
+        mbWinTopWait();
+        goto end;
+    }
+    if (!freeF && mbPlayerCoinGet(playerNo) < 20) {
+        mbAudGuidePlay(951);
+        mbWinCreate(MBWIN_TYPE_EVENT,
+            0x270004 + messNo, speakerNo);
+        mbWinTopWait();
+        goto end;
+    }
+    mbStatusDispSetAll(FALSE);
+    while (!mbStatusOffCheckAll()) {
+        HuPrcVSleep();
+    }
+    mbAudGuidePlay(950);
+    mbWinCreate(MBWIN_TYPE_EVENT, 0x270000 + messNo, speakerNo);
+    mbWinTopInsertMesSet(mbPlayerNameMesGet(playerNo), 0);
+    mbWinTopWait();
+    mbStatusDispFocusSet(playerNo, TRUE);
+    while (!mbStatusMoveCheck(playerNo)) {
+        HuPrcVSleep();
+    }
+    if (!freeF) {
+        mbAudGuidePlay(952);
+        mbWinCreateChoice(1, 0x270002 + messNo, speakerNo, 0);
+        if (GwPlayer[playerNo].comF) {
+            if (mbPlayerCoinGet(playerNo) >= 20) {
+                mbComChoiceUpSet();
+            } else {
+                mbComChoiceDownSet();
+            }
+        }
+        mbWinTopWait();
+        if (mbWinTopChoiceGet() == -1) {
+            mbAudGuidePlay(951);
+            mbWinCreate(MBWIN_TYPE_EVENT,
+                0x270008 + messNo, speakerNo);
+            mbWinTopWait();
+            mbStatusDispFocusSet(playerNo, FALSE);
+            while (!mbStatusMoveCheck(playerNo)) {
+                HuPrcVSleep();
+            }
+            mbStatusDispSetAll(TRUE);
+            goto end;
+        }
+        switch (mbWinTopChoiceGet()) {
+            case 0:
+                if (mbPlayerCoinGet(playerNo) < 20) {
+                    mbAudGuidePlay(951);
+                    mbWinCreate(MBWIN_TYPE_EVENT,
+                        0x270004 + messNo, speakerNo);
+                    mbWinTopWait();
+                    mbStatusDispFocusSet(playerNo, FALSE);
+                    while (!mbStatusMoveCheck(playerNo)) {
+                        HuPrcVSleep();
+                    }
+                    mbStatusDispSetAll(TRUE);
+                    goto end;
+                }
+                goto starBuy;
+
+            case 1:
+                mbAudGuidePlay(951);
+                mbWinCreate(MBWIN_TYPE_EVENT,
+                    0x270008 + messNo, speakerNo);
+                mbWinTopWait();
+                mbStatusDispFocusSet(playerNo, FALSE);
+                while (!mbStatusMoveCheck(playerNo)) {
+                    HuPrcVSleep();
+                }
+                mbStatusDispSetAll(TRUE);
+                goto end;
+
+            default:
+starBuy:
+                mbAudGuidePlay(952);
+                mbWinCreate(MBWIN_TYPE_EVENT,
+                    0x270006 + messNo, speakerNo);
+                mbWinTopWait();
+                mbCoinAddExec(playerNo, -20);
+                break;
+        }
+    } else {
+        mbWinCreate(MBWIN_TYPE_EVENT,
+            0x270006 + messNo, speakerNo);
+        mbWinTopWait();
+    }
+    masuId = GwPlayer[playerNo].masuId;
+    mbMasuPosGet(masuId, &startPos);
+    _SetFlag(FLAGNUM(FLAG_GROUP_COMMON, 28));
+    mbStarGetMain(playerNo, NULL, 1, TRUE);
+    mbWipeFadeOut();
+    mbPlayerMotionShiftSet(playerNo, 1, 0.0f, 1.0f, 0x40000001);
+    mbCameraPlayerViewSetFast(playerNo, 2);
+    if (starMoveHook != NULL) {
+        starMoveHook();
+    }
+    obj = StarMasuObjGet(starMasuNext);
+    work = obj->data;
+    work->time = 0;
+    mbMasuPosGet(starMasuNext, &endPos);
+    mbObjDispSet(obj->mdlId[0], FALSE);
+    work->modelDispF = FALSE;
+    mbObjDispSet(work->signModelId, FALSE);
+    mbPlayerMotionShiftSet(playerNo, 1, 0.0f, 1.0f, 0x40000001);
+    mbPauseHookPush(StarPauseHook);
+    mbNormPosto3D(&starMasuGuidePos, 4, &guidePos);
+    starGuideObj = mbGuideCreateFlag(&guidePos, starMasuGuideMotTbl,
+        TRUE, FALSE, TRUE);
+    mbGuideMotionNextSet(starGuideObj, 1);
+    mbStatusDispForceSetAll(FALSE);
+    mbWipeFadeIn();
+    mbMusPlay(1, 12, 127, 0);
+    mbAudGuidePlay(952);
+    mbGuideMotionShiftSet(starGuideObj, 12, TRUE);
+    winNo = mbWinCreateTime(4,
+        0x27000C + messNo, HUWIN_SPEAKER_NULL);
+    mbWinPause((s16)winNo);
+    mbev_StarScroll(&startPos, &endPos, 120);
+    mbWinKill((s16)winNo);
+    mbObjDispSet(obj->mdlId[0], TRUE);
+    seNo = mbAudFXPlay(1095);
+    mbAudFXPlay(1096);
+    StarObjGrowSet(obj);
+    work = obj->data;
+    while (work->mode != STAR_MODE_IDLE) {
+        HuPrcVSleep();
+    }
+    HuPrcSleep(20);
+    mbAudFXStop(seNo);
+    mbAudGuidePlay(952);
+    mbGuideMotionShiftSet(starGuideObj, 12, TRUE);
+    mbWinCreateTime(4,
+        0x27000E + messNo, HUWIN_SPEAKER_NULL);
+    mbWinTopWait();
+    mbMusFadeOutSpeed(1, 1000);
+    mbWipeFadeOut();
+    mbCameraPlayerViewSetFast(playerNo, 2);
+    mbStatusDispForceSet(playerNo, FALSE);
+    mbStatusDispForceSetAll(TRUE);
+    mbStatusDispForceSetAll(TRUE);
+    mbGuideKill(starGuideObj);
+    starGuideObj = NULL;
+    HuPrcSleep(60);
+    mbMusBoardPlay();
+    mbPauseHookPop(StarPauseHook);
+    mbWipeFadeIn();
+
+end:
+    _ClearFlag(FLAGNUM(FLAG_GROUP_COMMON, 28));
+    mbCameraFocusPlayerSet(GwSystem.turnPlayerNo);
+    mbCameraMoveWait();
+}
+
 static void StarPauseHook(BOOL pauseF)
 {
     MBMODELID modelId;
@@ -1639,6 +2104,171 @@ void mbZtarGetExec(int playerNo)
     ZtarObjGrowSet(obj);
     ZtarObjGrowWait(obj);
     mbZtarGetMain(playerNo, NULL, -1, TRUE);
+}
+
+void mbZtarGetMain(int playerNo, HuVecF *pos, int num, BOOL focusF)
+{
+    int time;
+    OMOBJ *obj;
+    STARWORK *work;
+    int objNo;
+    int masuId;
+    int seNo;
+    int no;
+    int i;
+    HuVecF playerPos;
+
+    masuId = GwPlayer[playerNo].masuId;
+    seNo = -1;
+    _SetFlag(FLAG_BOARD_TURN_NOSTART);
+    mbMusFadeOutSpeed(0, 1000);
+    if (pos == NULL) {
+        for (i = 0; i < STAR_OBJ_MAX; i++) {
+            if (ztarOMObj[i]) {
+                STARWORK *objWork = ztarOMObj[i]->data;
+
+                if (objWork->masuId == masuId) {
+                    objNo = i;
+                    break;
+                }
+            }
+        }
+        if (i >= STAR_OBJ_MAX) {
+            objNo = -1;
+        }
+        if (objNo >= 0) {
+            obj = ztarOMObj[objNo];
+        } else {
+            obj = NULL;
+        }
+        if (obj == NULL) {
+            for (i = 0; i < STAR_OBJ_MAX; i++) {
+                if (ztarOMObj[i]) {
+                    STARWORK *objWork = ztarOMObj[i]->data;
+
+                    if (objWork->playerNo == playerNo) {
+                        objNo = i;
+                        break;
+                    }
+                }
+            }
+            if (i >= STAR_OBJ_MAX) {
+                objNo = -1;
+            }
+            if (objNo >= 0) {
+                obj = ztarOMObj[objNo];
+            } else {
+                obj = NULL;
+            }
+        }
+        work = obj->data;
+        no = work->no;
+    } else {
+        objNo = ZtarObjCreate(pos);
+        obj = ztarOMObj[objNo];
+        work = obj->data;
+        work->playerNo = playerNo;
+        work->masuId = -1;
+        work->signF = FALSE;
+        work->baseY = pos->y - 300.0f;
+        work->pos = *pos;
+        obj = ztarOMObj[objNo];
+        work = obj->data;
+        mbPlayerPosGet(playerNo, &playerPos);
+        work->baseY = playerPos.y;
+        no = -1;
+        HuPrcVSleep();
+    }
+    ZtarObjShrinkIdleSet(obj);
+    seNo = mbAudFXPlay(1122);
+    ZtarObjShrinkIdleWait(obj);
+    time = 0;
+    do {
+        if (time++ == 27) {
+            ZtarObjShrinkSet(obj);
+        }
+        if (time == 30) {
+            ((STARWORK *)ztarOMObj[work->objNo]->data)->effectDispF = FALSE;
+        }
+        HuPrcVSleep();
+    } while (time < 60);
+    mbAudFXStop(seNo);
+    mbPlayerMotIdleSet(playerNo);
+    omVibrate((s16)playerNo, 20, 7, 3);
+    mbPlayerMotionShiftSet(playerNo, 8, 0.0f, 8.0f, 0);
+    mbPlayerWinLoseVoicePlay(playerNo, 13, 585);
+    if (mbPlayerStarGet(playerNo) >= 1) {
+        int delay;
+        int starNum;
+        int addNum;
+        int result;
+
+        if (abs(num) >= 50) {
+            delay = 1;
+        } else if (abs(num) >= 20) {
+            delay = 3;
+        } else {
+            delay = 6;
+        }
+        starNum = mbPlayerStarGet(playerNo) + num;
+        addNum = num;
+        if (starNum > 999) {
+            addNum = 999 - mbPlayerStarGet(playerNo);
+        } else if (starNum < 0) {
+            addNum = -mbPlayerStarGet(playerNo);
+        }
+        mbPlayerStarAdd(playerNo, addNum);
+        result = addNum;
+        if (result != 0) {
+            mbAudFXPlay(15);
+        }
+        if (result != 0) {
+            HuVecF dispPos;
+
+            mbPlayerPosGet(playerNo, &dispPos);
+            dispPos.y += 250.0f;
+            mbStarDispCreate(playerNo, &dispPos, result);
+            while (!mbStarDispCheck(playerNo)) {
+                HuPrcVSleep();
+            }
+        }
+        GwSystem.starTotal = GwSystem.starTotal + num;
+    } else {
+        int coin = mbPlayerCoinGet(playerNo);
+
+        if (coin >= 20) {
+            mbCoinAddDispExec(playerNo, -20, TRUE, TRUE);
+        } else if (coin > 0) {
+            mbCoinAddDispExec(playerNo, -coin, TRUE, TRUE);
+        }
+    }
+    mbPlayerMotionEndWait(playerNo);
+    _ClearFlag(FLAG_BOARD_TURN_NOSTART);
+    if (work->signF == FALSE) {
+        for (i = 0; i < STAR_OBJ_MAX; i++) {
+            if (ztarOMObj[i]) {
+                STARWORK *objWork = ztarOMObj[i]->data;
+
+                if (playerNo == objWork->playerNo) {
+                    ZtarObjKill(ztarOMObj[i]);
+                    break;
+                }
+            }
+        }
+    } else if (work->signF == TRUE) {
+        masuId = GwPlayer[playerNo].masuId;
+        for (i = 0; i < STAR_OBJ_MAX; i++) {
+            if (ztarOMObj[i]) {
+                STARWORK *objWork = ztarOMObj[i]->data;
+
+                if (masuId == objWork->masuId) {
+                    ZtarObjKill(ztarOMObj[i]);
+                    break;
+                }
+            }
+        }
+    }
+    HuPrcSleep(18);
 }
 
 static void ZtarObjOMExec(OMOBJ *obj)

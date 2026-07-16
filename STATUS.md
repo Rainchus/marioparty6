@@ -610,6 +610,27 @@ serialized build and explicit DTK checksum both report `137 files OK`; the
 rebuilt and original `main.dol` compare byte-identical, and the final build
 leaves `config/GP6E01/symbols.txt` unchanged.
 
+Wave 74 represents the final `0x4424` previously absent target text bytes in
+Coin, Player, and Star. All 307 functions across those three owners now have
+compiled source counterparts: Coin reaches 52/52 paired and 19 exact at
+80.933500%, Player reaches 165/165 and 134 exact at 96.342760%, and Star
+reaches 90/90 and 64 exact at 93.603770%. The source recovers Coin award and
+team-distribution logic, Player initialization/dice/movement/space handling,
+and the Star/Ztar acquisition and map-view event loops.
+
+`mbCoinDispKillCheck`, both exact Coin all-player entries, and exact
+`MasuCoinExec` account for `0x698` newly exact target bytes. Four represented
+`board/mgcall.c` residues also close exactly (`0x184`), leaving all 12
+represented minigame-call functions exact while 26 target functions remain
+absent. In total, eight functions and `0x81C` target bytes close exactly in
+this batch. All four owners remain `NonMatching`, so the clean-C owner ledger
+is unchanged. Evidence, sibling-authenticated source shapes, target-only ABI
+and stack facts, and bounded WIP residues are retained in
+[`docs/native_matching_wave74.md`](docs/native_matching_wave74.md). The final
+serialized build and explicit DTK checksum both report `137 files OK`; the
+rebuilt and original `main.dol` compare byte-identical, and the final build
+leaves `config/GP6E01/symbols.txt` unchanged.
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is

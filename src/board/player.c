@@ -4,13 +4,18 @@
 #include "dolphin/os.h"
 
 #include "game/board/audio.h"
+#include "game/board/branch.h"
 #include "game/board/camera.h"
 #include "game/board/coin.h"
 #include "game/board/effect.h"
+#include "game/board/gate.h"
 #include "game/board/main.h"
 #include "game/board/masu.h"
 #include "game/board/object.h"
+#include "game/board/pause.h"
 #include "game/board/player.h"
+#include "game/board/status.h"
+#include "game/board/tutorial.h"
 #include "game/audio.h"
 #include "game/charman.h"
 #include "game/data.h"
@@ -48,14 +53,105 @@ static GXColor metalShadowColor;
 static GXColor metalHiliteColor;
 static BOOL playerColSnapF;
 
+typedef struct PlayerColWork {
+    u8 motStartF : 1;
+    u8 killF : 1;
+    u8 snapF : 1;
+    u8 restF : 1;
+    u8 playerNo : 2;
+    u8 state : 2;
+    u8 circleF;
+    u8 masuId;
+    u8 masuIdNext;
+    s8 time;
+    s8 maxTime;
+    u8 _pad06[2];
+    float rotYStart;
+    float radius;
+} PLAYERCOLWORK;
+
 static GXColor metalDefaultColor[2] = {
     { 128, 190, 140, 255 },
     { 100, 50, 130, 255 }
 };
 
+#define CHAR_MDLFILE(name) DATA_##name##mdl1
+#define CHAR_MOTDIR(name) DATA_##name##mot
+
+static const int charMdlFileTbl[CHARNO_MAX] = {
+    CHAR_MDLFILE(mario),
+    CHAR_MDLFILE(luigi),
+    CHAR_MDLFILE(peach),
+    CHAR_MDLFILE(yoshi),
+    CHAR_MDLFILE(wario),
+    CHAR_MDLFILE(daisy),
+    CHAR_MDLFILE(waluigi),
+    CHAR_MDLFILE(kinopio),
+    CHAR_MDLFILE(teresa),
+    CHAR_MDLFILE(minikoopa),
+    CHAR_MDLFILE(kinopiko),
+    CHAR_MDLFILE(minikoopaR),
+    CHAR_MDLFILE(minikoopaG),
+    CHAR_MDLFILE(minikoopaB)
+};
+
+static const int charMotDirTbl[CHARNO_MAX] = {
+    CHAR_MOTDIR(mario),
+    CHAR_MOTDIR(luigi),
+    CHAR_MOTDIR(peach),
+    CHAR_MOTDIR(yoshi),
+    CHAR_MOTDIR(wario),
+    CHAR_MOTDIR(daisy),
+    CHAR_MOTDIR(waluigi),
+    CHAR_MOTDIR(kinopio),
+    CHAR_MOTDIR(teresa),
+    CHAR_MOTDIR(minikoopa),
+    CHAR_MOTDIR(kinopiko),
+    CHAR_MOTDIR(minikoopa),
+    CHAR_MOTDIR(minikoopa),
+    CHAR_MOTDIR(minikoopa)
+};
+
+static const u16 charMotNoTbl[15] = {
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_300),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_301),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_302),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_303),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_304),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_322),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_306),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_307),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_324),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_357),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_311),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_346),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_348),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_386),
+    CHAR_MOTNO(CHARMOT_HSF_c000m1_320)
+};
+
+static const int tutorialCharNoTbl[GW_PLAYER_MAX] = {
+    CHARNO_YOSHI,
+    CHARNO_MARIO,
+    CHARNO_PEACH,
+    CHARNO_WARIO
+};
+
+static const int singleCharNoTbl[GW_PLAYER_MAX] = {
+    CHARNO_MARIO,
+    CHARNO_MINIKOOPAR,
+    CHARNO_MINIKOOPAG,
+    CHARNO_MINIKOOPAB
+};
+
+#undef CHAR_MDLFILE
+#undef CHAR_MOTDIR
+
 static void PlayerColKill(int playerNo);
+static void PlayerColOMExec(OMOBJ *obj);
 static void PlayerMetalKill(int playerNo);
 static void PlayerMetalOMExec(OMOBJ *objP);
+static void ResetMetalColor(void);
 static void MetalEffectCreate(OMOBJ *objP);
 static void MetalEffectHook(
     HU3D_MODEL *modelP, MBPARTICLE *particleP, Mtx matrix);
@@ -70,10 +166,36 @@ static void BiriQEffect1Hook(
 static void BiriQEffect2Hook(
     HU3D_MODEL *modelP, MBPARTICLE *particleP, Mtx matrix);
 static void PlayerMove(void);
+static void PlayerMoveCall(int playerNo);
+static void PlayerMoveDestroy(void);
 static void PlayerTurn(int playerNo);
+static BOOL DiceRun(int playerNo);
 static BOOL PlayerViewSet(
     int playerNo, BOOL intrF, BOOL waitF, BOOL carF);
 static void MasuCoinExec(int playerNo, int coinNum);
+static void ev_PlayerStartTurn(int playerNo);
+static void ev_PlayerEndTurn(int playerNo);
+int mbSingleTeamCharGet(void);
+int mbCapSelect(void);
+int mbSingleCall(int mode, int arg);
+int mbDiceProcExec(int playerNo, int diceType, s8 *valueTbl,
+    int *tutorialVal, BOOL padWinF, BOOL waitF, HuVecF *pos, int color);
+int mbDiceExec(int playerNo, int diceType, s8 *valueTbl, int tutorialVal,
+    BOOL padWinF, BOOL waitF, HuVecF *pos, int color);
+void mbDiceKill(int playerNo);
+int mbDiceMaxGet(int diceType);
+int mbDiceValueMaxGet(int diceType);
+void mbev_Scroll(int playerNo, BOOL mapF);
+void mbev_CapKillerMoveCall(int playerNo);
+void mbev_CapCallKettou(int playerNo, s16 id, BOOL stopF);
+void mbev_CapCallTrap(int playerNo, s16 id, s16 idNext);
+void mbev_CapBiriQShockCreate(int playerNo);
+void mbStarDispSetAll(BOOL dispF);
+void mbStarMasuDispSet(int masuId, BOOL dispF);
+void mbTelopTimeCreate(void);
+void mbTelopPlayerCreate(int playerNo);
+s16 mbCoinDispMasuCreate(HuVecF *pos, int coinNum, BOOL playSe);
+void mbCoinAddExec(int playerNo, int coinNum);
 void mbDiceNumKill(int playerNo);
 void mbDiceObjHit(int playerNo);
 void mbObjMetalCreate(MBMODELID modelId);
@@ -87,10 +209,149 @@ void mbObjBiriQColorSet(
     MBMODELID modelId, BOOL enableF, float level, GXColor color);
 BOOL mbWipeSpecialStatGet(void);
 void mbWipeFadeIn(void);
+void mbWipeFadeOut(void);
+void mbWipeDissolveFadeIn(void);
+void mbWipeSpecialFadeOutCreate(int type, int time);
+void mbWipeSpecialFadeInCreate(int type, int time);
 BOOL mbPauseEnableCheck(void);
 void mbPos3DtoNorm(HuVecF *src, s16 cameraMask, HuVecF *dst);
 float mbSinDeg(float angle);
 float mbAngleEaseOut(float angleStart, float angleEnd, float weight);
+
+void mbPlayerInit(BOOL noEventF)
+{
+    MBPLAYERWORK *workP = &playerWork[0];
+    int motDataNum[16];
+    int i;
+    int j;
+
+    memset(playerWork, 0, sizeof(playerWork));
+    ResetMetalColor();
+    if (_CheckFlag(FLAG_BOARD_MG)) {
+        GwSystem.turnPlayerNo = 0;
+    }
+    if (noEventF) {
+        s16 startMasu = mbMasuFind_AttrIdGet(-1, MASU_FLAG_START);
+        int grp;
+
+        for (i = 0; i < GW_PLAYER_MAX; i++) {
+            if (_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+                GwPlayer[i].comF = TRUE;
+                GwPlayerConf[i].type = TRUE;
+            }
+            if (GwSystem.partyF) {
+                _CheckFlag(FLAG_BOARD_TUTORIAL);
+            } else if (i > 0) {
+                GwPlayerConf[i].charNo = singleCharNoTbl[i];
+                GwPlayer[i].comF = TRUE;
+                GwPlayerConf[i].type = TRUE;
+            }
+            GwPlayer[i].charNo = GwPlayerConf[i].charNo;
+            GwPlayerConf[i].charNo = GwPlayerConf[i].charNo;
+            GwPlayer[i].padNo = GwPlayerConf[i].padNo;
+            GwPlayerConf[i].padNo = GwPlayerConf[i].padNo;
+            GwPlayer[i].comF = GwPlayerConf[i].type;
+            GwPlayerConf[i].type = GwPlayerConf[i].type;
+            GwPlayer[i].comDif = GwPlayerConf[i].comDif;
+            GwPlayerConf[i].comDif = GwPlayerConf[i].comDif;
+            GwPlayer[i].masuId = startMasu;
+            GwPlayer[i].masuIdNext = startMasu;
+            GwPlayer[i].statusColor = 0;
+            GwPlayer[i].diceMode = 0;
+            for (j = 0; j < 3; j++) {
+                GwPlayer[i].capsule[j] = -1;
+            }
+            GwPlayer[i].team = grp = GwPlayerConf[i].grpNo;
+            GwPlayerConf[i].grpNo = grp;
+            GwPlayer[i].orderNo = i;
+            mbPlayerMetalSet(i, FALSE);
+            mbPlayerBiriQSet(i, FALSE);
+        }
+        for (i = 0; i < CHARNO_MAX; i++) {
+            if (CharMotionAMemPGet(i)) {
+                if (!GwSystem.partyF && i == mbSingleTeamCharGet()) {
+                    continue;
+                }
+                for (j = 0; j < GW_PLAYER_MAX; j++) {
+                    if (i == GwPlayer[j].charNo) {
+                        break;
+                    }
+                }
+                if (j >= GW_PLAYER_MAX) {
+                    CharDataClose(i);
+                }
+            }
+        }
+        for (i = 0; i < GW_PLAYER_MAX; i++) {
+            if (!CharMotionAMemPGet(GwPlayer[i].charNo)) {
+                CharMotionInit(GwPlayer[i].charNo);
+            }
+        }
+        if (!GwSystem.partyF) {
+            int charNo = mbSingleTeamCharGet();
+
+            if (!CharMotionAMemPGet(charNo)) {
+                CharMotionInit(charNo);
+            }
+        }
+        GwSystem.playerMode = 0;
+    }
+    for (i = 0; i < GW_PLAYER_MAX; i++, workP++) {
+        GW_PLAYER *playerP;
+        PLAYERCOLWORK *colWorkP;
+        int charNo;
+        MBMODELID modelId;
+
+        workP->startTurnHook = workP->endTurnHook = NULL;
+        workP->rotateObj = workP->moveObj = workP->posFixObj = NULL;
+        playerP = GWPlayerGet(i);
+        playerP->playerNo = workP->playerNo = i;
+        GwPlayerConf[i].type = GwPlayer[i].comF;
+        GwPlayerConf[i].padNo = GwPlayer[i].padNo;
+        GwPlayerConf[i].grpNo = mbPlayerGrpGet(i);
+        GwPlayerConf[i].comDif = GwPlayer[i].comDif;
+        charNo = GwPlayer[i].charNo;
+        GwPlayerConf[i].charNo = charNo;
+        for (j = 0; j < 15; j++) {
+            motDataNum[j] = charMotDirTbl[charNo] | charMotNoTbl[j];
+        }
+        motDataNum[j] = HU_DATANUM_NONE;
+        modelId = workP->objId =
+            mbObjCharCreate(charNo, charMdlFileTbl[charNo], motDataNum, FALSE);
+        mbPlayerMotionVoiceOnSet(i, 7, FALSE);
+        mbPlayerMotionVoiceOnSet(i, 12, FALSE);
+        mbPlayerMotionVoiceOnSet(i, 8, FALSE);
+        mbPlayerMotionVoiceOnSet(i, 13, FALSE);
+        workP->colObj =
+            omAddObjEx(mbObjMan, 0x100, 0, 0, -1, PlayerColOMExec);
+        colWorkP = omObjGetWork(workP->colObj, PLAYERCOLWORK);
+        colWorkP->playerNo = i;
+        colWorkP->killF = TRUE;
+        colWorkP->masuIdNext = GwPlayer[i].masuId;
+        mbPlayerMatClone(i);
+        workP->motNo = 1;
+        mbObjMotionSet(modelId, workP->motNo, HU3D_MOTATTR_LOOP);
+        GwPlayer[i].dispLightF = TRUE;
+        GwPlayer[i].masuIdPrev = -1;
+        mbPlayerWorkGet(i)->_unk10_3 = TRUE;
+        CharModelDataClose(charNo);
+    }
+    mbPlayerColSnapSet(FALSE);
+    if (GwSystem.partyF) {
+        mbPlayerPosResetAll();
+    } else {
+        for (i = 0; i < GW_PLAYER_MAX; i++) {
+            if (i > 0) {
+                GwPlayer[i].masuIdPrev =
+                    GwPlayer[i].masuIdNext = GwPlayer[i].masuId = 0;
+                mbPlayerDispSet(i, FALSE);
+            } else {
+                mbPlayerPosReset(i);
+            }
+        }
+    }
+    CharEffectLayerSet(5);
+}
 
 void mbPlayerClose(void)
 {
@@ -186,6 +447,140 @@ void mbSingleTurnExec(BOOL intrF)
     turnIntrF = FALSE;
 }
 
+static void PlayerTurn(int playerNo)
+{
+    BOOL telopF = FALSE;
+    BOOL killerF;
+    BOOL eventResult;
+    int i;
+
+    GwSystem.turnPlayerNo = playerNo;
+    mbPlayerPosReset(playerNo);
+    mbPlayerColSnapSet(TRUE);
+    mbev_PlayerColMasuSet(playerNo, GwPlayer[playerNo].masuId, TRUE);
+    mbStarDispSetAll(TRUE);
+    mbStarMasuDispSet(GwPlayer[playerNo].masuId, FALSE);
+    if (!turnIntrF) {
+        MBPLAYERWORK *workP;
+
+        mbCameraPlayerViewSetFast(playerNo, MB_CAMERA_VIEW_ZOOMIN);
+        mbCameraMoveOnSet(FALSE);
+        mbCameraMoveWait();
+        mbPlayerMotionSet(playerNo, 1, HU3D_MOTATTR_LOOP);
+        mbPlayerRotYSet(playerNo, 0.0f);
+        if (turnInitHook) {
+            turnInitHook(playerNo);
+        }
+        mbStatusDispForceSetAll(TRUE);
+        if (GwSystem.partyF && playerNo == 0 && GwSystem.timeTurn > 0) {
+            mbTelopTimeCreate();
+            telopF = TRUE;
+        }
+        if (mbWipeSpecialStatGet()) {
+            if (playerNo == 0) {
+                mbWipeDissolveFadeIn();
+            } else {
+                mbWipeSpecialFadeOutCreate(5, 42);
+            }
+        }
+        GwPlayer[playerNo].capsuleUse = -1;
+        workP = &playerWork[playerNo];
+        workP->masuNext = 0;
+        if (telopF) {
+            for (i = 0; i < 100; i++) {
+                HuPrcVSleep();
+            }
+        }
+        ev_PlayerStartTurn(playerNo);
+        omVibrate(playerNo, 20, 20, 0);
+        mbPauseDisableSet(FALSE);
+        mbTutorialCall(3);
+        if (GwSystem.partyF || GwSystem.turnNo == 1) {
+            mbTelopPlayerCreate(playerNo);
+        }
+        GwPlayer[playerNo].moveNum = -1;
+        GwPlayer[playerNo].skipEventF = FALSE;
+        GwSystem.playerMode = 0;
+    }
+repeat:
+    switch (GwSystem.playerMode) {
+        case 0:
+        case 2:
+            _ClearFlag(FLAG_BOARD_WALKDONE);
+            killerF = DiceRun(playerNo);
+            if (GwPlayer[playerNo].moveNum != 0) {
+                GwSystem.playerMode = 3;
+            }
+            if (killerF) {
+                mbev_CapKillerMoveCall(playerNo);
+                GwSystem.playerMode = 4;
+                goto repeat;
+            }
+        case 3:
+            mbPlayerColSnapSet(TRUE);
+            if (GwPlayer[playerNo].moveNum != 0) {
+                _ClearFlag(FLAG_BOARD_WALKDONE);
+                turnIntrF = PlayerViewSet(playerNo, TRUE, TRUE, TRUE);
+                mbCameraMoveOnSet(TRUE);
+                if (GwPlayer[playerNo].moveNum != 0) {
+                    PlayerMoveCall(playerNo);
+                }
+            }
+            mbPlayerMetalSet(playerNo, FALSE);
+            mbPlayerBiriQSet(playerNo, FALSE);
+            GwSystem.playerMode = 4;
+        case 4:
+            GwSystem.playerMode = 5;
+            if (_CheckFlag(FLAG_BOARD_LAST5) &&
+                mbPlayerKettouCheck(playerNo, GwPlayer[playerNo].masuId)) {
+                mbev_CapCallKettou(
+                    playerNo, GwPlayer[playerNo].masuId, FALSE);
+            }
+        case 5:
+            turnIntrF =
+                PlayerViewSet(playerNo, turnIntrF, TRUE, FALSE);
+            GwSystem.playerMode = 6;
+            mbMasuPlayerColorSet(playerNo);
+            eventResult =
+                mbev_MasuCapStop(playerNo, GwPlayer[playerNo].masuId);
+            if (!eventResult) {
+                GwSystem.playerMode = 7;
+                goto repeat;
+            }
+        case 6:
+            turnIntrF =
+                PlayerViewSet(playerNo, turnIntrF, FALSE, FALSE);
+            GwSystem.playerMode = 7;
+            mbCameraMoveWait();
+            if (!mbev_MasuStop(playerNo, GwPlayer[playerNo].masuId)) {
+                break;
+            }
+        case 7:
+            turnIntrF =
+                PlayerViewSet(playerNo, turnIntrF, FALSE, FALSE);
+            mbPlayerRotateStart(playerNo, 0, 15);
+            HuPrcSleep(15);
+            mbCameraMoveWait();
+            mbPlayerMotIdleSet(playerNo);
+        case 1:
+        default:
+            break;
+    }
+    ev_PlayerEndTurn(playerNo);
+    mbTutorialCall(4);
+    if (GwSystem.partyF) {
+        if (playerNo != GW_PLAYER_MAX - 1) {
+            mbWipeSpecialFadeInCreate(5, 1);
+        } else {
+            mbWipeFadeOut();
+        }
+    }
+    mbPlayerColSnapPlayerSet(playerNo, TRUE);
+    if (turnCloseHook) {
+        turnCloseHook(playerNo);
+    }
+}
+
 static BOOL PlayerViewSet(
     int playerNo, BOOL intrF, BOOL waitF, BOOL carF)
 {
@@ -234,11 +629,119 @@ int mbPlayerDiceTypeGet(int diceNo)
     return 0;
 }
 
-static void PlayerMoveDestroy(void)
+static BOOL DiceRun(int playerNo)
 {
-    MBPLAYERWORK *workP = HuPrcCurrentGet()->property;
+    BOOL killerF = FALSE;
+    BOOL capsuleSkipF = FALSE;
+    int capsuleNum;
+    int result;
 
-    workP->moveProc = NULL;
+    GwPlayer[playerNo].diceNum = 1;
+    capsuleNum = mbPlayerCapsuleNumGet(playerNo);
+    if (!GwSystem.partyF) {
+        capsuleNum = 1;
+        if (GwSystem.turnNo <= 1) {
+            capsuleNum = 0;
+        }
+    }
+repeat:
+    if (GwPlayer[playerNo].capsuleUse == -1 && !capsuleSkipF &&
+        capsuleNum != 0) {
+        GwSystem.playerMode = 0;
+        result = mbCapSelect();
+        if (GwPlayer[playerNo].capsuleUse != -1) {
+            GwPlayer[playerNo].capsuleUseNum++;
+        }
+    } else {
+        mbStatusDispSetAll(TRUE);
+        while (!mbStatusOffCheckAll()) {
+            HuPrcVSleep();
+        }
+        GwSystem.playerMode = 2;
+        if (_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+            int tutorialVal[3];
+            int diceType;
+            int diceMax;
+            int value;
+            int i;
+
+            diceType = mbPlayerDiceTypeGet(GwPlayer[playerNo].diceMode);
+            diceMax = mbDiceMaxGet(diceType);
+            for (i = 0; i < diceMax; i++) {
+                value = mbTutorialCall(5);
+                if (value < 0) {
+                    value = mbRandMod(mbDiceValueMaxGet(diceType));
+                }
+                tutorialVal[i] = value;
+            }
+            if (diceMax <= 1) {
+                result = mbDiceExec(playerNo, diceType, NULL,
+                    tutorialVal[0], FALSE, TRUE, NULL, 0);
+            } else {
+                result = mbDiceProcExec(playerNo, diceType, NULL,
+                    tutorialVal, FALSE, TRUE, NULL, 0);
+            }
+            mbTutorialCall(6);
+        } else {
+            int tutorialVal = -1;
+
+            if (!GwSystem.partyF) {
+                tutorialVal = mbSingleCall(0, -1);
+            } else if (GwPlayer[playerNo].comF &&
+                mbPlayerDiceTypeGet(GwPlayer[playerNo].diceMode) == 14) {
+                tutorialVal = mbMasuPKinokoValueGet(
+                    playerNo, GwPlayer[playerNo].masuId);
+            }
+            result = mbDiceExec(playerNo,
+                mbPlayerDiceTypeGet(GwPlayer[playerNo].diceMode), NULL,
+                tutorialVal, TRUE, TRUE, NULL, 0);
+        }
+    }
+    switch (result) {
+        case -3:
+            if (!GwSystem.partyF && !_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+                mbSingleCall(1, -1);
+            }
+            mbDiceKill(playerNo);
+            mbev_Scroll(playerNo, FALSE);
+            break;
+        case -4:
+            if (!GwSystem.partyF && !_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+                mbSingleCall(1, -1);
+            }
+            mbDiceKill(playerNo);
+            mbev_Scroll(playerNo, TRUE);
+            break;
+        case -6:
+            if (!GwSystem.partyF && !_CheckFlag(FLAG_BOARD_TUTORIAL)) {
+                mbSingleCall(1, -1);
+            }
+            capsuleSkipF = FALSE;
+            mbDiceKill(playerNo);
+            mbAudFXPlay(3);
+            break;
+        case -7:
+            capsuleSkipF = TRUE;
+            mbDiceKill(playerNo);
+            break;
+        case -5:
+        default:
+            break;
+    }
+    if (result <= 0) {
+        goto repeat;
+    }
+    if (GwPlayer[playerNo].diceMode == 5) {
+        killerF = TRUE;
+    }
+    GwPlayer[playerNo].diceMode = 0;
+    GwPlayer[playerNo].moveNum = result;
+    mbMoveNumCreate(playerNo, TRUE);
+    mbDiceNumKill(playerNo);
+    if (!GwSystem.partyF) {
+        mbSingleCall(3, result);
+    }
+    return killerF;
 }
 
 static void PlayerMoveCall(int playerNo)
@@ -254,6 +757,104 @@ static void PlayerMoveCall(int playerNo)
         HuPrcVSleep();
     }
     _SetFlag(FLAG_BOARD_WALKDONE);
+}
+
+static void PlayerMove(void)
+{
+    MBPLAYERWORK *workP = HuPrcCurrentGet()->property;
+    int playerNo = workP->playerNo;
+    s16 masuIdNext;
+    BOOL hiddenF;
+
+    playerWork[playerNo]._unk0C = 0;
+    playerWork[playerNo]._unk10_3 = TRUE;
+    workP->moveHook = NULL;
+    GwPlayer[playerNo].masuIdPrev = GwPlayer[playerNo].masuId;
+repeat:
+    if (!_CheckFlag(FLAG_BOARD_DEBUG) ||
+        _CheckFlag(FLAG_BOARD_TUTORIAL)) {
+        if (mbev_Branch(playerNo, &masuIdNext)) {
+            goto end;
+        }
+    } else {
+        if (mbev_BranchDebug(playerNo, &masuIdNext) || masuIdNext < 0) {
+            goto end;
+        }
+    }
+    masuIdNext = mbev_GateMasu(
+        playerNo, GwPlayer[playerNo].masuId, masuIdNext);
+    GwPlayer[playerNo].masuIdNext = masuIdNext;
+    playerWork[playerNo]._unk08 = -1;
+    workP->_unk06 = masuIdNext;
+    if (workP->_unk10_3) {
+        HuPrcSleep(-1);
+    }
+    PlayerColKill(playerNo);
+    mbev_CapCallTrap(
+        playerNo, GwPlayer[playerNo].masuId, masuIdNext);
+    mbev_MasuMasuEnd(masuIdNext);
+    if (workP->moveHook) {
+        playerWork[playerNo]._unk0C = 4;
+        workP->moveHook(playerNo);
+        workP->moveHook = NULL;
+    } else {
+        mbPlayerMasuMove(playerNo, TRUE);
+    }
+    playerWork[playerNo]._unk0C = 0;
+    playerWork[playerNo]._unk10_3 = TRUE;
+    playerWork[playerNo].masuMoveF = FALSE;
+    GwPlayer[playerNo].masuId = masuIdNext;
+    mbTutorialCall(8);
+    hiddenF = !mbMasuDispCheck(masuIdNext);
+    if (!hiddenF && GwPlayer[playerNo].biriQF) {
+        PlayerBiriQFlashSet(playerNo);
+        mbev_CapBiriQShockCreate(playerNo);
+    }
+    if (!mbev_MasuMasuStart(playerNo)) {
+        masuIdNext = GwPlayer[playerNo].masuId;
+        if (!mbev_MasuMove(playerNo, masuIdNext) &&
+            mbMasuDispCheck(masuIdNext)) {
+            mbAudFXPlay(0x3EE);
+            GwPlayer[playerNo].moveNum--;
+            if (GwPlayer[playerNo].moveNum < 0) {
+                GwPlayer[playerNo].moveNum = 0;
+            }
+            if (GwPlayer[playerNo].moveNum == 0) {
+                mbMoveNumKill(playerNo);
+            }
+        }
+    }
+    if (workP->_unk10_3) {
+        workP->moveEndF = TRUE;
+        HuPrcSleep(-1);
+    }
+    mbTutorialCall(9);
+    if (GwPlayer[playerNo].moveNum != 0) {
+        goto repeat;
+    }
+end:
+    workP->moveHook = NULL;
+    mbMoveNumKill(playerNo);
+    playerWork[playerNo]._unk0C = 0;
+    playerWork[playerNo]._unk10_3 = TRUE;
+    if (workP->_unk10_3) {
+        mbPlayerRotateStart(playerNo, 0, 15);
+        while (!mbPlayerRotateCheck(playerNo)) {
+            HuPrcVSleep();
+        }
+        mbPlayerMotIdleSet(playerNo);
+        mbPlayerColOrderReset();
+    } else {
+        mbPlayerMotIdleSet(playerNo);
+    }
+    HuPrcEnd();
+}
+
+static void PlayerMoveDestroy(void)
+{
+    MBPLAYERWORK *workP = HuPrcCurrentGet()->property;
+
+    workP->moveProc = NULL;
 }
 
 static void ev_PlayerStartTurn(int playerNo)
@@ -787,27 +1388,9 @@ void mbMoveNumDispSet(int playerNo, BOOL dispF)
     }
 }
 
-typedef struct PlayerColWork {
-    u8 motStartF : 1;
-    u8 killF : 1;
-    u8 snapF : 1;
-    u8 restF : 1;
-    u8 playerNo : 2;
-    u8 state : 2;
-    u8 circleF;
-    u8 masuId;
-    u8 masuIdNext;
-    s8 time;
-    s8 maxTime;
-    u8 _pad06[2];
-    float rotYStart;
-    float radius;
-} PLAYERCOLWORK;
-
 static void PlayerColCornerSet(int playerNo, int masuIdNext);
 static void PlayerColCornerSnap(int playerNo, int masuId, int cornerNo);
 static void PlayerColInit(int playerNo, int masuId, int cornerNo);
-static void PlayerColOMExec(OMOBJ *obj);
 
 void mbev_PlayerColMasuAllSet(int *masuIdFix, BOOL snapF)
 {
@@ -3354,6 +3937,51 @@ void mbPlayerMasuCornerSet(int playerNo, s8 cornerNo)
 s8 mbPlayerMasuCornerGet(int playerNo)
 {
     return playerWork[playerNo].masuCorner;
+}
+
+static void MasuCoinExec(int playerNo, int coinNum)
+{
+    HuVecF pos;
+    BOOL doneF;
+    s8 dispId;
+
+    if (coinNum < 0) {
+        omVibrate(playerNo, 20, 4, 4);
+    }
+    mbPlayerRotateStart(playerNo, 0, 15);
+    if (GwSystem.last5Effect == 1) {
+        coinNum *= 3;
+    }
+    mbPlayerPosGet(playerNo, &pos);
+    pos.y += 250.0f;
+    if (coinNum >= 0) {
+        mbAudFXPlay(0x44D);
+    } else {
+        mbAudFXPlay(0x44E);
+    }
+    dispId = mbCoinDispMasuCreate(&pos, coinNum, FALSE);
+    while (!mbPlayerRotateCheck(playerNo)) {
+        HuPrcVSleep();
+    }
+    if (coinNum >= 0) {
+        mbPlayerWinLoseVoicePlay(playerNo, 12, CHARVOICEID(6));
+        mbPlayerMotionShiftSet(
+            playerNo, 12, 0.0f, 4.0f, HU3D_ATTR_NONE);
+    } else {
+        mbPlayerWinLoseVoicePlay(playerNo, 13, CHARVOICEID(12));
+        mbPlayerMotionShiftSet(
+            playerNo, 13, 0.0f, 4.0f, HU3D_ATTR_NONE);
+    }
+    mbCoinAddExec(playerNo, coinNum);
+    mbCameraMoveWait();
+    for (doneF = FALSE;
+         !mbCoinDispKillCheck(dispId) || !doneF;) {
+        if (mbPlayerMotionEndCheck(playerNo) && !doneF) {
+            mbPlayerMotIdleSet(playerNo);
+            doneF = TRUE;
+        }
+        HuPrcVSleep();
+    }
 }
 
 void mbPlayerPlusMasuExec(int playerNo)

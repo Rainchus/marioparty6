@@ -15,6 +15,7 @@
 #define MASU_FLAG_CLIMBTO 0x0004
 #define MASU_FLAG_CLIMBFROM 0x0008
 #define MASU_FLAG_BATTAN 0x4000
+#define MASU_FLAG_START 0x8000
 
 typedef struct Masu_s {
     u8 useMtxF : 1;

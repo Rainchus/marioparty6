@@ -47,6 +47,7 @@ static inline int mbPlayerGrpGet(int playerNo)
 
 void mbPlayerTurnInitHookSet(void (*hook)(int playerNo));
 void mbPlayerTurnCloseHookSet(void (*hook)(int playerNo));
+void mbPlayerInit(BOOL noEventF);
 void mbPlayerClose(void);
 MBPLAYERWORK *mbPlayerWorkGet(int playerNo);
 void mbPlayerStartTurnHookSet(int playerNo, MBPLAYERTURNHOOK hook);

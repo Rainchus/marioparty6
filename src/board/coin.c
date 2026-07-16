@@ -7,6 +7,7 @@
 #include "game/board/effect.h"
 #include "game/board/main.h"
 #include "game/board/object.h"
+#include "game/board/player.h"
 
 #include "game/data.h"
 #include "game/gamework.h"
@@ -93,6 +94,7 @@ static void CoinDispOn(OMOBJ *obj);
 static void CoinDispMain(OMOBJ *obj);
 static void CoinDispOff(OMOBJ *obj);
 static void CoinDispObjKill(OMOBJ *obj);
+static void CoinAddAllProc(int *addNum, BOOL fastF, int *result);
 
 static OMOBJ *coinDispOMObj[GW_PLAYER_MAX + 1] = {};
 
@@ -1175,7 +1177,7 @@ static void CoinDispObjKill(OMOBJ *obj)
 
 void mbCoinDispKill(s16 no)
 {
-    if (no <= 0 || no > GW_PLAYER_MAX) {
+    if (no <= 0 || no >= GW_PLAYER_MAX + 1) {
         return;
     }
     if (coinDispOMObj[no]) {
@@ -1187,7 +1189,7 @@ void mbCoinDispKill(s16 no)
 
 BOOL mbCoinDispKillCheck(s16 no)
 {
-    if (no <= 0 || no > GW_PLAYER_MAX) {
+    if (no <= 0 || no >= GW_PLAYER_MAX + 1) {
         return TRUE;
     }
     if (coinDispOMObj[no]) {
@@ -1196,4 +1198,305 @@ BOOL mbCoinDispKillCheck(s16 no)
         return FALSE;
     }
     return TRUE;
+}
+
+int mbCoinAddProcExec(int playerNo, int coinNum, BOOL dispF, BOOL fastF)
+{
+    int coinDiff;
+    s16 dispNo;
+    int i;
+    int delay;
+    int coinChg;
+    int coinNew;
+    s16 seId;
+
+    if (abs(coinNum) >= 50) {
+        delay = 1;
+    } else if (abs(coinNum) >= 20) {
+        delay = 3;
+    } else {
+        delay = 6;
+    }
+    coinNew = coinNum + mbPlayerCoinGet(playerNo);
+    if (coinNew > 999) {
+        coinNum = 999 - mbPlayerCoinGet(playerNo);
+    } else if (coinNew < 0) {
+        coinNum = -mbPlayerCoinGet(playerNo);
+    }
+    coinDiff = coinNum;
+    if (!fastF) {
+        coinChg = (coinNum >= 0) ? 1 : -1;
+        seId = (coinChg > 0) ? 7 : 14;
+        for (i = 0; i < abs(coinNum); i++) {
+            mbPlayerCoinAdd(playerNo, coinChg);
+            mbAudFXPlay(seId);
+            HuPrcSleep(delay);
+        }
+    } else {
+        mbPlayerCoinAdd(playerNo, coinDiff);
+    }
+    if (coinDiff != 0 || dispF) {
+        HuVecF pos;
+
+        mbAudFXPlay(15);
+        mbPlayerPosGet(playerNo, &pos);
+        pos.y += 250.0f;
+        dispNo = mbCoinDispCreate(&pos, coinDiff, dispF, TRUE);
+        while (!mbCoinDispKillCheck(dispNo)) {
+            HuPrcVSleep();
+        }
+    }
+    return coinDiff;
+}
+
+int mbCoinAddDispExec(int playerNo, int coinNum, BOOL dispF, BOOL fastF)
+{
+    int coinDiff;
+    s16 dispNo;
+    int i;
+    int delay;
+    int coinChg;
+    int coinNew;
+    s16 seId;
+
+    if (abs(coinNum) >= 50) {
+        delay = 1;
+    } else if (abs(coinNum) >= 20) {
+        delay = 3;
+    } else {
+        delay = 6;
+    }
+    coinNew = coinNum + mbPlayerCoinGet(playerNo);
+    if (coinNew > 999) {
+        coinNum = 999 - mbPlayerCoinGet(playerNo);
+    } else if (coinNew < 0) {
+        coinNum = -mbPlayerCoinGet(playerNo);
+    }
+    coinDiff = coinNum;
+    if (!fastF) {
+        coinChg = (coinNum >= 0) ? 1 : -1;
+        seId = (coinChg > 0) ? 7 : 14;
+        for (i = 0; i < abs(coinNum); i++) {
+            mbPlayerCoinAdd(playerNo, coinChg);
+            mbAudFXPlay(seId);
+            HuPrcSleep(delay);
+        }
+    } else {
+        mbPlayerCoinAdd(playerNo, coinDiff);
+    }
+    if (coinDiff != 0) {
+        mbAudFXPlay(15);
+    }
+    if (dispF && coinDiff != 0) {
+        HuVecF pos;
+
+        mbPlayerPosGet(playerNo, &pos);
+        pos.y += 250.0f;
+        dispNo = mbCoinDispCreate(&pos, coinDiff, TRUE, TRUE);
+        while (!mbCoinDispKillCheck(dispNo)) {
+            HuPrcVSleep();
+        }
+    }
+    return coinDiff;
+}
+
+int mbCoinAddExec(int playerNo, int coinNum)
+{
+    return mbCoinAddDispExec(playerNo, coinNum, FALSE, FALSE);
+}
+
+int mbStatTeamMinValGet(int teamNo, int value, int max, int *addNum,
+    int *result)
+{
+    int playerNo[2];
+    int stat;
+    int player;
+    int temp;
+    int i;
+
+    stat = value;
+    for (i = 0; i < 2; i++) {
+        player = mbPlayerTeamFindPlayer(teamNo, i);
+        playerNo[i] = player;
+        stat += addNum[player];
+        result[player] = addNum[player];
+    }
+    if (stat > max) {
+        if (addNum[playerNo[0]] > addNum[playerNo[1]]) {
+            temp = playerNo[0];
+            playerNo[0] = playerNo[1];
+            playerNo[1] = temp;
+        }
+        stat = value;
+        for (i = 0; i < 2; i++) {
+            player = playerNo[i];
+            if (stat + addNum[player] > max) {
+                result[player] = max - stat;
+                stat = max;
+            } else {
+                stat += addNum[player];
+            }
+        }
+    } else if (stat < 0) {
+        if (addNum[playerNo[0]] < addNum[playerNo[1]]) {
+            temp = playerNo[0];
+            playerNo[0] = playerNo[1];
+            playerNo[1] = temp;
+        }
+        stat = value;
+        for (i = 0; i < 2; i++) {
+            player = playerNo[i];
+            if (stat + addNum[player] < 0) {
+                result[player] = -stat;
+                stat = 0;
+            } else {
+                stat += addNum[player];
+            }
+        }
+    }
+    return stat - value;
+}
+
+static void CoinAddAllProc(int *addNum, BOOL fastF, int *result)
+{
+    int coinNum[4];
+    int delay[4];
+    int time[4];
+    int coinChg[4];
+    BOOL activeF[4];
+    int playerNum;
+    int playerNo;
+    int coinNew;
+    int i;
+
+    for (i = 0; i < 4; i++) {
+        coinNum[i] = addNum[i];
+        activeF[i] = FALSE;
+    }
+    if (!GwSystem.tagF) {
+        for (i = 0; i < 4; i++) {
+            coinNew = coinNum[i] + mbPlayerCoinGet(i);
+            if (coinNew > 999) {
+                coinNum[i] = 999 - mbPlayerCoinGet(i);
+            } else if (coinNew < 0) {
+                coinNum[i] = -mbPlayerCoinGet(i);
+            }
+            result[i] = coinNum[i];
+            activeF[i] = TRUE;
+        }
+    } else {
+        for (i = 0; i < 2; i++) {
+            playerNo = mbPlayerTeamFindPlayer(i, 0);
+            activeF[playerNo] = TRUE;
+            coinNum[playerNo] = mbStatTeamMinValGet(i,
+                mbPlayerTeamCoinGet(i), 999, coinNum, result);
+        }
+    }
+    if (!fastF) {
+        for (i = 0; i < 4; i++) {
+            if (!activeF[i]) {
+                continue;
+            }
+            if (abs(coinNum[i]) >= 50) {
+                delay[i] = 1;
+            } else if (abs(coinNum[i]) >= 20) {
+                delay[i] = 3;
+            } else {
+                delay[i] = 6;
+            }
+            time[i] = delay[i];
+            coinChg[i] = (coinNum[i] >= 0) ? 1 : -1;
+        }
+        do {
+            playerNum = 0;
+            for (i = 0; i < 4; i++) {
+                if (!activeF[i] || coinNum[i] == 0) {
+                    continue;
+                }
+                if (--time[i] == 0) {
+                    mbPlayerCoinAdd(i, coinChg[i]);
+                    coinNum[i] -= coinChg[i];
+                    mbAudFXPlay(7);
+                    time[i] = delay[i];
+                }
+                playerNum++;
+            }
+            HuPrcVSleep();
+        } while (playerNum != 0);
+    } else {
+        for (i = 0; i < 4; i++) {
+            if (activeF[i]) {
+                mbPlayerCoinAdd(i, coinNum[i]);
+            }
+        }
+    }
+    mbAudFXPlay(15);
+}
+
+void mbCoinAddAllProcExecV(int *addNum, BOOL *dispF, BOOL fastF)
+{
+    int result[4];
+    int dispNo[4];
+    HuVecF pos;
+    BOOL waitF;
+    int i;
+
+    CoinAddAllProc(addNum, fastF, result);
+    for (i = 0; i < 4; i++) {
+        dispNo[i] = 0;
+        if (result[i] != 0 || dispF[i]) {
+            mbPlayerPosGet(i, &pos);
+            pos.y += 250.0f;
+            dispNo[i] = mbCoinDispCreate(&pos, result[i], dispF[i], TRUE);
+        }
+    }
+    do {
+        waitF = FALSE;
+        for (i = 0; i < 4; i++) {
+            if (dispNo[i] != 0 && !mbCoinDispKillCheck(dispNo[i])) {
+                waitF = TRUE;
+            }
+        }
+        HuPrcVSleep();
+    } while (waitF);
+}
+
+void mbCoinAddAllProcExec(int num0, int num1, int num2, int num3,
+    BOOL dispF, BOOL fastF)
+{
+    int addNum[4];
+    int result[4];
+    HuVecF pos;
+    s16 dispNo;
+    int i;
+
+    addNum[0] = num0;
+    addNum[1] = num1;
+    addNum[2] = num2;
+    addNum[3] = num3;
+    CoinAddAllProc(addNum, fastF, result);
+    if (dispF) {
+        for (i = 0; i < 4; i++) {
+            if (result[i] != 0) {
+                mbPlayerPosGet(i, &pos);
+                pos.y += 250.0f;
+                dispNo = mbCoinDispCreate(&pos, result[i], TRUE, TRUE);
+            }
+        }
+        while (!mbCoinDispKillCheck(dispNo)) {
+            HuPrcVSleep();
+        }
+    }
+}
+
+void mbCoinAddAllExec(int num0, int num1, int num2, int num3)
+{
+    int addNum[4];
+    int result[4];
+
+    addNum[0] = num0;
+    addNum[1] = num1;
+    addNum[2] = num2;
+    addNum[3] = num3;
+    CoinAddAllProc(addNum, FALSE, result);
 }

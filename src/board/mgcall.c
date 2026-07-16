@@ -26,18 +26,18 @@ static const HuVec2f statusPos4PBase[GW_PLAYER_MAX] = {
     { 400.0f, 296.0f },
 };
 
-static const HuVec2f statusPos1Vs3Base[GW_PLAYER_MAX] = {
-    { 176.0f, 240.0f },
-    { 400.0f, 160.0f },
-    { 400.0f, 240.0f },
-    { 400.0f, 320.0f },
-};
-
 static const HuVec2f statusPos2Vs2Base[GW_PLAYER_MAX] = {
     { 176.0f, 200.0f },
     { 176.0f, 280.0f },
     { 400.0f, 200.0f },
     { 400.0f, 280.0f },
+};
+
+static const HuVec2f statusPos1Vs3Base[GW_PLAYER_MAX] = {
+    { 176.0f, 240.0f },
+    { 400.0f, 160.0f },
+    { 400.0f, 240.0f },
+    { 400.0f, 320.0f },
 };
 
 static const HuVec2f statusPosKettouBase[2] = {
@@ -81,7 +81,7 @@ static int mgCallHisSize[9] = {
     0,
 };
 
-static int mgCallDataDir = -1;
+static u32 mgCallDataDir = -1;
 static OMOBJ *mgCallVsEffOMObj;
 static s16 mgCallFocus;
 
@@ -160,7 +160,7 @@ void mbMgRouletteFocusKill(BOOL killF)
 {
     MGLISTWORK *work = omObjGetWork(mgListObj[mgCallFocus], MGLISTWORK);
 
-    work->killF = killF;
+    work->dispF = killF;
 }
 
 static BOOL MgCallHisCheck(int type, s16 no)
@@ -202,8 +202,9 @@ BOOL mbMgCallSingleOnCheck(void)
 
 static u32 MgCallBattleMesGet(u32 mess)
 {
-    if (GwSystem.curTime) {
-        mess += 4;
+    if (!GwSystem.curTime) {
+        return mess;
+    } else {
+        return mess + 4;
     }
-    return mess;
 }
