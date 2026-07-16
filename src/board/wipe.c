@@ -31,7 +31,7 @@ typedef struct WipeSpecialData_s {
     s16 masuModelId[3];
     s16 hookModelId;
     u32 texSize;
-    void *texData;
+    u16 *texData;
     void *work;
     int type;
 } WIPE_SPECIAL_DATA;
@@ -1074,6 +1074,9 @@ void mbWipeDissolveFadeInTime(int time)
 void mbWipeSpecialInit(void)
 {
     WIPE_SPECIAL_DATA *wipeData = &wipeSpecialData;
+    u32 texSize;
+    void *texDataP;
+    u16 *texData;
     int i;
 
     memset(wipeData, 0, sizeof(*wipeData));
@@ -1088,8 +1091,10 @@ void mbWipeSpecialInit(void)
     }
     wipeData->texSize = GXGetTexBufferSize(320, 240, GX_TF_RGB565,
         GX_FALSE, 0);
-    wipeData->texData = HuMemDirectMallocNum(HEAP_HEAP,
-        wipeData->texSize, HU_MEMNUM_OVL);
+    texSize = wipeData->texSize;
+    texDataP = HuMemDirectMallocNum(HEAP_HEAP, texSize, HU_MEMNUM_OVL);
+    texData = texDataP;
+    wipeData->texData = texData;
     DCFlushRange(wipeData->texData, wipeData->texSize);
     wipeData->hookModelId = Hu3DHookFuncCreate(WipeSpecialDraw);
     Hu3DModelCameraSet(wipeData->hookModelId, HU3D_CAM2);

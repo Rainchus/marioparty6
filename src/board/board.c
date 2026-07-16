@@ -3,6 +3,7 @@
 
 #include "game/board/main.h"
 #include "game/board/pause.h"
+#include "game/board/player.h"
 #include "game/hu3d.h"
 #include "game/data.h"
 #include "game/gamework.h"
@@ -106,12 +107,6 @@ extern void mbev_CapBankCoinInit(void);
 extern void mbev_CapInit(void);
 extern void mbMasuClose(void);
 extern void mbMasuPlayerPrizeReset(s32 playerNo);
-extern void mbPlayerInit(BOOL partyF);
-extern void mbPlayerClose(void);
-extern void mbPlayerTurnInitHookSet(MBHOOK hook);
-extern void mbPlayerTurnCloseHookSet(MBHOOK hook);
-extern void mbPlayerCoinSet(s32 playerNo, s16 coin);
-extern void mbPlayerTeamCoinSet(s32 teamNo, s16 coin);
 extern void mbStatusInit(void);
 extern void mbStatusClose(void);
 extern void mbStatusDispForceSetAll(BOOL dispF);
@@ -126,7 +121,6 @@ extern void fn_8019A620(void);
 extern void mbSingleInit(void);
 extern void mbSingleClose(void);
 extern void mbSingleSaveInit(s32 boardNo, s32 storyDif, s32 mgPack);
-extern void mbSingleTurnExec(s32 interruptF);
 extern void mbSingleGameEnd(void);
 extern s32 mbSingleCall(s32 mode, s32 arg);
 extern s32 mbev_SingleMgEnd(s32 playerNo);
@@ -143,7 +137,6 @@ extern void mbTelopLastTurnCreate(void);
 extern void mbTelopTimeChangeCreate(void);
 extern void mbTelopTimeChangeKill(void);
 extern BOOL mbTelopTimeChangeCheck(void);
-extern void mbTurnExec(s32 interruptF);
 extern void HuAudAllStop(void);
 extern void mbLightFuncSet(MBHOOK setHook, MBHOOK resetHook);
 extern void mbDirClose(void);
@@ -756,8 +749,7 @@ void mbSaveInit(s32 boardNo)
             GwPlayer[i].star = 0;
             GwSystem.tagF = FALSE;
         } else {
-            s32 handicap = GwPlayer[i].handicap;
-            GwPlayer[i].star = handicap;
+            GwPlayer[i].star = mbPlayerHandicapGet(i);
         }
         mbMasuPlayerPrizeReset(i);
         GwPlayer[i].coinTotalMg = 0;

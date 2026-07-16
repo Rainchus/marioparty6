@@ -45,6 +45,11 @@ static inline int mbPlayerGrpGet(int playerNo)
     return GwPlayer[playerNo].team;
 }
 
+static inline int mbPlayerHandicapGet(int playerNo)
+{
+    return GwPlayer[playerNo].handicap;
+}
+
 void mbPlayerTurnInitHookSet(void (*hook)(int playerNo));
 void mbPlayerTurnCloseHookSet(void (*hook)(int playerNo));
 void mbPlayerInit(BOOL noEventF);

@@ -60,9 +60,9 @@ void mbScrollClose(void)
 
 void mbev_Scroll(int playerNo, BOOL mapF)
 {
-    BOOL pauseDisableF;
-    BOOL result;
     int cameraStackNo;
+    BOOL result;
+    BOOL pauseDisableF;
 
     pauseDisableF = mbPauseDisableGet();
     mbPauseDisableSet(TRUE);
@@ -129,8 +129,8 @@ static void ScrollKill(void)
 static BOOL ScrollMain(int playerNo)
 {
     BOOL result;
-    s16 starMasuId;
     s16 winNo;
+    s16 starMasuId;
 
     if (mbWipeSpecialStatGet() == FALSE) {
         mbWipeDissolveFadeOut();
