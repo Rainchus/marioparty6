@@ -1,3 +1,9 @@
+#define _MATH_H
+#define M_PI 3.141592653589793
+double sin(double x);
+double cos(double x);
+double atan2(double y, double x);
+
 #include "datadir_enum.h"
 #include "game/data.h"
 #include "game/disp.h"
@@ -10,7 +16,6 @@
 #include "game/wipe.h"
 #include "game/board/main.h"
 
-#include <math.h>
 #include <string.h>
 
 extern BOOL mbTutorialExitReqGet(void);

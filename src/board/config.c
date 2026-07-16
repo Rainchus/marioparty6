@@ -1,14 +1,19 @@
+#include "game/board/main.h"
 #include "game/board/object.h"
 #include "game/board/player.h"
+#include "game/data.h"
 #include "game/disp.h"
 #include "game/esprite.h"
 #include "game/gamework.h"
 #include "game/hu3d.h"
 #include "game/memory.h"
+#include "game/process.h"
+#include "game/sprite.h"
 
 #include "dolphin/gx.h"
 #include "dolphin/mtx.h"
 
+extern void *mbMalloc(s32 size);
 extern void *mbMallocFlush(s32 size);
 extern void *mbMallocFlushModel(s32 size);
 
@@ -38,6 +43,7 @@ typedef struct PausePanelWork_s {
 static BOOL playerDispF[GW_PLAYER_MAX];
 
 static s32 configPadDisable;
+static HUPROCESS *pauseGuideProc;
 static PAUSE_PANEL_WORK *pausePanelWork;
 static BOOL pauseGuideKillF;
 static s32 pauseDispCopyModelId;
@@ -45,6 +51,8 @@ static s32 pauseDispCopyCounter;
 static void *pauseDispCopyFb;
 
 static void PauseDispCopyDraw(HU3D_MODEL *modelP, Mtx *mtx);
+static void PauseGuideMain(void);
+static void PauseGuideDestroy(void);
 static BOOL GWStorySingleCheck(void);
 
 void mbPauseDispCopyCreate(void)
@@ -140,6 +148,122 @@ static void PauseDispCopyDraw(HU3D_MODEL *modelP, Mtx *mtx)
     }
 }
 
+void mbPauseGuideCreate(void)
+{
+    pausePanelWork = mbMalloc(sizeof(PAUSE_PANEL_WORK) * 20);
+    pauseGuideKillF = FALSE;
+    pauseGuideProc = HuPrcChildCreate(PauseGuideMain, 0x2011, 0x2000, 0,
+        mbMainProc);
+    HuPrcDestructorSet2(pauseGuideProc, PauseGuideDestroy);
+    HuPrcSetStat(pauseGuideProc,
+        HU_PRC_STAT_PAUSE_ON | HU_PRC_STAT_UPAUSE_ON);
+}
+
+static void PauseGuideDestroy(void)
+{
+    int i;
+    PAUSE_PANEL_WORK *work;
+
+    if (pausePanelWork) {
+        for (i = 0; i < 20; i++) {
+        }
+        work = pausePanelWork;
+        HuMemDirectFree(work);
+        pausePanelWork = NULL;
+    }
+    pauseGuideProc = NULL;
+}
+
+s16 mbPausePanelCreate(int dataNum, unsigned int espDataNum)
+{
+    int i;
+    PAUSE_PANEL_WORK *work;
+    int panelId;
+
+    for (panelId = 1; panelId < 20; panelId++) {
+        if (pausePanelWork[panelId].modelId <= 0) {
+            break;
+        }
+    }
+    work = &pausePanelWork[panelId];
+    memset(work, 0, sizeof(PAUSE_PANEL_WORK));
+    work->scale = work->scaleStart = work->scaleTarget = work->scaleBase = 1.0f;
+    work->pos.z = work->posStart.z = work->posTarget.z = -500.0f;
+    work->modelId = mbObjCreate(mbBoardDataNumGet(DATANUM(DATA_bpause6, 0x25)),
+        NULL, FALSE);
+    mbObjCameraSet(work->modelId, 4);
+    mbObjLayerSet(work->modelId, 4);
+    {
+        MBMODELID modelId = work->modelId;
+
+        mbObjAttrSet(modelId, HU3D_MOTATTR_LOOP);
+    }
+    {
+        MBMODELID modelId = work->modelId;
+
+        mbObjAttrSet(modelId, 0x00200000);
+    }
+    mbObjDispSet(work->modelId, FALSE);
+    work->anim = HuSprAnimRead(HuDataSelHeapReadNum(
+        mbBoardDataNumGet(dataNum), HU_MEMNUM_OVL, HEAP_MODEL));
+    for (i = 0; i < 2; i++) {
+        if (i == 0) {
+            work->animId[0] = Hu3DAnimCreate(work->anim,
+                mbObjModelIDGet(work->modelId), "S3TCys77120");
+        } else {
+            work->animId[i] = Hu3DAnimLink(work->animId[0],
+                mbObjModelIDGet(work->modelId), "S3TCys77121");
+        }
+        Hu3DAnmNoSet(work->animId[i], 0);
+    }
+    work->batsuModelId = mbObjCreate(
+        mbBoardDataNumGet(DATANUM(DATA_bpause6, 0x24)), NULL, TRUE);
+    mbObjCameraSet(work->batsuModelId, 4);
+    mbObjLayerSet(work->batsuModelId, 4);
+    {
+        MBMODELID modelId = work->batsuModelId;
+
+        mbObjAttrSet(modelId, 0x00200000);
+    }
+    mbObjDispSet(work->batsuModelId, FALSE);
+    work->sprId = -1;
+    if (espDataNum != 0) {
+        work->sprId = espEntry(mbBoardDataNumGet(espDataNum), 100, 0);
+        espAttrSet(work->sprId, HUSPR_ATTR_LINEAR);
+        espDispOff(work->sprId);
+    }
+    return panelId;
+}
+
+void mbPausePanelKill(s16 panelId)
+{
+    PAUSE_PANEL_WORK *work = &pausePanelWork[panelId];
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        if (work->animId[i] >= 0) {
+            Hu3DAnimKill(work->animId[i]);
+        }
+        work->animId[i] = -1;
+    }
+    if (work->anim) {
+        HuSprAnimKill(work->anim);
+    }
+    work->anim = NULL;
+    if (work->modelId != 0) {
+        mbObjKill(work->modelId);
+        work->modelId = 0;
+    }
+    if (work->batsuModelId != 0) {
+        mbObjKill(work->batsuModelId);
+        work->batsuModelId = 0;
+    }
+    if (work->sprId >= 0) {
+        espKill(work->sprId);
+        work->sprId = -1;
+    }
+}
+
 void mbPauseGuideKill(void)
 {
     pauseGuideKillF = TRUE;
@@ -211,6 +335,44 @@ BOOL mbPausePanelFreezeGet(s16 panelId)
         freezeF = TRUE;
     }
     return freezeF;
+}
+
+void mbPausePanelSizeSet(s16 panelId, int time, float scale)
+{
+    PAUSE_PANEL_WORK *work = &pausePanelWork[panelId];
+
+    work->motion = 2;
+    work->maxTime = time;
+    work->time = 0;
+    work->scaleTarget = scale;
+    work->scaleStart = work->scale;
+}
+
+void mbPausePanelGrowSet(s16 panelId, int time, int delay, float scale)
+{
+    PAUSE_PANEL_WORK *work = &pausePanelWork[panelId];
+
+    work->motion = 4;
+    work->maxTime = time;
+    work->delay = delay + 1;
+    work->time = 0;
+    work->scaleTarget = 1.0f;
+    work->scaleStart = work->scale = 0.00001f;
+    work->scaleBase = scale;
+    mbObjDispSet(work->modelId, FALSE);
+    if (work->batsuModelId != 0) {
+        mbObjDispSet(work->batsuModelId, FALSE);
+    }
+}
+
+void mbPausePanelShrinkSet(s16 panelId, int time, int delay)
+{
+    PAUSE_PANEL_WORK *work = &pausePanelWork[panelId];
+
+    work->motion = 5;
+    work->maxTime = time;
+    work->delay = delay + 1;
+    work->time = 0;
 }
 
 void mbConfigPadDisableSet(BOOL disableF)

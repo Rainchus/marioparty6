@@ -57,7 +57,7 @@ extern void mbTelopTimeDispSet(s16 id, BOOL disp);
 extern void mbTelopTimeSprKill(s16 id);
 extern void mbNormPosto3D(HuVecF *src, int camId, HuVecF *dst);
 extern BOOL mbConfigExec(int playerNo, int modelId);
-extern s16 mbPausePanelCreate(int dataNum, int type);
+extern s16 mbPausePanelCreate(int dataNum, unsigned int espDataNum);
 extern void mbPausePanelPosSet(s16 id, float x, float y);
 extern void mbPausePanelBankSet(s16 id, int bank);
 extern void mbPausePanelGrowSet(s16 id, int a, int b, float scale);
