@@ -870,7 +870,7 @@ static void CoinEffHook(HU3D_MODEL *modelP, MBPARTICLE *particleP, Mtx mtx)
             particleDataP->rot.z += particleDataP->scaleBase;
             particleDataP->time--;
             if (particleDataP->time < 10) {
-                particleDataP->color.a = particleDataP->color.a * 0.8f;
+                particleDataP->color.a *= 0.8f;
                 if (particleDataP->time == 0) {
                     particleDataP->color.a = 0;
                     particleDataP->scale = 0.0f;
@@ -1311,8 +1311,8 @@ int mbStatTeamMinValGet(int teamNo, int value, int max, int *addNum,
     int playerNo[2];
     int stat;
     int player;
-    int temp;
     int i;
+    int j;
 
     stat = value;
     for (i = 0; i < 2; i++) {
@@ -1323,13 +1323,13 @@ int mbStatTeamMinValGet(int teamNo, int value, int max, int *addNum,
     }
     if (stat > max) {
         if (addNum[playerNo[0]] > addNum[playerNo[1]]) {
-            temp = playerNo[0];
+            player = playerNo[0];
             playerNo[0] = playerNo[1];
-            playerNo[1] = temp;
+            playerNo[1] = player;
         }
         stat = value;
-        for (i = 0; i < 2; i++) {
-            player = playerNo[i];
+        for (j = 0; j < 2; j++) {
+            player = playerNo[j];
             if (stat + addNum[player] > max) {
                 result[player] = max - stat;
                 stat = max;
@@ -1339,13 +1339,13 @@ int mbStatTeamMinValGet(int teamNo, int value, int max, int *addNum,
         }
     } else if (stat < 0) {
         if (addNum[playerNo[0]] < addNum[playerNo[1]]) {
-            temp = playerNo[0];
+            player = playerNo[0];
             playerNo[0] = playerNo[1];
-            playerNo[1] = temp;
+            playerNo[1] = player;
         }
         stat = value;
-        for (i = 0; i < 2; i++) {
-            player = playerNo[i];
+        for (j = 0; j < 2; j++) {
+            player = playerNo[j];
             if (stat + addNum[player] < 0) {
                 result[player] = -stat;
                 stat = 0;

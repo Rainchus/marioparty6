@@ -1271,17 +1271,16 @@ void mbMoveNumCreateColor(int playerNo, BOOL carF, int color)
     objP->trans.z = posNorm.z;
     if (carF) {
         Mtx lookAt;
-        HuVecF posCamera;
         float tanFov;
 
         mbPlayerPosGet(playerNo, &pos);
         pos.y += 300.0f;
         MTXLookAt(lookAt, &cameraP->pos, &cameraP->up, &cameraP->target);
-        MTXMultVec(lookAt, &pos, &posCamera);
+        MTXMultVec(lookAt, &pos, &posNorm);
         tanFov = HuSin(cameraP->fov * 0.5f)
             / HuCos(cameraP->fov * 0.5f);
-        objP->rot.y = posCamera.y / (tanFov * posCamera.z);
-        objP->rot.z = -posCamera.z;
+        objP->rot.y = posNorm.y / (tanFov * posNorm.z);
+        objP->rot.z = -posNorm.z;
     }
 }
 
@@ -2751,12 +2750,13 @@ static void PlayerBiriQOMExec(OMOBJ *objP)
         if (!killF) {
             PlayerBiriQKill(workP->playerNo);
         }
-        if (objP->data != NULL) {
+        if (objP->data) {
             void *dataP = objP->data;
 
             HuMemDirectFree(dataP);
         }
         omDelObjEx(HuPrcCurrentGet(), objP);
+        return;
     }
 }
 

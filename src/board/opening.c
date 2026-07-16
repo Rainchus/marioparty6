@@ -590,13 +590,13 @@ static void PlayerOrderSet(int *order)
         }
     }
 
-    if (GwSystem.tagF) {
+    if (GWTeamFGet()) {
         for (i = 0; i < GW_PLAYER_MAX / 2; i++) {
             teamCoin[i] = 0;
             teamStar[i] = 0;
         }
         for (i = 0; i < GW_PLAYER_MAX; i++) {
-            teamNo = GwPlayer[i].team;
+            teamNo = mbPlayerGrpGet(i);
             teamCoin[teamNo] += GwPlayer[i].coin;
             teamStar[teamNo] += GwPlayer[i].star;
             GwPlayer[i].coin = 0;
@@ -635,7 +635,7 @@ void mbev_OpeningSingle(void)
             0x4000, 0, mbMainProc);
     }
     HuPrcDestructorSet2(openingSingleProc, ev_OpeningSingleKill);
-    while (!work->endF) {
+    do {
         if (work->dispF && mbTelopCheck()) {
             if (winId < 0) {
                 winId = mbWinCreateHelp(0x0026000C);
@@ -656,7 +656,7 @@ void mbev_OpeningSingle(void)
             }
         }
         HuPrcVSleep();
-    }
+    } while (!work->endF);
     mbWipeWait();
     if (!WipeCheckIn()) {
         mbWipeFadeOut();
@@ -1107,6 +1107,7 @@ void mbOpeningCameraPosRestore(void)
 static void OpeningSingleEffHook(HU3D_MODEL *modelP, MBPARTICLE *particleP,
     Mtx mtx)
 {
+    HuVecF dir;
     GXColor colorTbl[4] = {
         { 255, 255, 255, 128 },
         { 128, 255, 0, 128 },
@@ -1114,7 +1115,6 @@ static void OpeningSingleEffHook(HU3D_MODEL *modelP, MBPARTICLE *particleP,
         { 255, 128, 255, 128 }
     };
     MBPARTICLEDATA *dataP;
-    HuVecF dir;
     float rand;
     int i;
 
@@ -1144,9 +1144,9 @@ static void OpeningSingleEffHook(HU3D_MODEL *modelP, MBPARTICLE *particleP,
             VECNormalize(&dir, &dir);
             VECScale(&dir, &dir, 40.0f);
 
-            dataP->pos.x = guideCurPos.x + dir.x;
-            dataP->pos.y = guideCurPos.y + dir.y;
-            dataP->pos.z = guideCurPos.z + dir.z;
+            dataP->pos.x = dir.x + guideCurPos.x;
+            dataP->pos.y = dir.y + guideCurPos.y;
+            dataP->pos.z = dir.z + guideCurPos.z;
             dataP->vel.x = 0.0f;
             dataP->vel.y = 0.0f;
             dataP->vel.z = 0.0f;

@@ -84,7 +84,7 @@ static void ev_Last5Coin40(int playerNo, OMOBJ *guideObj)
     MBCOINOBJ *coinObj;
     LAST5COINWORK *coinWork;
     s16 coinObjId[LAST5_COIN_NUM];
-    int activeNum;
+    int activeNum = 0;
     int coinNum = 1;
     int i;
 
