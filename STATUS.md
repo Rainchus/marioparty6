@@ -19,8 +19,17 @@ The separate compiler runtime has 19/19 exact functions and `0xA44` text bytes
 under the authenticated original-assembly exception. Both owners are now
 configured `Matching`, and the source-linked `0x10A54` code-byte REL passes
 the complete object, relocation, REL, SHA, and DOL gates. The former
-boot-to-mode-select blocker is therefore closed; the remaining Priority 1 work
-returns to `board/`.
+boot-to-mode-select blocker is therefore closed.
+
+The current flow priority is `mdpartydll.rel`. Wave 80 opens its application,
+stage, and compiler-runtime ownership. The two clean-C owners now represent 90
+of 315 target functions and `0x73A4/0x467FC` text bytes; relocation-aware
+objdiff proves 87 functions and `0x6918` bytes exact. Both owners remain
+`NonMatching`, so none of those fallback-linked bytes enters the recovered
+module total. The separate 19-function, `0xA44` compiler runtime is exact and
+source-linked only under the authenticated original-assembly exception.
+Evidence is retained in
+[`docs/native_matching_wave80.md`](docs/native_matching_wave80.md).
 
 The evidence-backed target ledger at this build is:
 
@@ -47,10 +56,14 @@ The evidence-backed target ledger at this build is:
   byte-identical
 - `build/GP6E01/mdseldll/mdseldll.rel` SHA-1:
   `e6c20b24cfca8135ed8c49ce59108100277444c0`
-- DTK progress at that build: 9.79% code and 31.82% data overall; 47.42% code
-  and 74.59% data in the DOL; 1.81% code and 4.71% data in REL modules
-- Matching owners at that build: 305 of 897 overall, 294 of 396 in the DOL,
-  and 11 of 501 in the REL modules
+- `cmp orig/GP6E01/files/dll/mdpartydll.rel build/GP6E01/mdpartydll/mdpartydll.rel`:
+  byte-identical
+- `build/GP6E01/mdpartydll/mdpartydll.rel` SHA-1:
+  `519debb149ef42eda1ab3b0a4d2b3132b4f3e3cc`
+- DTK progress at that build: 9.81% code and 31.82% data overall; 47.42% code
+  and 74.59% data in the DOL; 1.83% code and 4.71% data in REL modules
+- Matching owners at that build: 306 of 900 overall, 294 of 396 in the DOL,
+  and 12 of 504 in the REL modules
 - DOL policy split: 255 matching owners without the assembly exception, 39
   matching owners admitted under the source-authentication exception, 101
   `C-not-yet-matched` fallback owners, and 1 `original-was-asm` fallback owner
@@ -1134,7 +1147,7 @@ decompiled owners. Evidence is retained in
 
 ### Active REL fallback taxonomy
 
-The same two buckets apply to every configured REL fallback owner. These four
+The same two buckets apply to every configured REL fallback owner. These six
 owners are separate from the 396-owner DOL ledger:
 
 | Owner | Bucket and reason | Authentication or current evidence |
@@ -1143,6 +1156,8 @@ owners are separate from the 396-owner DOL ledger:
 | `REL/selmenuDll/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; longstanding fallback, never de-flipped | Same MP5 Runtime source authentication; MP6 object/link proof remains pending. |
 | `REL/fileseldll/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; longstanding fallback, never de-flipped | Same MP5 Runtime source authentication; MP6 object/link proof remains pending. |
 | `REL/meschkdll/meschkdll.c` | `C-not-yet-matched`; `SRC-DIVERGES`; never de-flipped | Five functions are exact; `fn_1_188` remains divergent, so the owner stays fallback-linked. |
+| `REL/mdpartydll/mdparty.c` | `C-not-yet-matched`; `SRC-DIVERGES`; new owner, never de-flipped | 61/258 functions and `0x4D20/0x3F424` target text bytes are represented. Sixty functions and `0x48CC` bytes are exact; `fn_1_22A8` remains target/source `0x454/0x454` at 99.444046% with parameter-color and `HuVecF` stack-slot rotation. |
+| `REL/mdpartydll/stage.c` | `C-not-yet-matched`; `SRC-DIVERGES`; new owner, never de-flipped | 29/57 functions and `0x2684/0x73D8` target text bytes are represented. Twenty-seven functions and `0x204C` bytes are exact; `fn_1_3F5EC` is target/source `0x480/0x464` at 91.538190% and `fn_1_3FC60` is `0x1E4/0x1D4` at 88.727270%. |
 
 Wave 70 resolves the two former `mdseldll` fallback rows. Application owner
 `REL/mdseldll/mdsel.c` leaves `C-not-yet-matched` after all 113 functions and
@@ -1153,6 +1168,14 @@ exception: ProjectPiki/Pikmin `24378f0e`
 citation, MP5 `e246f9d` corroborates the family, and the MP6 object plus full
 container gate proves the admitted target bytes. This promotion does not
 reclassify its assembly as clean C.
+
+Wave 80 resolves `REL/mdpartydll/runtime.c` in the same exception bucket.
+ProjectPiki/Pikmin `24378f0e`,
+`src/Runtime/PPCEABI/H/runtime.c`, supplies the Matching-owner source-shape
+citation; MP5 `e246f9d` corroborates the compiler-runtime family. The MP6
+object proves all 19 functions, `.text 0xA44`, and `.rodata 0x18` exact, and
+the final 137-file, `main.dol`, and `mdpartydll.rel` gates are byte-identical.
+The runtime is source-linked assembly and contributes zero clean-C bytes.
 
 ## Named DOL ownership
 
