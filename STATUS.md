@@ -21,15 +21,15 @@ configured `Matching`, and the source-linked `0x10A54` code-byte REL passes
 the complete object, relocation, REL, SHA, and DOL gates. The former
 boot-to-mode-select blocker is therefore closed.
 
-The current flow priority is `mdpartydll.rel`. Wave 80 opens its application,
-stage, and compiler-runtime ownership. The two clean-C owners now represent 90
-of 315 target functions and `0x73A4/0x467FC` text bytes; relocation-aware
-objdiff proves 87 functions and `0x6918` bytes exact. Both owners remain
-`NonMatching`, so none of those fallback-linked bytes enters the recovered
-module total. The separate 19-function, `0xA44` compiler runtime is exact and
-source-linked only under the authenticated original-assembly exception.
-Evidence is retained in
-[`docs/native_matching_wave80.md`](docs/native_matching_wave80.md).
+The current flow priority is `mdpartydll.rel`. Wave 81 expands its application
+and stage ownership to 159 of 315 represented target functions and
+`0xC7F0/0x467FC` text bytes; relocation-aware objdiff proves 156 functions and
+exactly `0xC000` bytes. All 48 represented stage functions are exact. Both
+clean-C owners remain `NonMatching`, so none of those fallback-linked bytes
+enters the recovered-module total. The separate 19-function, `0xA44` compiler
+runtime remains exact and source-linked only under the authenticated
+original-assembly exception. Evidence is retained in
+[`docs/native_matching_wave81.md`](docs/native_matching_wave81.md).
 
 The evidence-backed target ledger at this build is:
 
@@ -1156,8 +1156,8 @@ owners are separate from the 396-owner DOL ledger:
 | `REL/selmenuDll/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; longstanding fallback, never de-flipped | Same MP5 Runtime source authentication; MP6 object/link proof remains pending. |
 | `REL/fileseldll/runtime.c` | `original-was-asm`; `ASM-GATE-PENDING`; longstanding fallback, never de-flipped | Same MP5 Runtime source authentication; MP6 object/link proof remains pending. |
 | `REL/meschkdll/meschkdll.c` | `C-not-yet-matched`; `SRC-DIVERGES`; never de-flipped | Five functions are exact; `fn_1_188` remains divergent, so the owner stays fallback-linked. |
-| `REL/mdpartydll/mdparty.c` | `C-not-yet-matched`; `SRC-DIVERGES`; new owner, never de-flipped | 61/258 functions and `0x4D20/0x3F424` target text bytes are represented. Sixty functions and `0x48CC` bytes are exact; `fn_1_22A8` remains target/source `0x454/0x454` at 99.444046% with parameter-color and `HuVecF` stack-slot rotation. |
-| `REL/mdpartydll/stage.c` | `C-not-yet-matched`; `SRC-DIVERGES`; new owner, never de-flipped | 29/57 functions and `0x2684/0x73D8` target text bytes are represented. Twenty-seven functions and `0x204C` bytes are exact; `fn_1_3F5EC` is target/source `0x480/0x464` at 91.538190% and `fn_1_3FC60` is `0x1E4/0x1D4` at 88.727270%. |
+| `REL/mdpartydll/mdparty.c` | `C-not-yet-matched`; `SRC-DIVERGES`; new owner, never de-flipped | 111/258 functions and `0x7F34/0x3F424` target text bytes are represented. 108 functions and `0x7744` bytes are exact. The only represented residues are `fn_1_2B0` (`0x150/0x14C`, 98.095240%), its `fn_1_400` inline copy (`0x24C/0x248`, 98.911570%), and `fn_1_22A8` (`0x454/0x454`, 99.444046%). No fake zero local or register force was admitted. |
+| `REL/mdpartydll/stage.c` | `C-not-yet-matched`; `SRC-DIVERGES`; new owner, never de-flipped | 48/57 functions and `0x48BC/0x73D8` target text bytes are represented and all 48 are data-value exact. Exact `.data 0x24` and `.bss 0xE4` ownership follows the same-game extern-before-code/reverse-definition shape. Nine target functions remain unrepresented, so the complete object still diverges and the owner stays fallback-linked. Wave 81 also corrects the prior represented-byte ledger from `0x2684` to the target-proven `0x26B0`; `fn_1_40A9C` supplied the omitted `0x2C`. |
 
 Wave 70 resolves the two former `mdseldll` fallback rows. Application owner
 `REL/mdseldll/mdsel.c` leaves `C-not-yet-matched` after all 113 functions and
@@ -1176,6 +1176,15 @@ citation; MP5 `e246f9d` corroborates the compiler-runtime family. The MP6
 object proves all 19 functions, `.text 0xA44`, and `.rodata 0x18` exact, and
 the final 137-file, `main.dol`, and `mdpartydll.rel` gates are byte-identical.
 The runtime is source-linked assembly and contributes zero clean-C bytes.
+
+Wave 81 does not change any fallback bucket or exercise another assembly
+exception. It adds 69 represented functions and `0x5420` target bytes against
+the corrected Wave 80 baseline, while adding 69 exact functions and `0x56E8`
+exact bytes after closing both former stage residues. `mdparty.c` and `stage.c`
+remain `C-not-yet-matched`; the full 137-file gate and both `main.dol` and
+`mdpartydll.rel` comparisons remain byte-identical. Detailed function, layout,
+and no-fakematch evidence is retained in
+[`docs/native_matching_wave81.md`](docs/native_matching_wave81.md).
 
 ## Named DOL ownership
 

@@ -12,6 +12,7 @@
 #include "game/object.h"
 #include "game/sprite.h"
 #include "game/window.h"
+#include "game/wipe.h"
 
 #define sind(x) sin((M_PI * (x)) / 180.0)
 
@@ -47,13 +48,62 @@ typedef struct Lbl1DataC0Entry {
 typedef struct Lbl1Bss288Entry {
     HU3D_MODELID modelId;
     HU3D_ANIMID animId[4];
-    u8 unk_A[0x2E];
+    u8 unk_A[0x26];
+    s16 unk_30;
+    u8 unk_32[6];
 } LBL_1_BSS_288_ENTRY;
 
 typedef struct Lbl1Bss1C {
     OMOBJ *obj;
     u8 unk_4[4];
 } LBL_1_BSS_1C;
+
+typedef struct Lbl1Bss228Entry {
+    s16 state;
+    s16 pad;
+    HuVecF pos;
+    HuVecF unk_10;
+    HuVecF unk_1C;
+    float time;
+    float duration;
+} LBL_1_BSS_228_ENTRY;
+
+typedef struct Lbl1Bss1C8Entry {
+    s16 state;
+    s16 pad;
+    HuVecF pos;
+    HuVecF unk_10;
+    HuVecF unk_1C;
+    float time;
+    float duration;
+} LBL_1_BSS_1C8_ENTRY;
+
+typedef struct Lbl1Bss9BCEntry {
+    s16 unk_0;
+    s16 unk_2;
+    s16 unk_4;
+    s16 unk_6;
+    s16 chrSel;
+    s16 unk_A;
+    s16 unk_C;
+} LBL_1_BSS_9BC_ENTRY;
+
+typedef struct Lbl1Bss9F4 {
+    s16 unk_0;
+    s16 unk_2;
+    s16 unk_4;
+    s16 unk_6;
+    s16 unk_8;
+    s16 unk_A;
+    s16 unk_C;
+    s16 unk_E;
+    s16 unk_10;
+    s16 unk_12;
+    s16 unk_14;
+    s16 unk_16;
+    s16 unk_18;
+    s16 unk_1A;
+} LBL_1_BSS_9F4;
 
 extern const VoidFunc _ctors[];
 extern const VoidFunc _dtors[];
@@ -65,6 +115,11 @@ extern int HuAudFXPlayPan(int seId, int pan);
 extern s16 lbl_1_bss_28;
 extern s16 lbl_1_bss_2A;
 extern s16 lbl_1_bss_2C;
+extern s16 lbl_1_bss_2E;
+extern HuVecF lbl_1_bss_80;
+extern HuVecF lbl_1_bss_8C[2];
+extern HuVecF lbl_1_bss_A4[4];
+extern HuVecF lbl_1_bss_D4[4];
 extern OMOBJMAN *lbl_1_bss_0;
 extern OMOBJ *lbl_1_bss_4;
 extern OMOBJ *lbl_1_bss_8;
@@ -74,39 +129,61 @@ extern OMOBJ *lbl_1_bss_14;
 extern OMOBJ *lbl_1_bss_18;
 extern LBL_1_BSS_1C lbl_1_bss_1C;
 extern OMOBJ *lbl_1_bss_24;
+extern OMOBJ *lbl_1_bss_30;
 extern HUWINID lbl_1_bss_104[2];
+extern LBL_1_BSS_1C8_ENTRY lbl_1_bss_108[4];
+extern LBL_1_BSS_1C8_ENTRY lbl_1_bss_1C8[2];
+extern LBL_1_BSS_228_ENTRY lbl_1_bss_228[2];
 extern LBL_1_BSS_288_ENTRY lbl_1_bss_288[25];
 extern ANIMDATA *lbl_1_bss_800[41];
 extern HUSPRID lbl_1_bss_8A4[58];
 extern HUSPR_GROUPID lbl_1_bss_918[18];
 extern ANIMDATA *lbl_1_bss_93C[32];
+extern LBL_1_BSS_9BC_ENTRY lbl_1_bss_9BC[4];
+extern LBL_1_BSS_9F4 lbl_1_bss_9F4;
 extern MDCAMERA_WORK lbl_1_bss_A10;
 extern HUWINID lbl_1_bss_A60[4];
 extern HU3D_LIGHTID lbl_1_bss_A68[2];
+extern s32 lbl_1_bss_A6C[5];
 
 extern s32 lbl_1_data_BC8;
+extern s16 lbl_1_data_4[3][4];
 extern u32 lbl_1_data_1C[32];
 extern s16 lbl_1_data_9C[18];
 extern LBL_1_DATA_C0_ENTRY lbl_1_data_C0[58];
 extern u32 lbl_1_data_800[41];
+extern HuVecF lbl_1_data_8A4[67];
 extern char lbl_1_data_BCC[];
 extern s16 lbl_1_data_BEE[7];
+extern u32 lbl_1_data_BFC[14];
+extern char lbl_1_data_C34[];
 extern char lbl_1_data_C66[];
 extern char lbl_1_data_C77[];
 extern char lbl_1_data_C89[];
 extern char lbl_1_data_C9B[];
 extern char lbl_1_data_CA9[];
+extern char lbl_1_data_CAB[];
 extern char lbl_1_data_CDC[];
 extern char lbl_1_data_D0C[];
+extern char lbl_1_data_DB4[];
+extern char lbl_1_data_DC6[];
 extern char lbl_1_data_DF2[];
 extern char lbl_1_data_DFA[];
 extern char lbl_1_data_E02[];
 extern char lbl_1_data_E0A[];
 extern s16 lbl_1_data_DA2[3];
 extern s32 lbl_1_data_DA8[3];
+extern s16 lbl_1_data_DE6[6];
 extern char lbl_1_data_ED8[];
 
 void fn_1_0(HUWINID winId, u32 mess, s16 index);
+void fn_1_1B4(void);
+void fn_1_2B0(void);
+void fn_1_400(void);
+void fn_1_64C(void);
+void fn_1_718(void);
+void fn_1_E30(void);
+void fn_1_109C(s16 arg0);
 void fn_1_1248(void);
 void fn_1_12F8(void);
 void fn_1_2D1D4(void);
@@ -115,6 +192,15 @@ void fn_1_2DFD4(OMOBJ *obj, MDCAMERA_WORK *camera);
 void ObjectSetup(void);
 void fn_1_32D0(OMOBJ *obj);
 void fn_1_467C(void);
+void fn_1_4A84(OMOBJ *obj);
+void fn_1_4EDC(OMOBJ *obj);
+void fn_1_50EC(OMOBJ *obj);
+void fn_1_5208(OMOBJ *obj);
+void fn_1_5324(OMOBJ *obj);
+void fn_1_5A18(OMOBJ *obj);
+void fn_1_6324(OMOBJ *obj);
+void fn_1_6A20(OMOBJ *obj);
+void fn_1_737C(OMOBJ *obj);
 void fn_1_605C(OMOBJ *obj);
 void fn_1_7064(OMOBJ *obj);
 void fn_1_7ED4(OMOBJ *obj);
@@ -123,8 +209,16 @@ void fn_1_9218(OMOBJ *obj);
 void fn_1_A5D8(OMOBJ *obj);
 void fn_1_B4C8(OMOBJ *obj);
 void fn_1_D748(void);
+void fn_1_10518(OMOBJ *obj);
+void fn_1_2C874(void);
 void fn_1_2CE00(void);
 void fn_1_44DCC(OMOBJMAN *objman);
+void fn_1_43F3C(s16 arg0, HuVecF *arg1, s16 arg2);
+void fn_1_45F3C(s16 arg0, HuVecF *arg1, s16 arg2, s16 arg3);
+
+extern void mbSaveInit(s32 boardNo);
+extern void mbSavePartyInit(
+    s32, s32, s32, s32, s32, s32, s32, s32);
 
 void fn_1_0(HUWINID winId, u32 mess, s16 index)
 {
@@ -152,6 +246,226 @@ void fn_1_0(HUWINID winId, u32 mess, s16 index)
                 }
                 break;
             }
+        }
+    }
+}
+
+void fn_1_1B4(void)
+{
+    lbl_1_bss_2A = FALSE;
+    lbl_1_bss_2C = FALSE;
+    if (GWBankFlagGet(2)) {
+        lbl_1_bss_2A = TRUE;
+    }
+    if (GWBankFlagGet(3)) {
+        lbl_1_bss_2C = TRUE;
+    }
+    lbl_1_data_BEE[0] = TRUE;
+    lbl_1_data_BEE[1] = TRUE;
+    lbl_1_data_BEE[2] = TRUE;
+    lbl_1_data_BEE[3] = TRUE;
+    lbl_1_data_BEE[4] = TRUE;
+    lbl_1_data_BEE[5] = FALSE;
+    if (GWBankFlagGet(0x33)) {
+        lbl_1_data_BEE[5] = TRUE;
+    }
+}
+
+inline void fn_1_1B4(void);
+
+void fn_1_2B0(void)
+{
+    s16 i;
+    s32 status;
+
+    for (i = 0; i < 4; i++) {
+        if (CharMotionAMemPGet(GwPlayer[i].charNo) == 0) {
+            break;
+        }
+    }
+    if (i != 4) {
+        CharDataClose(-1);
+        for (i = 0; i < 4; i++) {
+            status = HuDataDirReadAsync(
+                CharDataDirTbl[GwPlayer[i].charNo][4]);
+            if (status != -1) {
+                while (!HuDataGetAsyncStat(status)) {
+                    HuPrcVSleep();
+                }
+            }
+            CharMotionInit(GwPlayer[i].charNo);
+            HuDataDirClose(CharDataDirTbl[GwPlayer[i].charNo][4]);
+        }
+    }
+}
+
+inline void fn_1_2B0(void);
+
+void fn_1_400(void)
+{
+    s32 dataDir[2] = { DATA_board_us, DATA_capsule };
+    s16 i;
+    s32 status;
+
+    fn_1_2B0();
+    for (i = 0; i < 2; i++) {
+        status = HuDataDirReadAsync(dataDir[i]);
+        if (status != -1) {
+            while (!HuDataGetAsyncStat(status)) {
+                HuPrcVSleep();
+            }
+        }
+        HuAR_MRAMtoARAM(dataDir[i]);
+        while (HuARDMACheck()) {
+            HuPrcVSleep();
+        }
+        HuDataDirClose(dataDir[i]);
+    }
+    status = HuDataDirReadAsync(lbl_1_data_BFC[GwSystem.boardNo]);
+    if (status != -1) {
+        while (!HuDataGetAsyncStat(status)) {
+            HuPrcVSleep();
+        }
+    }
+    lbl_1_bss_2E = TRUE;
+    HuPrcEnd();
+    while (TRUE) {
+        HuPrcVSleep();
+    }
+}
+
+void fn_1_64C(void)
+{
+    lbl_1_bss_2E = FALSE;
+    OSReport(lbl_1_data_C34);
+    OSReport(lbl_1_data_C66, 0x21);
+    OSReport(lbl_1_data_C77, 0x24);
+    OSReport(lbl_1_data_C89, 0x9B);
+    OSReport(lbl_1_data_C9B, 0xF2);
+    HuAMemDump();
+    OSReport(lbl_1_data_CA9);
+    HuDataDirClose(DATA_mdparty);
+    HuPrcChildCreate(fn_1_400, 0x100, 0x4000, 0, lbl_1_bss_0);
+}
+
+void fn_1_718(void)
+{
+    s16 i;
+
+    lbl_1_bss_9F4.unk_A++;
+    lbl_1_bss_9F4.unk_A %= 2;
+    GwSystem.tagF = lbl_1_bss_9F4.unk_0;
+    GwSystem.bonusStarF = lbl_1_bss_9F4.unk_A;
+    GwSystem.mgPack = lbl_1_bss_9F4.unk_8;
+    GwSystem.turnNo = TRUE;
+    GwSystem.turnMax = (lbl_1_bss_9F4.unk_6 * 5) + 10;
+    GwSystem.boardNo = lbl_1_bss_9F4.unk_4;
+    GwCommon.partyMgPack = GwSystem.mgPack;
+    GwCommon.confTag = lbl_1_bss_9F4.unk_0;
+    GwCommon.confTurnNum = (lbl_1_bss_9F4.unk_6 * 5) + 10;
+    GwCommon.partyMgPack = lbl_1_bss_9F4.unk_8;
+    GwCommon.confBonusStar = lbl_1_bss_9F4.unk_A;
+    GwCommon.lastBoard = lbl_1_bss_9F4.unk_4;
+
+    for (i = 0; i < 4; i++) {
+        GwPlayer[i].comF = lbl_1_bss_9BC[i].unk_4;
+        GwPlayer[i].comDif = lbl_1_bss_9BC[i].unk_6;
+        GwPlayer[i].charNo = lbl_1_bss_9BC[i].chrSel;
+        GwPlayer[i].padNo = lbl_1_bss_9BC[i].unk_A;
+        GwPlayer[i].handicap = lbl_1_bss_9BC[i].unk_C;
+        GwPlayer[i].team = FALSE;
+    }
+    if (GwSystem.tagF) {
+        for (i = 0; i < 4; i++) {
+            GwPlayer[i].handicap = 0;
+        }
+        GwPlayer[lbl_1_data_4[lbl_1_bss_9F4.unk_E][0]].handicap =
+            lbl_1_bss_9BC[0].unk_C;
+        GwPlayer[lbl_1_data_4[lbl_1_bss_9F4.unk_E][2]].handicap =
+            lbl_1_bss_9BC[1].unk_C;
+        GwPlayer[lbl_1_data_4[lbl_1_bss_9F4.unk_E][0]].team = FALSE;
+        GwPlayer[lbl_1_data_4[lbl_1_bss_9F4.unk_E][1]].team = FALSE;
+        GwPlayer[lbl_1_data_4[lbl_1_bss_9F4.unk_E][2]].team = TRUE;
+        GwPlayer[lbl_1_data_4[lbl_1_bss_9F4.unk_E][3]].team = TRUE;
+    }
+    for (i = 0; i < 4; i++) {
+        GwPlayerConf[i].grpNo = FALSE;
+        GwPlayerConf[i].type = GwPlayer[i].comF;
+        GwPlayerConf[i].comDif = GwPlayer[i].comDif;
+        GwPlayerConf[i].charNo = GwPlayer[i].charNo;
+        GwPlayerConf[i].padNo = GwPlayer[i].padNo;
+        GwPlayerConf[i].grpNo = GwPlayer[i].team;
+    }
+    _ClearFlag(FLAG_BOARD_TUTORIAL);
+    mbSavePartyInit(
+        GwSystem.tagF, GwSystem.bonusStarF, GwSystem.mgPack,
+        GwSystem.turnMax, GwPlayer[0].handicap, GwPlayer[1].handicap,
+        GwPlayer[2].handicap, GwPlayer[3].handicap);
+    mbSaveInit(GwSystem.boardNo);
+}
+
+void fn_1_E30(void)
+{
+    s16 i;
+
+    for (i = 0; i < 4; i++) {
+        GwPlayer[i].comF = TRUE;
+        GwPlayer[i].comDif = 0;
+        GwPlayer[i].charNo = i;
+        GwPlayer[i].padNo = i;
+        GwPlayer[i].handicap = 0;
+        GwPlayer[i].team = FALSE;
+    }
+    for (i = 0; i < 4; i++) {
+        GwPlayerConf[i].grpNo = FALSE;
+        GwPlayerConf[i].type = GwPlayer[i].comF;
+        GwPlayerConf[i].comDif = GwPlayer[i].comDif;
+        GwPlayerConf[i].charNo = GwPlayer[i].charNo;
+        GwPlayerConf[i].padNo = GwPlayer[i].padNo;
+        GwPlayerConf[i].grpNo = GwPlayer[i].team;
+    }
+    mbSaveInit(9);
+    GwSystem.boardNo = 6;
+}
+
+void fn_1_109C(s16 arg0)
+{
+    OMOVL boardDll[6] = {
+        DLL_w01dll,
+        DLL_w02dll,
+        DLL_w03dll,
+        DLL_w04dll,
+        DLL_w05dll,
+        DLL_w06dll,
+    };
+
+    do {
+        HuPrcVSleep();
+    } while (!lbl_1_bss_2E);
+    OSReport(lbl_1_data_CAB);
+    OSReport(lbl_1_data_C66, 0x21);
+    OSReport(lbl_1_data_C77, 0x24);
+    OSReport(lbl_1_data_C89, 0x9B);
+    OSReport(lbl_1_data_C9B, 0xF2);
+    HuAMemDump();
+    OSReport(lbl_1_data_CA9);
+
+    switch (arg0) {
+        case 0: {
+            OMOVLHIS *history = omOvlHisGet(0);
+
+            omOvlHisChg(
+                0, boardDll[GwSystem.boardNo], history->evtno,
+                history->stat);
+            omOvlGotoEx(boardDll[GwSystem.boardNo], TRUE, 0, 0);
+            break;
+        }
+        case 1: {
+            OMOVLHIS *history = omOvlHisGet(0);
+
+            omOvlHisChg(0, history->ovl, 1, 0);
+            omOvlCallEx(DLL_w10dll, TRUE, 0, 0);
+            break;
         }
     }
 }
@@ -604,6 +918,23 @@ void fn_1_4020(s16 winNo, s32 messNum, s16 speed)
     }
 }
 
+void fn_1_4258(s16 winNo, s32 messNum, s16 insertPos)
+{
+    s32 insertedMess;
+    s16 activeWin;
+
+    fn_1_3CA0(winNo);
+    if (lbl_1_data_DA8[1] != messNum) {
+        lbl_1_data_DA8[0] = -1;
+        lbl_1_data_DA8[1] = messNum;
+        insertedMess = lbl_1_data_DA8[1];
+        activeWin = lbl_1_data_DA2[0];
+        HuWinHomeClear(lbl_1_bss_A60[activeWin]);
+        HuWinInsertMesSet(
+            lbl_1_bss_A60[activeWin], insertedMess, insertPos);
+    }
+}
+
 void fn_1_444C(s32 messNum)
 {
     if (lbl_1_data_DA2[1] == -1) {
@@ -637,6 +968,10 @@ void fn_1_467C(void)
 }
 
 inline void fn_1_467C(void);
+
+void fn_1_4730(void)
+{
+}
 
 void fn_1_4734(HUSPR_GROUPID groupId, s32 attr)
 {
@@ -696,6 +1031,338 @@ inline void fn_1_4834(void);
 
 void fn_1_4A80(void)
 {
+}
+
+void fn_1_4EDC(OMOBJ *obj)
+{
+    OMOBJ *obj0 = lbl_1_bss_C;
+    OMOBJ *obj1 = lbl_1_bss_10;
+    LBL_1_BSS_228_ENTRY *work0 = &lbl_1_bss_228[0];
+    LBL_1_BSS_228_ENTRY *work1 = &lbl_1_bss_228[1];
+
+    if (obj0 != NULL) {
+        Hu3DModelObjPosGet(obj0->mdlId[0], lbl_1_data_DB4, &work0->pos);
+        fn_1_43F3C(0, &work0->pos, 1);
+        work0->time = 0.0f;
+    }
+    if (obj1 != NULL) {
+        Hu3DModelObjPosGet(obj1->mdlId[0], lbl_1_data_DB4, &work1->pos);
+        fn_1_43F3C(1, &work1->pos, 1);
+        work1->time = 0.0f;
+    }
+    if (++obj->work[0] > 30) {
+        obj->work[0] = 0;
+        obj->objFunc = fn_1_4A84;
+    }
+}
+
+void fn_1_4FE8(void)
+{
+    Hu3DMotionShiftSet(lbl_1_bss_C->mdlId[0], lbl_1_bss_C->mtnId[4],
+        0.0f, 5.0f, 0);
+    Hu3DMotionShiftSet(lbl_1_bss_10->mdlId[0], lbl_1_bss_10->mtnId[4],
+        0.0f, 5.0f, 0);
+    lbl_1_bss_30 =
+        omAddObjEx(lbl_1_bss_0, 0x1000, 0x10, 0x10, -1, fn_1_4EDC);
+    lbl_1_bss_30->work[0] = 0;
+    HuAudFXPlay(0x49F);
+    HuAudFXPlay(0x4A0);
+}
+
+void fn_1_50EC(OMOBJ *obj)
+{
+    Hu3DMotionSpeedSet(obj->mdlId[0], 2.0f);
+    if (obj->work[3]++ > 30) {
+        obj->objFunc = NULL;
+        Hu3DMotionSpeedSet(obj->mdlId[0], 1.0f);
+        Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[0], 0.0f, 15.0f,
+            HU3D_MOTATTR_LOOP);
+    }
+}
+
+void fn_1_5194(void)
+{
+    OMOBJ *obj = lbl_1_bss_C;
+
+    Hu3DMotionShiftSet(
+        obj->mdlId[0], obj->mtnId[3], 0.0f, 10.0f, 0);
+    obj->work[3] = 0;
+    obj->objFunc = fn_1_50EC;
+}
+
+void fn_1_5208(OMOBJ *obj)
+{
+    Hu3DMotionSpeedSet(obj->mdlId[0], 2.0f);
+    if (obj->work[3]++ > 30) {
+        obj->objFunc = NULL;
+        Hu3DMotionSpeedSet(obj->mdlId[0], 1.0f);
+        Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[0], 0.0f, 15.0f,
+            HU3D_MOTATTR_LOOP);
+    }
+}
+
+void fn_1_52B0(void)
+{
+    OMOBJ *obj = lbl_1_bss_10;
+
+    Hu3DMotionShiftSet(
+        obj->mdlId[0], obj->mtnId[3], 0.0f, 10.0f, 0);
+    obj->work[3] = 0;
+    obj->objFunc = fn_1_5208;
+}
+
+void fn_1_58A0(void)
+{
+    LBL_1_BSS_1C8_ENTRY *work = &lbl_1_bss_1C8[0];
+    OMOBJ *obj = lbl_1_bss_C;
+
+    work->state = 0;
+    work->time = 0.0f;
+    work->duration = 20.0f;
+    Hu3DModelPosGet(obj->mdlId[0], &work->pos);
+    work->pos.x = -325.0f;
+    work->pos.y = 0.0f;
+    work->pos.z = 100.0f;
+    Hu3DModelPosGet(obj->mdlId[0], &work->unk_10);
+    work->unk_10.x = 100.0f;
+    work->unk_10.y = 600.0f;
+    work->unk_10.z = 200.0f;
+    Hu3DModelPosGet(obj->mdlId[0], &work->unk_1C);
+    work->unk_1C.x = 100.0f;
+    work->unk_1C.y = 225.0f;
+    work->unk_1C.z = -1000.0f;
+    Hu3DMotionShiftSet(
+        obj->mdlId[0], obj->mtnId[2], 0.0f, 0.0f, 0);
+    lbl_1_bss_A6C[0] = HuAudFXPlay(0x47E);
+    obj->objFunc = fn_1_5324;
+}
+
+s32 fn_1_5FB0(void)
+{
+    OMOBJ *obj = lbl_1_bss_C;
+    HuVecF pos;
+
+    Hu3DModelPosGet(obj->mdlId[0], &pos);
+    if (pos.x < -100.0f) {
+        return FALSE;
+    }
+    obj->work[0] = 0;
+    obj->objFunc = fn_1_5A18;
+    Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[1], 0.0f, 0.0f,
+        HU3D_MOTATTR_LOOP);
+    return TRUE;
+}
+
+void fn_1_605C(OMOBJ *obj)
+{
+    omSetStatBit(obj, OM_STAT_MODELPAUSE);
+    obj->mdlId[0] = Hu3DModelCreate(
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x4F), HU_MEMNUM_OVL));
+    obj->mtnId[0] = Hu3DJointMotion(obj->mdlId[0],
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x50), HU_MEMNUM_OVL));
+    obj->mtnId[1] = Hu3DJointMotion(obj->mdlId[0],
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x51), HU_MEMNUM_OVL));
+    obj->mtnId[2] = Hu3DJointMotion(obj->mdlId[0],
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x52), HU_MEMNUM_OVL));
+    obj->mtnId[3] = Hu3DJointMotion(obj->mdlId[0],
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x53), HU_MEMNUM_OVL));
+    obj->mtnId[4] = Hu3DJointMotion(obj->mdlId[0],
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x54), HU_MEMNUM_OVL));
+    obj->mtnId[5] = Hu3DJointMotion(obj->mdlId[0],
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x55), HU_MEMNUM_OVL));
+    Hu3DModelPosSet(obj->mdlId[0], -100.0f, 0.0f, 0.0f);
+    Hu3DModelRotSet(obj->mdlId[0], 0.0f, 0.0f, 0.0f);
+    Hu3DModelScaleSet(obj->mdlId[0], 1.25f, 1.25f, 1.25f);
+    Hu3DModelLayerSet(obj->mdlId[0], 1);
+    Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[0], 0.0f, 0.0f,
+        HU3D_MOTATTR_LOOP);
+    Hu3DModelShadowSet(obj->mdlId[0]);
+    obj->objFunc = NULL;
+}
+
+void fn_1_6284(OMOBJ *obj)
+{
+    if (obj) {
+        Hu3DMotionKill(obj->mtnId[0]);
+        Hu3DMotionKill(obj->mtnId[1]);
+        Hu3DMotionKill(obj->mtnId[2]);
+        Hu3DMotionKill(obj->mtnId[3]);
+        Hu3DMotionKill(obj->mtnId[4]);
+        Hu3DMotionKill(obj->mtnId[5]);
+        Hu3DModelKill(obj->mdlId[0]);
+        omDelObjEx(lbl_1_bss_0, obj);
+    }
+    obj->objFunc = NULL;
+}
+
+void fn_1_68A4(void)
+{
+    LBL_1_BSS_1C8_ENTRY *work = &lbl_1_bss_1C8[1];
+    OMOBJ *obj = lbl_1_bss_10;
+
+    work->state = 0;
+    work->time = 0.0f;
+    work->duration = 20.0f;
+    Hu3DModelPosGet(obj->mdlId[0], &work->pos);
+    work->pos.x = 325.0f;
+    work->pos.y = 0.0f;
+    work->pos.z = 100.0f;
+    Hu3DModelPosGet(obj->mdlId[0], &work->unk_10);
+    work->unk_10.x = -100.0f;
+    work->unk_10.y = 400.0f;
+    work->unk_10.z = 200.0f;
+    Hu3DModelPosGet(obj->mdlId[0], &work->unk_1C);
+    work->unk_1C.x = -100.0f;
+    work->unk_1C.y = 125.0f;
+    work->unk_1C.z = -1000.0f;
+    Hu3DMotionShiftSet(
+        obj->mdlId[0], obj->mtnId[2], 0.0f, 0.0f, 0);
+    lbl_1_bss_A6C[1] = HuAudFXPlay(0x47C);
+    obj->objFunc = fn_1_6324;
+}
+
+s32 fn_1_6FB8(void)
+{
+    OMOBJ *obj = lbl_1_bss_10;
+    HuVecF pos;
+
+    Hu3DModelPosGet(obj->mdlId[0], &pos);
+    if (pos.x > 100.0f) {
+        return FALSE;
+    }
+    obj->work[0] = 0;
+    obj->objFunc = fn_1_6A20;
+    Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[1], 0.0f, 0.0f,
+        HU3D_MOTATTR_LOOP);
+    return TRUE;
+}
+
+void fn_1_7064(OMOBJ *obj)
+{
+    omSetStatBit(obj, OM_STAT_MODELPAUSE);
+    obj->mdlId[0] = Hu3DModelCreate(
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x56), HU_MEMNUM_OVL));
+    obj->mdlId[1] = Hu3DModelCreate(
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x57), HU_MEMNUM_OVL));
+    obj->mtnId[0] = Hu3DJointMotion(obj->mdlId[0],
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x58), HU_MEMNUM_OVL));
+    obj->mtnId[1] = Hu3DJointMotion(obj->mdlId[0],
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x59), HU_MEMNUM_OVL));
+    obj->mtnId[2] = Hu3DJointMotion(obj->mdlId[0],
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x5A), HU_MEMNUM_OVL));
+    obj->mtnId[3] = Hu3DJointMotion(obj->mdlId[0],
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x5B), HU_MEMNUM_OVL));
+    obj->mtnId[4] = Hu3DJointMotion(obj->mdlId[0],
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x5C), HU_MEMNUM_OVL));
+    obj->mtnId[5] = Hu3DJointMotion(obj->mdlId[0],
+        HuDataReadNum(DATANUM(DATA_mdparty, 0x5D), HU_MEMNUM_OVL));
+    Hu3DModelHookSet(obj->mdlId[0], lbl_1_data_DC6, obj->mdlId[1]);
+    Hu3DModelPosSet(obj->mdlId[0], 100.0f, 0.0f, 0.0f);
+    Hu3DModelRotSet(obj->mdlId[0], 0.0f, 0.0f, 0.0f);
+    Hu3DModelScaleSet(obj->mdlId[0], 1.25f, 1.25f, 1.25f);
+    Hu3DModelLayerSet(obj->mdlId[0], 1);
+    Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[0], 0.0f, 0.0f,
+        HU3D_MOTATTR_LOOP);
+    Hu3DModelShadowSet(obj->mdlId[0]);
+    obj->objFunc = NULL;
+}
+
+void fn_1_72C4(OMOBJ *obj)
+{
+    if (obj) {
+        Hu3DModelHookReset(obj->mdlId[1]);
+        Hu3DMotionKill(obj->mtnId[0]);
+        Hu3DMotionKill(obj->mtnId[1]);
+        Hu3DMotionKill(obj->mtnId[2]);
+        Hu3DMotionKill(obj->mtnId[3]);
+        Hu3DMotionKill(obj->mtnId[4]);
+        Hu3DMotionKill(obj->mtnId[5]);
+        Hu3DModelKill(obj->mdlId[0]);
+        Hu3DModelKill(obj->mdlId[1]);
+        omDelObjEx(lbl_1_bss_0, obj);
+    }
+    obj->objFunc = NULL;
+}
+
+void fn_1_7900(void)
+{
+    LBL_1_BSS_9BC_ENTRY *desc;
+    OMOBJ *obj = lbl_1_bss_14;
+    LBL_1_BSS_1C8_ENTRY *work;
+    s16 i;
+
+    for (i = 0, desc = &lbl_1_bss_9BC[i]; i < 4; i++, desc++) {
+        work = &lbl_1_bss_108[i];
+        work->state = 1;
+        work->time = 0.0f;
+        work->duration = 90.0f;
+        Hu3DModelPosGet(obj->mdlId[desc->chrSel], &work->pos);
+        Hu3DModelPosGet(obj->mdlId[desc->chrSel], &work->unk_10);
+        work->unk_10.x += 0.5f * work->unk_10.x;
+        work->unk_10.y = 550.0f;
+        work->unk_10.z = 100.0f;
+        Hu3DModelPosGet(obj->mdlId[desc->chrSel], &work->unk_1C);
+        work->unk_1C.y = 225.0f;
+        work->unk_1C.z = -800.0f;
+        Hu3DMotionShiftSet(obj->mdlId[desc->chrSel],
+            obj->mtnId[(2 * desc->chrSel) + 1], 0.0f, 10.0f,
+            HU3D_MOTATTR_LOOP);
+    }
+    HuAudFXPlay(0x4A2);
+    obj->objFunc = fn_1_737C;
+}
+
+void fn_1_7ABC(OMOBJ *obj)
+{
+    s16 i;
+    LBL_1_BSS_9BC_ENTRY *desc;
+    float scale;
+
+    for (i = 0, desc = &lbl_1_bss_9BC[i]; i < 4; i++, desc++) {
+        scale = fn_1_1868(0.0f, 1.0f, obj->work[0], obj->work[1]);
+        Hu3DModelScaleSet(
+            obj->mdlId[desc->chrSel], scale, scale, scale);
+    }
+    if ((obj->work[0] += 1.0f) > obj->work[1]) {
+        obj->objFunc = NULL;
+    }
+}
+
+void fn_1_7C88(void)
+{
+    OMOBJ *obj = lbl_1_bss_14;
+    LBL_1_BSS_9BC_ENTRY *desc;
+    HuVecF pos;
+    s16 i;
+
+    for (i = 0, desc = &lbl_1_bss_9BC[i]; i < 4; i++, desc++) {
+        Hu3DModelPosGet(lbl_1_bss_288[desc->chrSel].modelId, &pos);
+        if (desc->unk_4 != 0) {
+            fn_1_45F3C(i, &pos, 4, 0);
+        } else {
+            fn_1_45F3C(i, &pos, desc->unk_A, 0);
+        }
+    }
+    for (i = 0, desc = &lbl_1_bss_9BC[i]; i < 4; i++, desc++) {
+        Hu3DModelPosGet(lbl_1_bss_288[desc->chrSel].modelId, &pos);
+        pos.y -= 70.0f;
+        Hu3DModelPosSetV(obj->mdlId[desc->chrSel], &pos);
+        Hu3DModelScaleSet(obj->mdlId[desc->chrSel], 0.0f, 0.0f, 0.0f);
+        Hu3DModelAttrReset(obj->mdlId[desc->chrSel], HU3D_ATTR_DISPOFF);
+    }
+    obj->work[0] = 0;
+    obj->work[1] = 15;
+    obj->objFunc = fn_1_7ABC;
+    HuPrcSleep(15);
+    HuAudFXPlay(0x4A1);
+    for (i = 0, desc = &lbl_1_bss_9BC[i]; i < 4; i++, desc++) {
+        Hu3DModelPosGet(lbl_1_bss_288[desc->chrSel].modelId, &pos);
+        if (desc->unk_4 != 0) {
+            fn_1_45F3C(i, &pos, 4, 1);
+        } else {
+            fn_1_45F3C(i, &pos, desc->unk_A, 1);
+        }
+    }
 }
 
 void fn_1_7ED4(OMOBJ *obj)
@@ -838,6 +1505,36 @@ void fn_1_9A24(void)
     }
 }
 
+void fn_1_9B68(s16 arg0)
+{
+    lbl_1_bss_D4[arg0].x = 0.0f;
+}
+
+void fn_1_9B90(s16 arg0, s16 arg1)
+{
+    HuSprBankSet(lbl_1_bss_918[arg0 + 4], 0, arg1);
+}
+
+void fn_1_9CC8(s16 arg0)
+{
+    lbl_1_bss_A4[arg0].x = 0.0f;
+}
+
+void fn_1_9CF0(s16 arg0, s16 arg1)
+{
+    HuSprBankSet(lbl_1_bss_918[arg0 + 8], 2, arg1);
+}
+
+void fn_1_9E28(s16 arg0)
+{
+    lbl_1_bss_8C[arg0].x = 0.0f;
+}
+
+void fn_1_9E50(s16 arg0, s16 arg1)
+{
+    HuSprBankSet(lbl_1_bss_918[arg0 + 14], 2, arg1);
+}
+
 void fn_1_A880(void)
 {
     s16 i;
@@ -845,6 +1542,16 @@ void fn_1_A880(void)
     for (i = 0; i < 2; i++) {
         HuWinExKill(lbl_1_bss_104[i]);
     }
+}
+
+void fn_1_D648(s16 arg0)
+{
+    lbl_1_bss_24->mtnId[0] = arg0;
+}
+
+s16 fn_1_D660(void)
+{
+    return lbl_1_bss_24->mtnId[0];
 }
 
 void fn_1_D748(void)
@@ -886,6 +1593,196 @@ void fn_1_D748(void)
 }
 
 inline void fn_1_D748(void);
+
+void fn_1_D978(void)
+{
+    s16 i;
+    s16 j;
+
+    if (lbl_1_bss_24) {
+        lbl_1_bss_24->mtnId[0] = -1;
+        for (i = 24; i >= 0; i--) {
+            for (j = 0; j < 4; j++) {
+                Hu3DAnimKill(lbl_1_bss_288[i].animId[j]);
+            }
+            Hu3DModelKill(lbl_1_bss_288[i].modelId);
+        }
+    }
+    lbl_1_bss_24 = NULL;
+}
+
+void fn_1_114C4(OMOBJ *obj)
+{
+    obj->work[0] = 10;
+    obj->objFunc = fn_1_10518;
+    lbl_1_bss_24->mtnId[0] = 1;
+}
+
+void fn_1_114F4(OMOBJ *obj)
+{
+    HuSprAttrSet(lbl_1_bss_918[2], 4, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[4] = 0;
+    HuSprAttrSet(lbl_1_bss_918[2], 5, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[5] = 0;
+    obj->objFunc = NULL;
+    lbl_1_bss_24->mtnId[0] = 1;
+}
+
+void fn_1_12260(s16 arg0)
+{
+    HuVecF rot;
+    LBL_1_BSS_288_ENTRY *entry = &lbl_1_bss_288[arg0];
+
+    Hu3DModelRotGet(entry->modelId, &rot);
+    rot.y += 6.0f;
+    if (rot.y > 360.0f) {
+        rot.y -= 360.0f;
+    }
+    Hu3DModelRotSetV(entry->modelId, &rot);
+}
+
+void fn_1_122FC(s16 arg0)
+{
+    LBL_1_BSS_288_ENTRY *entry = &lbl_1_bss_288[arg0];
+
+    Hu3DModelRotSet(entry->modelId, 0.0f, 0.0f, 0.0f);
+}
+
+void fn_1_1765C(s16 arg0)
+{
+    LBL_1_BSS_288_ENTRY *entry = &lbl_1_bss_288[arg0 + 11];
+
+    Hu3DModelPosSetV(entry->modelId, &lbl_1_data_8A4[arg0 + 1]);
+    Hu3DModelRotSet(entry->modelId, 0.0f, 0.0f, 0.0f);
+    Hu3DModelScaleSet(entry->modelId, 1.25f, 1.25f, 1.0f);
+    entry->unk_30 = 0;
+    Hu3DModelLayerSet(entry->modelId, 1);
+}
+
+void fn_1_18A10(OMOBJ *obj)
+{
+    OMOBJ *workObj;
+    OMOBJ *workObj2;
+
+    if (obj->work[0] == 0) {
+        workObj = lbl_1_bss_8;
+        workObj->work[0] = 2;
+        workObj->work[1] = 0;
+        workObj2 = lbl_1_bss_8;
+        workObj2->work[2] = 2;
+        workObj2->work[3] = 0;
+    }
+    if (obj->work[0]++ > 30) {
+        obj->objFunc = NULL;
+        lbl_1_bss_24->mtnId[0] = 1;
+    }
+}
+
+void fn_1_1A124(OMOBJ *obj)
+{
+    HuSprAttrSet(lbl_1_bss_918[2], 2, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[2] = 0;
+    HuSprAttrSet(lbl_1_bss_918[2], 3, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[3] = 0;
+    HuSprAttrSet(lbl_1_bss_918[2], 4, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[4] = 0;
+    HuSprAttrSet(lbl_1_bss_918[2], 5, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[5] = 0;
+    obj->objFunc = NULL;
+    lbl_1_bss_24->mtnId[0] = 1;
+}
+
+void fn_1_21C04(OMOBJ *obj)
+{
+    HuSprAttrSet(lbl_1_bss_918[2], 4, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[4] = 0;
+    HuSprAttrSet(lbl_1_bss_918[2], 5, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[5] = 0;
+    obj->objFunc = NULL;
+    lbl_1_bss_24->mtnId[0] = 1;
+}
+
+void fn_1_227E4(OMOBJ *obj)
+{
+    HUSPR_GROUP *group;
+    s16 groupId;
+    s16 i;
+
+    if (obj->work[0] == 0) {
+        HuWinDispOff(lbl_1_bss_104[0]);
+        HuWinDispOff(lbl_1_bss_104[1]);
+        groupId = lbl_1_bss_918[13];
+        group = &HuSprGrpData[groupId];
+        for (i = 0; i < group->sprNum; i++) {
+            HuSprAttrSet(groupId, i, HUSPR_ATTR_DISPOFF);
+        }
+        lbl_1_bss_80.x = 0.0f;
+    }
+    if (obj->work[0]++ > 10) {
+        obj->objFunc = NULL;
+        lbl_1_bss_24->mtnId[0] = 1;
+    }
+}
+
+void fn_1_2318C(OMOBJ *obj)
+{
+    HuSprAttrSet(lbl_1_bss_918[2], 4, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[4] = 0;
+    HuSprAttrSet(lbl_1_bss_918[2], 5, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[5] = 0;
+    obj->objFunc = NULL;
+    lbl_1_bss_24->mtnId[0] = 1;
+}
+
+void fn_1_239DC(OMOBJ *obj)
+{
+    obj->objFunc = NULL;
+    lbl_1_bss_24->mtnId[0] = 1;
+}
+
+void fn_1_249A4(OMOBJ *obj)
+{
+    HuSprAttrSet(lbl_1_bss_918[2], 2, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[2] = 0;
+    HuSprAttrSet(lbl_1_bss_918[2], 3, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[3] = 0;
+    HuSprAttrSet(lbl_1_bss_918[2], 4, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[4] = 0;
+    HuSprAttrSet(lbl_1_bss_918[2], 5, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[5] = 0;
+    obj->objFunc = NULL;
+    lbl_1_bss_24->mtnId[0] = 1;
+}
+
+void fn_1_28434(OMOBJ *obj)
+{
+    HuSprAttrSet(lbl_1_bss_918[2], 2, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[2] = 0;
+    HuSprAttrSet(lbl_1_bss_918[2], 3, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[3] = 0;
+    HuSprAttrSet(lbl_1_bss_918[2], 4, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[4] = 0;
+    HuSprAttrSet(lbl_1_bss_918[2], 5, HUSPR_ATTR_DISPOFF);
+    lbl_1_data_DE6[5] = 0;
+    obj->objFunc = NULL;
+    lbl_1_bss_24->mtnId[0] = 1;
+}
+
+void fn_1_2CD6C(OMOBJ *obj)
+{
+    if (!WipeCheck()) {
+        fn_1_2C874();
+        omOvlReturnEx(1, 1);
+    }
+}
+
+void fn_1_2CDA8(OMOBJ *obj)
+{
+    if (omSysExitReq != 0) {
+        WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_NORMAL, 60);
+        obj->objFunc = fn_1_2CD6C;
+    }
+}
 
 void fn_1_2D1D4(void)
 {
@@ -982,14 +1879,39 @@ void fn_1_2DFD4(OMOBJ *obj, MDCAMERA_WORK *camera)
     fn_1_28B0(camera, 15.0f);
 }
 
+s16 lbl_1_data_4[3][4] = {
+    { 0, 1, 2, 3 },
+    { 0, 2, 1, 3 },
+    { 0, 3, 1, 2 },
+};
 s32 lbl_1_data_BC8 = -1;
 char lbl_1_data_BCC[] = "# ========== win callback :: %d\n";
 s16 lbl_1_data_BEE[7] = { 0, 0, 0, 0, 0, 0, 0 };
+u32 lbl_1_data_BFC[14] = {
+    DATA_w01,
+    DATA_w02,
+    DATA_w03,
+    DATA_w04,
+    DATA_w05,
+    DATA_w06,
+    DATA_w10,
+    DATA_w01n,
+    DATA_w02n,
+    DATA_w03n,
+    DATA_w04n,
+    DATA_w05n,
+    DATA_w06n,
+    DATA_w10n,
+};
+char lbl_1_data_C34[] =
+    "\n>>>>>>>>>> mdpartydll :: READ INIT!! <<<<<<<<<<\n";
 char lbl_1_data_C66[] = "0x%x :: _effect\n";
 char lbl_1_data_C77[] = "0x%x :: _gamemes\n";
 char lbl_1_data_C89[] = "0x%x :: _mgconst\n";
 char lbl_1_data_C9B[] = "0x%x :: _win\n";
 char lbl_1_data_CA9[] = "\n";
+char lbl_1_data_CAB[] =
+    "\n>>>>>>>>>> mdpartydll :: READ END!! <<<<<<<<<<\n";
 char lbl_1_data_CDC[] = ">>>>>>>>>> mdpartydll :: objsetup!! <<<<<<<<<<\n";
 char lbl_1_data_D0C[] = "\n>>>>>>>>>> mdpartydll :: ovlreturn!! <<<<<<<<<<\n";
 s16 lbl_1_data_DA2[3] = { -1, -1, 0 };
@@ -1008,12 +1930,20 @@ OMOBJ *lbl_1_bss_24;
 s16 lbl_1_bss_28;
 s16 lbl_1_bss_2A;
 s16 lbl_1_bss_2C;
+s16 lbl_1_bss_2E;
+OMOBJ *lbl_1_bss_30;
 HUWINID lbl_1_bss_104[2];
+LBL_1_BSS_1C8_ENTRY lbl_1_bss_108[4];
+LBL_1_BSS_1C8_ENTRY lbl_1_bss_1C8[2];
+LBL_1_BSS_228_ENTRY lbl_1_bss_228[2];
 LBL_1_BSS_288_ENTRY lbl_1_bss_288[25];
 ANIMDATA *lbl_1_bss_800[41];
 HUSPRID lbl_1_bss_8A4[58];
 HUSPR_GROUPID lbl_1_bss_918[18];
 ANIMDATA *lbl_1_bss_93C[32];
+LBL_1_BSS_9BC_ENTRY lbl_1_bss_9BC[4];
+LBL_1_BSS_9F4 lbl_1_bss_9F4;
 MDCAMERA_WORK lbl_1_bss_A10;
 HUWINID lbl_1_bss_A60[4];
 HU3D_LIGHTID lbl_1_bss_A68[2];
+s32 lbl_1_bss_A6C[5];
