@@ -175,7 +175,8 @@ OMOBJ *mbGuideCreateFlag(HuVecF *pos, s8 *motTbl, BOOL screenF,
 void mbGuideMotionNextSet(OMOBJ *obj, s16 motNo);
 void mbGuideMotionShiftSet(OMOBJ *obj, s16 motNo, BOOL shiftF);
 void mbGuideKill(OMOBJ *obj);
-int mbGuideModelGet(OMOBJ *obj);
+/* This owner consumes the target's signed 16-bit guide-model return view. */
+MBMODELID mbGuideModelGet(OMOBJ *obj);
 float mbSinDeg(float angle);
 float mbAngleWrap(float angle);
 int mbStatTeamMinValGet(int teamNo, int value, int max,
@@ -1310,17 +1311,16 @@ static void StarAddAllProc(int *addNum, BOOL fastF, int *result)
     int starChg[4];
     BOOL activeF[4];
     int playerNum;
-    int playerNo;
-    int starNew;
     int i;
 
     for (i = 0; i < 4; i++) {
         starNum[i] = addNum[i];
         activeF[i] = FALSE;
     }
-    if (!GwSystem.tagF) {
+    if (!GWTeamFGet()) {
         for (i = 0; i < 4; i++) {
-            starNew = starNum[i] + mbPlayerStarGet(i);
+            int starNew = starNum[i] + mbPlayerStarGet(i);
+
             if (starNew > 999) {
                 starNum[i] = 999 - mbPlayerStarGet(i);
             } else if (starNew < 0) {
@@ -1331,9 +1331,9 @@ static void StarAddAllProc(int *addNum, BOOL fastF, int *result)
         }
     } else {
         for (i = 0; i < 2; i++) {
-            playerNo = mbPlayerTeamFindPlayer(i, 0);
-            activeF[playerNo] = TRUE;
-            starNum[playerNo] = mbStatTeamMinValGet(i,
+            playerNum = mbPlayerTeamFindPlayer(i, 0);
+            activeF[playerNum] = TRUE;
+            starNum[playerNum] = mbStatTeamMinValGet(i,
                 mbPlayerGrpStarGet(i), 999, addNum, result);
         }
     }
@@ -1950,7 +1950,7 @@ end:
 
 static void StarPauseHook(BOOL pauseF)
 {
-    MBMODELID modelId;
+    int modelId;
 
     if (starGuideObj != NULL) {
         modelId = mbGuideModelGet(starGuideObj);

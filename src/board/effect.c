@@ -893,33 +893,17 @@ MBPARTICLEDATA *mbParticleDataCreate(MBPARTICLE *effP)
     return NULL;
 }
 
-typedef struct unkTotalData2_s {
-    u8 unk0[2];
-    s16 num;
-    u8 unk4[8];
-} UNKTOTALDATA2;
-
-typedef struct unkTotalData_s {
-    s16 num;
-    UNKTOTALDATA2 *data;
-} UNKTOTALDATA;
-
-typedef struct unkTotal_s {
-    u8 unk0[8];
-    UNKTOTALDATA *data;
-} UNKTOTAL;
-
-int mbParticleUnkTotalGet(void *ptr, int no)
+int mbParticleUnkTotalGet(ANIMDATA *anim, int bankNo)
 {
     int i;
-    int num = 0;
-    UNKTOTALDATA *data = &((UNKTOTAL *)ptr)->data[no];
+    int total = 0;
+    ANIMBANK *bank = &anim->bank[bankNo];
 
-    for(i=0; i<data->num; i++) {
-        UNKTOTALDATA2 *data2 = &data->data[i];
-        num += data2->num;
+    for(i=0; i<bank->timeNum; i++) {
+        ANIMFRAME *frame = &bank->frame[i];
+        total += frame->time;
     }
-    return num;
+    return total;
 }
 
 HU3D_MODELID mbParManCreate(ANIMDATA *anim, s16 maxCnt, HU3D_PARMAN_PARAM *param)
@@ -983,12 +967,12 @@ void mbParManVecSet(HU3D_MODELID modelId, float x, float y, float z)
     parManParticleP->parMan.vec.z = z;
 }
 
-void mbParManRotSet(HU3D_MODELID modelId, float x, float y, float z)
+void mbParManRotSet(HU3D_MODELID modelId, float rotX, float rotY, float rotZ)
 {
     MBPARMAN *parManParticleP = Hu3DData[modelId].hookData;
     Mtx rotMtx;
 
-    mbMtxRot(rotMtx, x, y, z);
+    mbMtxRot(rotMtx, rotX, rotY, rotZ);
     parManParticleP->parMan.vec.x = rotMtx[0][2];
     parManParticleP->parMan.vec.y = rotMtx[1][2];
     parManParticleP->parMan.vec.z = rotMtx[2][2];

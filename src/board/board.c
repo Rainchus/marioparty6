@@ -120,7 +120,7 @@ extern void mbScrollClose(void);
 extern void fn_8019A620(void);
 extern void mbSingleInit(void);
 extern void mbSingleClose(void);
-extern void mbSingleSaveInit(s32 boardNo, s32 storyDif, s32 mgPack);
+extern void mbSingleSaveInit(s32 teamChar, s32 mgPack, s32 storyComDif);
 extern void mbSingleGameEnd(void);
 extern s32 mbSingleCall(s32 mode, s32 arg);
 extern s32 mbev_SingleMgEnd(s32 playerNo);
@@ -766,9 +766,9 @@ void mbSaveInit(s32 boardNo)
     }
 }
 
-void mbSaveStoryInit(s32 boardNo, s32 storyDif, s32 mgPack)
+void mbSaveStoryInit(s32 teamChar, s32 mgPack, s32 storyComDif)
 {
-    mbSingleSaveInit(boardNo, storyDif, mgPack);
+    mbSingleSaveInit(teamChar, mgPack, storyComDif);
     GwMgNightF = 0;
 }
 

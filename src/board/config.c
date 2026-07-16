@@ -1,6 +1,7 @@
 #include "game/board/object.h"
 #include "game/board/player.h"
 #include "game/disp.h"
+#include "game/esprite.h"
 #include "game/gamework.h"
 #include "game/hu3d.h"
 #include "game/memory.h"
@@ -11,13 +12,37 @@
 extern void *mbMallocFlush(s32 size);
 extern void *mbMallocFlushModel(s32 size);
 
+typedef struct PausePanelWork_s {
+    int modelId;              /* 0x00 */
+    int batsuModelId;         /* 0x04 */
+    int sprId;                /* 0x08 */
+    ANIMDATA *anim;           /* 0x0C */
+    HU3D_ANIMID animId[2];    /* 0x10 */
+    HuVecF pos;               /* 0x14 */
+    HuVecF posStart;          /* 0x20 */
+    HuVecF posTarget;         /* 0x2C */
+    BOOL batsuF;              /* 0x38 */
+    float scale;              /* 0x3C */
+    float scaleStart;         /* 0x40 */
+    float scaleTarget;        /* 0x44 */
+    float scaleBase;          /* 0x48 */
+    s16 bank;                 /* 0x4C */
+    s16 motion;               /* 0x4E */
+    s16 time;                 /* 0x50 */
+    s16 maxTime;              /* 0x52 */
+    s16 delay;                /* 0x54 */
+    s16 animTime;             /* 0x56 */
+    s16 animMaxTime;          /* 0x58 */
+} PAUSE_PANEL_WORK;
+
 static BOOL playerDispF[GW_PLAYER_MAX];
 
 static s32 configPadDisable;
+static PAUSE_PANEL_WORK *pausePanelWork;
+static BOOL pauseGuideKillF;
 static s32 pauseDispCopyModelId;
 static s32 pauseDispCopyCounter;
 static void *pauseDispCopyFb;
-static BOOL pauseGuideKillF;
 
 static void PauseDispCopyDraw(HU3D_MODEL *modelP, Mtx *mtx);
 static BOOL GWStorySingleCheck(void);
@@ -115,14 +140,82 @@ static void PauseDispCopyDraw(HU3D_MODEL *modelP, Mtx *mtx)
     }
 }
 
-void mbConfigPadDisableSet(BOOL disableF)
-{
-    configPadDisable = disableF;
-}
-
 void mbPauseGuideKill(void)
 {
     pauseGuideKillF = TRUE;
+}
+
+void mbPausePanelPosSet(s16 panelId, float x, float y)
+{
+    PAUSE_PANEL_WORK *work = &pausePanelWork[panelId];
+
+    work->pos.x = work->posStart.x = work->posTarget.x = x;
+    work->pos.y = work->posStart.y = work->posTarget.y = y;
+}
+
+void mbPausePanelPosGet(s16 panelId, HuVecF *pos)
+{
+    PAUSE_PANEL_WORK *work = &pausePanelWork[panelId];
+
+    pos->x = work->pos.x;
+    pos->y = work->pos.y;
+    pos->z = 0.0f;
+}
+
+void mbPausePanelRotSet(s16 panelId, float rotX, float rotY, float rotZ)
+{
+    PAUSE_PANEL_WORK *work = &pausePanelWork[panelId];
+
+    mbObjRotSet(work->modelId, rotX, rotY, rotZ);
+}
+
+void mbPausePanelScaleSet(s16 panelId, float scale)
+{
+    PAUSE_PANEL_WORK *work = &pausePanelWork[panelId];
+
+    work->scale = work->scaleStart = work->scaleTarget = scale;
+}
+
+float mbPausePanelScaleGet(s16 panelId)
+{
+    PAUSE_PANEL_WORK *work = &pausePanelWork[panelId];
+
+    return work->scale;
+}
+
+void mbPausePanelBankSet(s16 panelId, int bank)
+{
+    PAUSE_PANEL_WORK *work = &pausePanelWork[panelId];
+
+    work->bank = bank;
+    Hu3DAnmNoSet(work->animId[0], bank);
+    Hu3DAnmNoSet(work->animId[1], bank);
+    if (work->sprId >= 0) {
+        espBankSet(work->sprId, bank);
+    }
+}
+
+void mbPausePanelBatsuSet(s16 panelId, BOOL batsuF)
+{
+    PAUSE_PANEL_WORK *work = &pausePanelWork[panelId];
+
+    work->batsuF = batsuF;
+}
+
+BOOL mbPausePanelFreezeGet(s16 panelId)
+{
+    PAUSE_PANEL_WORK *work = &pausePanelWork[panelId];
+    BOOL freezeF = FALSE;
+
+    if (work->motion == 0 && work->animMaxTime == 0) {
+        freezeF = TRUE;
+    }
+    return freezeF;
+}
+
+void mbConfigPadDisableSet(BOOL disableF)
+{
+    configPadDisable = disableF;
 }
 
 static BOOL GWStorySingleCheck(void)

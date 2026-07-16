@@ -1,11 +1,15 @@
 # Native matching wave 77: Board source-shape closures
 
 Wave 77 closes eight represented Board functions totaling `0x133C` target
-text bytes and restores one additional target-proven Last Five initialization.
-The exact closures recover control-flow form, inline ownership, local-object
-lifetime, declaration order, expression kind, and explicit return shape. No
-owner is promoted: all five owners retain represented or absent work, and
-fallback-linked bytes remain excluded from decompiled-source totals.
+text bytes. The exact closures recover control-flow form, inline ownership,
+local-object lifetime, declaration order, expression kind, and explicit
+return shape. No owner is promoted: all five owners retain represented or
+absent work, and fallback-linked bytes remain excluded from decompiled-source
+totals.
+
+Wave 78 corrected the Last Five initialization claim originally recorded in
+this note. The exact Wave 77 closures and their `0x133C` byte total are
+unaffected; the non-exact Last Five candidate is corrected below.
 
 ## Authorities and recovery boundary
 
@@ -82,18 +86,20 @@ execution order makes the complete `0xFC` function exact.
 Star reaches 66/90 data-value-exact functions. Target/source `.text` remain
 `0x5C00/0x5A08`, scoring 93.608350%.
 
-## Last Five initialization
+## Last Five correction (Wave 78)
 
-The target `ev_Last5Coin40` contains a zero initialization for the scalar that
-tracks active effects. The same-game `ev_DiceZoromeCoin` authenticates the
-source spelling `int activeNum = 0`. Restoring it grows source text by the
-required initialization and improves the function from 98.781910% to
-99.026596%, at target/source `0x2F0/0x2EC`.
+The zero word at target stack offset `+0x8` is write-only; the actual
+`playerPos` and `coinObjId` arrays begin at `+0xC` and `+0x18`. Initializing
+`activeNum` emits a live `li r27, 0`, changes the downstream register
+allocation, and does not produce the target's write-only stack word. The
+same-game Dice routine therefore authenticates a related source family, but
+does not authenticate that local for this function.
 
-The function is not called exact: one target stack store and the downstream
-allocation/slot map still diverge. Last5 target/source `.text` become
-`0x2458/0x654`, scoring 17.376183%; one of two represented functions remains
-exact.
+The unsupported initialization was removed. `ev_Last5Coin40` returns to
+target/source `0x2F0/0x2E8` at 98.781910%. Last5 target/source whole `.text`
+are `0x2458/0x650`, scoring 17.356405%; one of two represented functions
+remains exact. The unexplained write-only slot and downstream allocation
+residue remain open rather than being assigned a guessed C local.
 
 ## Bounded rejected probes
 
@@ -125,7 +131,7 @@ Objdiff CLI `3.7.2`, using `functionRelocDiffs=data_value`, reports:
 | `board/player.c` | `0xBEB0/0xBDC0` | 96.373980% | 165/165 | 139 |
 | `board/coin.c` | `0x4550/0x3F7C` | 81.022545% | 52/52 | 21 |
 | `board/star.c` | `0x5C00/0x5A08` | 93.608350% | 90/90 | 66 |
-| `board/last5.c` | `0x2458/0x654` | 17.376183% | 2/10 | 1 |
+| `board/last5.c` (Wave 78 correction) | `0x2458/0x650` | 17.356405% | 2/10 | 1 |
 
 No previously exact function regressed. The final serialized `rtk ninja -j1`
 build and the independent `dtk shasum -q -c config/GP6E01/build.sha1` command

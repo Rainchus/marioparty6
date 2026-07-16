@@ -221,7 +221,7 @@ void mbCoinEffObjCreate(int modelId)
 static void CoinInit(void)
 {
     int i;
-    s16 modelId;
+    int modelId;
 
     for (i = 0; i < COIN_MODEL_MAX; i++) {
         modelId = mbObjCreate(mbBoardDataNumGet(coinObjFileTbl[i]), NULL, FALSE);
@@ -1365,17 +1365,16 @@ static void CoinAddAllProc(int *addNum, BOOL fastF, int *result)
     int coinChg[4];
     BOOL activeF[4];
     int playerNum;
-    int playerNo;
-    int coinNew;
     int i;
 
     for (i = 0; i < 4; i++) {
         coinNum[i] = addNum[i];
         activeF[i] = FALSE;
     }
-    if (!GwSystem.tagF) {
+    if (!GWTeamFGet()) {
         for (i = 0; i < 4; i++) {
-            coinNew = coinNum[i] + mbPlayerCoinGet(i);
+            int coinNew = coinNum[i] + mbPlayerCoinGet(i);
+
             if (coinNew > 999) {
                 coinNum[i] = 999 - mbPlayerCoinGet(i);
             } else if (coinNew < 0) {
@@ -1386,9 +1385,9 @@ static void CoinAddAllProc(int *addNum, BOOL fastF, int *result)
         }
     } else {
         for (i = 0; i < 2; i++) {
-            playerNo = mbPlayerTeamFindPlayer(i, 0);
-            activeF[playerNo] = TRUE;
-            coinNum[playerNo] = mbStatTeamMinValGet(i,
+            playerNum = mbPlayerTeamFindPlayer(i, 0);
+            activeF[playerNum] = TRUE;
+            coinNum[playerNum] = mbStatTeamMinValGet(i,
                 mbPlayerTeamCoinGet(i), 999, coinNum, result);
         }
     }

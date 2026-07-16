@@ -193,24 +193,23 @@ void mbev_OpeningParty(void)
 static void ev_OpeningParty(void)
 {
     int orderTbl[10];
-    int playerOrder[GW_PLAYER_MAX];
+    HuVecF playerPos;
     HuVecF cameraOfs = { 0.0f, 250.0f, 0.0f };
-    HuVecF cameraRot = { -20.0f, 0.0f, 0.0f };
     HuVecF masuPos;
     HuVecF guidePos;
     HuVecF cameraPos;
-    HuVecF playerPos;
     HuVecF playerRotDir;
-    float cameraZoom = 20000.0f;
-    s16 masuId;
+    HuVecF cameraRot = { -20.0f, 0.0f, 0.0f };
+    int playerOrder[GW_PLAYER_MAX];
+    int temp;
     s16 playerRotAngle;
+    s16 masuId;
     int manPlayerNo;
+    float cameraZoom = 20000.0f;
     int comNum;
-    BOOL allComF;
     int order1;
     int order2;
-    int temp;
-    int boardNo;
+    BOOL allComF;
     int i;
     GW_PLAYER *playerP;
     MBPLAYERWORK *playerWorkP;
@@ -224,15 +223,18 @@ static void ev_OpeningParty(void)
         mbObjDispSet(mbPlayerObjIDGet(i), FALSE);
     }
 
-    comNum = 0;
-    for (i = GW_PLAYER_MAX - 1; i >= 0; i--) {
+    for (i = GW_PLAYER_MAX - 1, comNum = 0; i > -1; i--) {
         if (GwPlayerConf[i].type != 0) {
             comNum++;
         } else {
             manPlayerNo = i;
         }
     }
-    allComF = comNum >= GW_PLAYER_MAX;
+    if (comNum >= GW_PLAYER_MAX) {
+        allComF = TRUE;
+    } else {
+        allComF = FALSE;
+    }
 
     mbCameraZoomSet(openingZoom);
     mbCameraRotSetV(&openingRot);
@@ -248,8 +250,11 @@ static void ev_OpeningParty(void)
 
     mbWipeFadeIn();
     mbMusPlay(0, 11, 127, 0);
-    boardNo = GwSystem.boardNo;
-    mbTelopCreate(-1, boardNo + 16, FALSE);
+    {
+        int boardNo = GwSystem.boardNo;
+
+        mbTelopCreate(-1, boardNo + 16, FALSE);
+    }
     HuPrcSleep(72);
 
     cameraPos = masuPos;
@@ -258,7 +263,9 @@ static void ev_OpeningParty(void)
         180);
     mbCameraMoveWait();
 
-    playerPos = masuPos;
+    playerPos.x = masuPos.x;
+    playerPos.y = masuPos.y;
+    playerPos.z = masuPos.z;
     PlayerDropExec(&playerPos);
     for (i = 0; i < GW_PLAYER_MAX; i++) {
         mbPlayerPosGet(i, &playerPos);
@@ -273,8 +280,11 @@ static void ev_OpeningParty(void)
     mbObjMotionShiftSet(openingGuideObjId, 12, 0.0f, 8.0f,
         HU3D_MOTATTR_LOOP);
     mbAudGuidePlay(950);
-    boardNo = GwSystem.boardNo;
-    mbWinCreate(2, welcomeMesTbl[boardNo], 6);
+    {
+        int boardNo = GwSystem.boardNo;
+
+        mbWinCreate(2, welcomeMesTbl[boardNo], 6);
+    }
     mbWinTopWait();
 
     mbAudGuidePlay(952);
@@ -342,12 +352,11 @@ static void ev_OpeningParty(void)
         }
         mbWinTopWait();
 
-        playerP = &GwPlayer[i];
+        playerP = GWPlayerGet(i);
         playerWorkP = mbPlayerWorkGet(i);
         mbDiceNumShrinkSet(playerP->playerNo);
-        playerWorkP->playerNo = i;
-        playerP->playerNo = playerWorkP->playerNo;
-        if (!GwSystem.tagF) {
+        playerP->playerNo = playerWorkP->playerNo = i;
+        if (!GWTeamFGet()) {
             mbStatusDispSet(i, TRUE);
         }
         mbPlayerWinLoseVoicePlay(i, 12, 0x243);
@@ -364,7 +373,7 @@ static void ev_OpeningParty(void)
     for (i = 0; i < GW_PLAYER_MAX; i++) {
         mbPlayerMotIdleSet(i);
     }
-    if (GwSystem.tagF) {
+    if (GWTeamFGet()) {
         mbStatusDispSetAll(TRUE);
     }
     HuPrcSleep(30);
@@ -424,7 +433,7 @@ static void ev_OpeningParty(void)
     for (i = 0; i < GW_PLAYER_MAX; i++) {
         mbPlayerMotionSet(i, 1, HU3D_MOTATTR_LOOP);
     }
-    mbCameraNearFarSet(100.0f, cameraZoom);
+    mbCameraNearFarSet(100.0f, 20000.0f);
     mbObjKill(openingGuideObjId);
     openingGuideObjId = -1;
     mbMusBoardPlay();
@@ -462,33 +471,32 @@ static void OpeningCoinExec(void)
     OPENINGCOINWORK *work;
     HuVecF playerPos;
     int coinNum;
-    int playerNo;
     int i;
+    int j;
 
     work = openingCoinWork;
     coinNum = 0;
-    for (playerNo = 0; playerNo < GW_PLAYER_MAX; playerNo++) {
-        mbPlayerPosGet(playerNo, &playerPos);
-        for (i = 0; i < 10; i++, work++) {
+    for (i = 0; i < GW_PLAYER_MAX; i++) {
+        mbPlayerPosGet(i, &playerPos);
+        for (j = 0; j < 10; j++, work++) {
             work->coinId = mbCoinCreate();
             work->pos.x = playerPos.x + (0.2f * frandf() * 100.0f) - 10.0f;
             work->pos.y = playerPos.y + 800.0f;
             work->pos.z = playerPos.z;
             playerPos.y += 120.00001f;
-            work->vel.x = 0.0f;
             work->vel.y = -10.0f;
-            work->vel.z = 0.0f;
+            work->vel.x = work->vel.z = 0.0f;
             work->rot.y = mbRandMod(360);
             work->dispF = TRUE;
             mbCoinObjPosSetV(work->coinId, &work->pos);
             mbCoinObjRotSetV(work->coinId, &work->rot);
             mbCoinObjDispSet(work->coinId, work->dispF);
-            work->playerNo = playerNo;
+            work->playerNo = i;
             coinNum++;
         }
     }
 
-    while (coinNum > 0) {
+    while (TRUE) {
         work = openingCoinWork;
         for (i = 0; i < GW_PLAYER_MAX * 10; i++, work++) {
             if (!work->dispF) {
@@ -508,19 +516,20 @@ static void OpeningCoinExec(void)
                 coinNum--;
             }
         }
-        if (coinNum > 0) {
-            HuPrcVSleep();
+        if (coinNum <= 0) {
+            break;
         }
+        HuPrcVSleep();
     }
     mbAudFXPlay(15);
 }
 
 static void PlayerDropExec(HuVecF *center)
 {
-    BOOL landF[GW_PLAYER_MAX];
     int delay[GW_PLAYER_MAX] = { 0, 30, 60, 90 };
-    HuVecF vel[GW_PLAYER_MAX];
+    BOOL landF[GW_PLAYER_MAX];
     HuVecF pos[GW_PLAYER_MAX];
+    HuVecF vel[GW_PLAYER_MAX];
     int endNum;
     int i;
 
@@ -530,9 +539,8 @@ static void PlayerDropExec(HuVecF *center)
         pos[i].x = center->x + 100.0f * playerCenterDist[i];
         pos[i].y = center->y + 800.0f;
         pos[i].z = center->z;
-        vel[i].x = 0.0f;
         vel[i].y = -20.0f;
-        vel[i].z = 0.0f;
+        vel[i].x = vel[i].z = 0.0f;
         landF[i] = FALSE;
         mbPlayerPosSetV(i, &pos[i]);
         mbPlayerMotionShiftSet(i, 4, 0.0f, 8.0f, HU3D_MOTATTR_NONE);
@@ -540,7 +548,7 @@ static void PlayerDropExec(HuVecF *center)
     }
 
     endNum = 0;
-    while (endNum < GW_PLAYER_MAX) {
+    while (TRUE) {
         for (i = 0; i < GW_PLAYER_MAX; i++) {
             if (landF[i] && mbPlayerMotionEndCheck(i)) {
                 mbPlayerMotionShiftSet(i, 1, 0.0f, 8.0f,
@@ -559,9 +567,10 @@ static void PlayerDropExec(HuVecF *center)
                 mbPlayerPosSetV(i, &pos[i]);
             }
         }
-        if (endNum < GW_PLAYER_MAX) {
-            HuPrcVSleep();
+        if (endNum >= GW_PLAYER_MAX) {
+            break;
         }
+        HuPrcVSleep();
     }
 
     for (i = 0; i < GW_PLAYER_MAX; i++) {

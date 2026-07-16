@@ -136,14 +136,14 @@ void mbParticleHookSet(HU3D_MODELID modelId, MBPARTICLEHOOK hook);
 void mbParticleAttrSet(HU3D_MODELID modelId, u8 attr);
 void mbParticleAttrReset(HU3D_MODELID modelId, u8 attr);
 MBPARTICLEDATA *mbParticleDataCreate(MBPARTICLE *particleP);
-int mbParticleUnkTotalGet(void *ptr, int no);
+int mbParticleUnkTotalGet(ANIMDATA *anim, int bankNo);
 
 HU3D_MODELID mbParManCreate(ANIMDATA *anim, s16 maxCnt, HU3D_PARMAN_PARAM *param);
 void mbParManKill(HU3D_MODELID modelId);
 void mbParticleBlendModeSet(HU3D_MODELID modelId, u8 blendMode);
 void mbParManPosSet(HU3D_MODELID modelId, float x, float y, float z);
 void mbParManVecSet(HU3D_MODELID modelId, float x, float y, float z);
-void mbParManRotSet(HU3D_MODELID modelId, float x, float y, float z);
+void mbParManRotSet(HU3D_MODELID modelId, float rotX, float rotY, float rotZ);
 void mbParManAttrSet(HU3D_MODELID modelId, s32 attr);
 void mbParManAttrReset(HU3D_MODELID modelId, s32 attr);
 
