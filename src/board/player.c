@@ -1572,6 +1572,11 @@ typedef struct PlayerBiriQWork {
     u8 flashF : 1;
     u8 _unk0_3 : 1;
     u8 effectF : 1;
+    u8 playerNo : 2;
+    s16 time;
+    s16 maxTime;
+    s16 _unk06;
+    s16 _unk08;
 } PLAYERBIRIQWORK;
 
 static void PlayerBiriQEffectSet(int playerNo, BOOL effectF);
@@ -1656,6 +1661,40 @@ static void PlayerBiriQEffectSet(int playerNo, BOOL effectF)
         PLAYERBIRIQWORK *workP = omObjGetWork(objP, PLAYERBIRIQWORK);
 
         workP->effectF = effectF;
+    }
+}
+
+static void BiriQEffect2Hook(
+    HU3D_MODEL *modelP, MBPARTICLE *particleP, Mtx matrix)
+{
+    MBPARTICLE *sourceP;
+    MBPARTICLEDATA *dataP;
+    int i;
+    int alpha;
+
+    if (particleP->mode == 0) {
+        dataP = particleP->data;
+        for (i = 0; i < particleP->num; i++, dataP++) {
+            dataP->scale = 0.0f;
+            dataP->color.a = 0;
+            dataP->time = 0;
+        }
+        particleP->mode = 1;
+        particleP->blendMode = MB_PARTICLE_BLEND_ADDCOL;
+    }
+    sourceP = particleP->hookData;
+    memcpy(particleP->data, sourceP->data,
+        particleP->num * sizeof(MBPARTICLEDATA));
+    dataP = particleP->data;
+    for (i = 0; i < particleP->num; i++, dataP++) {
+        dataP->color.r = 255;
+        dataP->color.g = 255;
+        dataP->color.b = 255;
+        alpha = 1.2f * dataP->color.a;
+        if (alpha > 255) {
+            alpha = 255;
+        }
+        dataP->color.a = alpha;
     }
 }
 

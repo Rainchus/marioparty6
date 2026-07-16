@@ -78,6 +78,10 @@ struct MbParticle_s {
     union {
         s16 work[8];
         struct {
+            s16 _work10[6];
+            void *hookData;
+        };
+        struct {
             u8 guideUnused10[4];
             float unk14;
             u8 guideUnused18[8];

@@ -542,6 +542,32 @@ REL, and byte-identical DOL gate. Runtime assembly remains separately reported
 and is not counted as clean decompiled C. Full evidence is retained in
 [`docs/native_matching_wave70.md`](docs/native_matching_wave70.md).
 
+Wave 71 batches eight newly data-value-exact Board functions totaling `0x938`
+target text bytes without promoting an incomplete owner. `board/coin.c` gains
+the exact close/effect lifecycle and rises from 24/52 represented and 6 exact
+functions to 27/52 and 9; source `.text` grows from `0x103C` to `0x1294`, at
+20.446123%. The target-proven object-motion ABI and particle-result lifetime
+close `DiceObjCreate`, `DiceInEffCreate`, and `DiceInDotEffCreate`, raising
+`board/dice.c` from 47 to 50 data-value-exact functions and to 92.523540%
+across its complete 68-function source representation. Exact
+`BiriQEffect2Hook` plus the real particle-owner union and Biri-Q work fields
+raise `board/player.c` to 151/165 represented and 131 data-value-exact
+functions, at 66.687890%.
+
+The same particle-owner field unlocks five formerly absent `board/star.c`
+functions totaling `0xCF4` target text bytes: the object constructor, complete
+five-mode update, rotation, particle effect, and material hook. `StarObjRotate`
+is exact; Star rises from 67/90 represented and 60 exact functions to 72/90
+and 61, with source `.text 0x2254` at 35.109547%. `board/object.c` remains
+80/80 and byte-exact after correcting the public motion-ID return ABI. Coin,
+Dice, Player, and Star remain `NonMatching` and fallback-linked, so this wave
+does not change the clean-C owner ledger. Evidence and bounded rejected probes
+are retained in
+[`docs/native_matching_wave71.md`](docs/native_matching_wave71.md). The final
+serialized build and explicit DTK checksum both report `137 files OK`; the
+rebuilt and original `main.dol` compare byte-identical, and the final build
+leaves `config/GP6E01/symbols.txt` unchanged.
+
 The exact build result includes extracted original objects and explicit
 standalone assembly fallbacks for owners that are not yet byte-identical C.
 Those owners remain `NonMatching` in `configure.py`; fallback-linked code is

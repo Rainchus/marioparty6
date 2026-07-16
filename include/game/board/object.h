@@ -57,8 +57,8 @@ int mbObjSePlay(MBMODELID modelId, s16 seId);
 void mbObjMotionVoiceOnSet(MBMODELID modelId, int motNo, BOOL voiceOnF);
 int mbObjMotionGet(MBMODELID modelId);
 void mbObjMotionSet(MBMODELID modelId, int motNo, u32 attr);
-HU3D_MOTIONID mbObjMotionIDCurGet(MBMODELID modelId);
-HU3D_MOTIONID mbObjMotionIDGet(MBMODELID modelId, int motNo);
+int mbObjMotionIDCurGet(MBMODELID modelId);
+int mbObjMotionIDGet(MBMODELID modelId, int motNo);
 void mbObjMotionShiftSet(MBMODELID modelId, int motNo, float start, float end, u32 attr);
 int mbObjMotionShiftIDGet(MBMODELID modelId);
 void mbObjMotionNoCreate(MBMODELID modelId, int dataNum, int motNo);
@@ -86,6 +86,7 @@ void mbObjShadowSet(MBMODELID modelId);
 void mbObjShadowReset(MBMODELID modelId);
 void mbObjShadowMapSet(MBMODELID modelId);
 void mbObjShadowMapReset(MBMODELID modelId);
+void mbObjStarTevStageSet(HU3D_DRAW_OBJ *, HSF_MATERIAL *, int *, int *);
 int mbObjStub0(void);
 
 #endif

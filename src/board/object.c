@@ -670,12 +670,12 @@ void mbObjMotionSet(MBMODELID modelId, int motNo, u32 attr)
     modelP->motNo = motNo;
 }
 
-HU3D_MOTIONID mbObjMotionIDCurGet(MBMODELID modelId)
+int mbObjMotionIDCurGet(MBMODELID modelId)
 {
     return mbObjMotionIDGet(modelId, mbObjMotionGet(modelId));
 }
 
-HU3D_MOTIONID mbObjMotionIDGet(MBMODELID modelId, int motNo)
+int mbObjMotionIDGet(MBMODELID modelId, int motNo)
 {
     MBOBJMODEL *modelP = &objManData[modelId];
 

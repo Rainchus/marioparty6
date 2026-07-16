@@ -1,13 +1,20 @@
 #include "game/board/coin.h"
+#include "game/board/effect.h"
+#include "game/board/main.h"
+#include "game/board/object.h"
 
 #include "game/gamework.h"
+#include "game/hu3d.h"
 #include "game/memory.h"
 #include "game/object.h"
+#include "game/process.h"
 
 #include "string.h"
 
 #define COIN_OBJ_BANK_MAX 64
 #define COIN_OBJ_BANK_SIZE 64
+#define COIN_EFF_MAX 64
+#define COIN_MODEL_MAX 14
 
 #define COIN_OBJ_ID_MASK 0x0FFF
 #define COIN_OBJ_ID_BASE 0x4000
@@ -40,8 +47,75 @@ typedef struct CoinDispWork_s {
     u16 maxTime;
 } COINDISPWORK;
 
+typedef struct CoinEffData_s {
+    HuVecF pos;
+    s16 modelId;
+    s16 count;
+} COINEFFDATA;
+
+static void CoinClose(void);
+
 static OMOBJ *coinDispOMObj[GW_PLAYER_MAX + 1] = {};
+static COINEFFDATA coinEffData[COIN_EFF_MAX];
 static MBCOINOBJDATA coinObjData;
+static int coin1MdlId;
+static int coin2MdlId;
+static HUPROCESS *coinMdlProc;
+
+void mbCoinClose(void)
+{
+    int i;
+
+    CoinClose();
+    for (i = 0; i < COIN_EFF_MAX; i++) {
+        if (coinEffData[i].modelId > 0) {
+            mbParticleKill(coinEffData[i].modelId);
+            coinEffData[i].modelId = 0;
+        }
+    }
+    if (coin1MdlId > 0) {
+        mbObjKill(coin1MdlId);
+        coin1MdlId = 0;
+    }
+    if (coin2MdlId > 0) {
+        mbObjKill(coin2MdlId);
+        coin2MdlId = 0;
+    }
+    HuPrcKill(coinMdlProc);
+}
+
+void mbCoinEffObjCreate(int modelId)
+{
+    HuVecF pos;
+
+    mbObjPosGet(modelId, &pos);
+    mbCoinEffCreate(&pos);
+    mbObjKill(modelId);
+}
+
+static void CoinClose(void)
+{
+    MBCOINOBJBANK *bankP;
+    int i;
+
+    Hu3DModelKill(coinObjData.hookModelId[0]);
+    coinObjData.hookModelId[0] = -1;
+    Hu3DModelKill(coinObjData.hookModelId[1]);
+    coinObjData.hookModelId[1] = -1;
+    Hu3DModelKill(coinObjData.hookModelId[2]);
+    coinObjData.hookModelId[2] = -1;
+    for (i = 0; i < COIN_OBJ_BANK_MAX; i++) {
+        if (coinObjData.bank[i] != NULL) {
+            bankP = coinObjData.bank[i];
+            HuMemDirectFree(bankP);
+            coinObjData.bank[i] = NULL;
+        }
+    }
+    for (i = 0; i < COIN_MODEL_MAX; i++) {
+        mbObjKill(coinObjData.modelId[i]);
+        coinObjData.modelId[i] = 0;
+    }
+}
 
 s16 mbCoinCreate(void)
 {

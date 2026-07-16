@@ -1545,6 +1545,7 @@ OMOBJ *mbDiceSNpcNumCreate(int playerNo, HuVecF *pos)
     int color = 0;
     BOOL createF = FALSE;
     int i;
+    HuVecF objPos;
     HuVecF offset;
 
     if (playerNo < 0) {
@@ -1558,9 +1559,8 @@ OMOBJ *mbDiceSNpcNumCreate(int playerNo, HuVecF *pos)
 
             value += (s8)work->value;
             if (!createF) {
-                HuVecF objPos = obj->rot;
-
                 color = work->color;
+                objPos = obj->rot;
                 VECSubtract(&objPos, pos, &offset);
                 createF = TRUE;
             }
@@ -1821,7 +1821,7 @@ static void DiceZoromeEffHook(HU3D_MODEL *modelP, MBPARTICLE *particleP,
 
 static HU3D_MODELID DiceInEffCreate(void)
 {
-    HU3D_MODELID modelId;
+    int modelId;
 
     modelId = mbParticleCreate(HuSprAnimRead(HuDataSelHeapReadNum(
         mbBoardDataNumGet(0x00050064), HU_MEMNUM_OVL, HEAP_MODEL)), 80);
@@ -1834,7 +1834,7 @@ static HU3D_MODELID DiceInEffCreate(void)
 
 static HU3D_MODELID DiceInDotEffCreate(void)
 {
-    HU3D_MODELID modelId;
+    int modelId;
 
     modelId = mbParticleCreate(HuSprAnimRead(HuDataSelHeapReadNum(
         mbBoardDataNumGet(0x00050064), HU_MEMNUM_OVL, HEAP_MODEL)), 150);
