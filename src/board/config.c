@@ -127,7 +127,5 @@ void mbPauseGuideKill(void)
 
 static BOOL GWStorySingleCheck(void)
 {
-    BOOL partyF = GWPartyGet();
-
-    return !partyF;
+    return !GWPartyGet();
 }

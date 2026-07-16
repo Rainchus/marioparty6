@@ -43,6 +43,7 @@ typedef struct MbParticleData_s {
             float scaleBase;
         };
         HuVecF guideAccel;
+        s32 vertexNo;
     };
     float scale;
     union {

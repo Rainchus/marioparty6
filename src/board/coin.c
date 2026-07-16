@@ -2,6 +2,7 @@
 #include "dolphin/math.h"
 
 #include "game/board/audio.h"
+#include "game/board/camera.h"
 #include "game/board/coin.h"
 #include "game/board/effect.h"
 #include "game/board/main.h"
@@ -28,6 +29,12 @@
 #define COIN_OBJ_ATTR_USED 0x00000001
 #define COIN_OBJ_ATTR_DISP 0x00100000
 
+#define COINDISP_MODE_ON 0
+#define COINDISP_MODE_MAIN 1
+#define COINDISP_MODE_NONE 2
+#define COINDISP_MODE_OFF 3
+#define COINDISP_MODEL_MAX 5
+
 typedef struct MbCoinObjBank_s {
     int count;
     u32 attr[COIN_OBJ_BANK_SIZE];
@@ -53,6 +60,12 @@ typedef struct CoinDispWork_s {
     u16 maxTime;
 } COINDISPWORK;
 
+typedef struct coinDispModel_s {
+    HuVecF pos;
+    HuVecF scale;
+    float rotY;
+} COINDISPMODEL;
+
 typedef struct CoinEffData_s {
     HuVecF pos;
     s16 modelId;
@@ -64,6 +77,8 @@ extern void mbMtxRotZDeg(Mtx mtx, float angle);
 extern void mbMtxScaleRotXDeg(Mtx mtx, float angle, HuVecF *scale);
 extern float mbSinDeg(float angle);
 extern float mbCosDeg(float angle);
+extern void mbPos3Dto2D(HuVecF *src, HuVecF *dst);
+extern void mbPos2Dto3D(HuVecF *src, HuVecF *dst);
 
 static void CoinInit(void);
 static void CoinClose(void);
@@ -71,6 +86,13 @@ static void CoinDraw(HU3D_MODEL *modelP, Mtx *mtxP);
 static void CoinMain(void);
 static void CoinEffCreate(int no, HuVecF *pos);
 static void CoinEffHook(HU3D_MODEL *modelP, MBPARTICLE *particleP, Mtx mtx);
+static void CoinDispCreate(OMOBJ *obj, int coinNum);
+static void CoinDispOMExec(OMOBJ *obj);
+static void CoinDispObjUpdate(OMOBJ *obj);
+static void CoinDispOn(OMOBJ *obj);
+static void CoinDispMain(OMOBJ *obj);
+static void CoinDispOff(OMOBJ *obj);
+static void CoinDispObjKill(OMOBJ *obj);
 
 static OMOBJ *coinDispOMObj[GW_PLAYER_MAX + 1] = {};
 
@@ -856,6 +878,299 @@ static void CoinEffHook(HU3D_MODEL *modelP, MBPARTICLE *particleP, Mtx mtx)
         }
     }
     coinEffData[particleP->time].count = count;
+}
+
+s16 mbCoinDispCreate(HuVecF *pos, int coinNum, int sign, BOOL playSe)
+{
+    OMOBJ *obj;
+    COINDISPWORK *work;
+    s8 i;
+
+    for (i = 1; i < GW_PLAYER_MAX + 1; i++) {
+        if (!coinDispOMObj[i]) {
+            break;
+        }
+    }
+    if (i >= GW_PLAYER_MAX + 1) {
+        return -1;
+    }
+    if (coinNum > 999) {
+        coinNum = 999;
+    } else if (coinNum < -999) {
+        coinNum = -999;
+    }
+    obj = omAddObjEx(mbObjMan, 261, 5, 0, OM_GRP_NONE, CoinDispOMExec);
+    obj->data = HuMemDirectMallocNum(
+        HEAP_HEAP,
+        COINDISP_MODEL_MAX * sizeof(COINDISPMODEL),
+        HU_MEMNUM_OVL);
+    omSetStatBit(obj, OM_STAT_MODELPAUSE);
+    coinDispOMObj[i] = obj;
+    work = omObjGetWork(obj, COINDISPWORK);
+    work->killF = FALSE;
+    if (coinNum != 0) {
+        work->sign = (coinNum < 0) ? 1 : 0;
+    } else {
+        work->sign = (sign < 0) ? 1 : 0;
+    }
+    work->mode = COINDISP_MODE_ON;
+    work->no = i;
+    work->delay = 0;
+    work->time = 0;
+    obj->trans.x = pos->x;
+    obj->trans.y = pos->y;
+    obj->trans.z = pos->z;
+    obj->rot.x = 0.0f;
+    obj->rot.y = 0.01f;
+    CoinDispCreate(obj, coinNum);
+    CoinDispObjUpdate(obj);
+    if (playSe) {
+        if (!work->sign) {
+            mbAudFXPlay(0x467);
+        } else {
+            mbAudFXPlay(0x468);
+        }
+    }
+    return work->no;
+}
+
+s16 mbCoinDispMasuCreate(HuVecF *pos, int coinNum, BOOL playSe)
+{
+    return mbCoinDispCreate(pos, coinNum, 1, playSe);
+}
+
+s16 mbCoinDispCapsuleCreate(HuVecF *pos, int coinNum)
+{
+    return mbCoinDispCreate(pos, coinNum, 1, TRUE);
+}
+
+static void CoinDispCreate(OMOBJ *obj, int coinNum)
+{
+    int digitVal;
+    COINDISPWORK *work = omObjGetWork(obj, COINDISPWORK);
+    COINDISPMODEL *model = obj->data;
+    BOOL dispF = FALSE;
+    float motTime;
+    int i;
+    int modelNum;
+
+    obj->mdlId[0] = mbCoinCreate();
+    if (work->sign) {
+        motTime = 2.5f;
+    } else {
+        motTime = 1.5f;
+    }
+    obj->mdlId[1] = mbCoinObjCreate(
+        work->sign + 10,
+        work->sign ? 2 : 1);
+    digitVal = 100;
+    work->modelNum = 0;
+    modelNum = 2;
+    coinNum = abs(coinNum);
+    for (i = 0; i < 3; i++) {
+        int digit = coinNum / digitVal;
+
+        if (i == 2) {
+            dispF = TRUE;
+        }
+        if (dispF || digit != 0) {
+            dispF = TRUE;
+            obj->mdlId[modelNum] = mbCoinObjCreate(
+                digit,
+                work->sign ? 2 : 1);
+            modelNum++;
+        }
+        coinNum -= digit * digitVal;
+        digitVal /= 10;
+    }
+    work->modelNum = modelNum;
+    for (i = 0; i < work->modelNum; i++, model++) {
+        model->pos.x = model->pos.y = model->pos.z = 0.0f;
+        model->rotY = 0.0f;
+        model->scale.x = model->scale.y = model->scale.z = 0.001f;
+        mbCoinObjLayerSet(obj->mdlId[i], HU3D_CAM1);
+    }
+}
+
+static void CoinDispOMExec(OMOBJ *obj)
+{
+    COINDISPWORK *work = omObjGetWork(obj, COINDISPWORK);
+
+    if (work->killF || mbExitCheck()) {
+        CoinDispObjKill(obj);
+        coinDispOMObj[work->no] = NULL;
+        omDelObjEx(HuPrcCurrentGet(), obj);
+        return;
+    }
+    if (work->delay == 0) {
+        switch (work->mode) {
+            case COINDISP_MODE_ON:
+                CoinDispOn(obj);
+                break;
+
+            case COINDISP_MODE_MAIN:
+                CoinDispMain(obj);
+                break;
+
+            case COINDISP_MODE_OFF:
+                CoinDispOff(obj);
+                break;
+        }
+    } else {
+        work->delay--;
+    }
+    CoinDispObjUpdate(obj);
+}
+
+static void CoinDispObjUpdate(OMOBJ *obj)
+{
+    COINDISPWORK *work = omObjGetWork(obj, COINDISPWORK);
+    COINDISPMODEL *model = obj->data;
+    HuVecF pos2D;
+    HuVecF pos;
+    Mtx rotMtx;
+    float cameraRotY;
+    int i;
+
+    mbCameraRotGet(&pos2D);
+    cameraRotY = pos2D.y;
+    PSMTXRotRad(rotMtx, 'Y', 0.017453292f * cameraRotY);
+    for (i = 0; i < work->modelNum; i++, model++) {
+        float scale;
+        float z;
+
+        PSMTXMultVec(rotMtx, &model->pos, &pos2D);
+        VECAdd(&obj->trans, &pos2D, &pos);
+        mbPos3Dto2D(&pos, &pos2D);
+        z = pos2D.z;
+        pos2D.z = 800.0f;
+        mbPos2Dto3D(&pos2D, &pos);
+        scale = 800.0f / z;
+        mbCoinObjPosSetV(obj->mdlId[i], &pos);
+        mbCoinObjRotSet(
+            obj->mdlId[i],
+            0.0f,
+            model->rotY + cameraRotY,
+            0.0f);
+        mbCoinObjScaleSet(
+            obj->mdlId[i],
+            model->scale.x * scale,
+            model->scale.y * scale,
+            model->scale.z * scale);
+    }
+}
+
+static void CoinDispOn(OMOBJ *obj)
+{
+    COINDISPWORK *work = omObjGetWork(obj, COINDISPWORK);
+    COINDISPMODEL *model = obj->data;
+    float s;
+    float scale;
+    int i;
+
+    s = mbSinDeg((float)work->time);
+    scale = s;
+    obj->rot.x = 405.0f * s;
+    model->scale.x = model->scale.y = model->scale.z = scale;
+    model->pos.x = model->pos.y = model->pos.z = 0.0f;
+    model->rotY = obj->rot.x;
+    if (work->time < 90) {
+        work->time += 6;
+        return;
+    }
+    work->mode = COINDISP_MODE_MAIN;
+    work->time = 0;
+    work->maxTime = 30;
+    model = ((COINDISPMODEL *)obj->data) + 1;
+    for (i = 1; i < work->modelNum; i++, model++) {
+        model->scale.x = model->scale.y = model->scale.z = scale;
+        model->pos.x = model->pos.y = model->pos.z = 0.0f;
+        model->rotY = obj->rot.x;
+    }
+}
+
+static void CoinDispMain(OMOBJ *obj)
+{
+    COINDISPWORK *work = omObjGetWork(obj, COINDISPWORK);
+    COINDISPMODEL *model = obj->data;
+    float weight = (float)work->time / work->maxTime;
+    float ofsX = -0.5f * ((work->modelNum - 1) * 120.00001f);
+    float s = mbSinDeg(weight * 90.0f);
+    float angle;
+    float sy;
+    int i;
+
+    obj->rot.x = 45.0f + (s * 315.0f);
+    angle = weight * (((work->modelNum - 1) * 30.0f) + 180.0f);
+    for (i = 0; i < work->modelNum; i++, model++) {
+        sy = mbSinDeg(angle);
+        if (sy < 0.0f) {
+            sy = 0.0f;
+        }
+        model->pos.x = s * ofsX;
+        model->pos.y = 200.0f * sy;
+        model->pos.z = 0.0f;
+        model->rotY = obj->rot.x;
+        ofsX += 120.00001f;
+        angle -= 30.0f;
+    }
+    if (++work->time > work->maxTime) {
+        work->mode = COINDISP_MODE_OFF;
+        work->time = 0;
+        work->maxTime = 24;
+        work->delay = 30;
+    }
+}
+
+static void CoinDispOff(OMOBJ *obj)
+{
+    COINDISPWORK *work = omObjGetWork(obj, COINDISPWORK);
+    COINDISPMODEL *model = obj->data;
+    float weight = (float)work->time / work->maxTime;
+    float angle;
+    float s;
+    float posY;
+    float angleBase;
+    int i;
+
+    obj->rot.x = (270.0f * mbSinDeg(weight * 90.0f)) + 90.0f;
+    angleBase = weight * (((work->modelNum - 1) * 30.0f) + 90.0f);
+    for (i = 0; i < work->modelNum; i++, model++) {
+        angle = angleBase - (i * 30.0f);
+        if (angle < 0.0f) {
+            angle = 0.0f;
+        } else if (angle > 90.0f) {
+            angle = 90.0f;
+        }
+        s = mbSinDeg(angle);
+        if (work->sign) {
+            posY = -100.0f * s;
+        } else {
+            posY = 100.0f * s;
+        }
+        model->pos.y = posY;
+        model->rotY = obj->rot.x;
+        mbCoinObjAlphaSet(obj->mdlId[i], mbCosDeg(angle));
+    }
+    if (++work->time > work->maxTime) {
+        for (i = 0; i < work->modelNum; i++) {
+            mbCoinObjDispSet(obj->mdlId[i], FALSE);
+        }
+        work->killF = TRUE;
+    }
+}
+
+static void CoinDispObjKill(OMOBJ *obj)
+{
+    COINDISPWORK *work = omObjGetWork(obj, COINDISPWORK);
+    int i;
+
+    for (i = 0; i < work->modelNum; i++) {
+        if (obj->mdlId[i] >= 0) {
+            mbCoinObjNumDec(obj->mdlId[i]);
+        }
+        obj->mdlId[i] = -1;
+    }
 }
 
 void mbCoinDispKill(s16 no)

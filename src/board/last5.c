@@ -33,7 +33,7 @@ static void Last5PlayerOrderGet(int *playerOrder, int playerNum)
         playerOrder[i] = swap;
     }
 
-    if (!GwSystem.tagF) {
+    if (!GWTeamFGet()) {
         if (GwPlayer[playerOrder[playerNum - 1]].comF) {
             for (i = playerNum - 1; i >= 0; i--) {
                 if (!GwPlayer[playerOrder[i]].comF) {
@@ -104,7 +104,7 @@ static void ev_Last5Coin40(int playerNo, OMOBJ *guideObj)
         coinObj->rot.y = 360.0f * frandf();
         coinObj->scale.x = coinObj->scale.y = coinObj->scale.z = 0.7f;
         coinWork = (LAST5COINWORK *)coinObj->work;
-        coinWork->delay = (i * 30) / coinNum;
+        coinWork->delay = (float)(i * 30) / coinNum;
         coinWork->velocity = -13.333334f;
     }
 

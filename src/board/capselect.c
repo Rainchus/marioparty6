@@ -44,7 +44,10 @@ void mbCapSelectResultReset(int playerNo)
 
 BOOL mbCapSelectShrinkCheck(int playerNo)
 {
-    return ev_CapSelectShrinkProc[playerNo] == NULL;
+    if (ev_CapSelectShrinkProc[playerNo] == NULL) {
+        return TRUE;
+    }
+    return FALSE;
 }
 
 static void CapSelectStoryFSet(BOOL storyF)
@@ -57,7 +60,7 @@ static void CapSelectExtraCapsuleGet(int playerNo, int capsuleNo)
     ev_CapSelectExtra[playerNo] = capsuleNo;
 }
 
-static s16 CapSelectCapsuleGet(int playerNo, int selectNo)
+static int CapSelectCapsuleGet(int playerNo, int selectNo)
 {
     if (ev_CapSelectStoryF) {
         if (selectNo == 0) {

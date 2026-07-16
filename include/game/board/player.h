@@ -143,6 +143,7 @@ void mbPlayerColRestSet(int playerNo, BOOL restF);
 void mbPlayerColFirstSet(int playerNo);
 void mbPlayerColOrderReset(void);
 void mbPlayerEffectSet(int playerNo, BOOL effectF);
+void mbPlayerMetalSet(int playerNo, BOOL metalF);
 void mbPlayerBiriQSet(int playerNo, BOOL biriQF);
 void mbPlayerMetalColorSet(const GXColor *shadowColor,
     const GXColor *hiliteColor);

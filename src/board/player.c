@@ -12,7 +12,9 @@
 #include "game/board/object.h"
 #include "game/board/player.h"
 #include "game/audio.h"
+#include "game/charman.h"
 #include "game/data.h"
+#include "game/frand.h"
 #include "game/process.h"
 #include "game/msm.h"
 
@@ -53,6 +55,10 @@ static GXColor metalDefaultColor[2] = {
 
 static void PlayerColKill(int playerNo);
 static void PlayerMetalKill(int playerNo);
+static void PlayerMetalOMExec(OMOBJ *objP);
+static void MetalEffectCreate(OMOBJ *objP);
+static void MetalEffectHook(
+    HU3D_MODEL *modelP, MBPARTICLE *particleP, Mtx matrix);
 static void PlayerBiriQKill(int playerNo);
 static void PlayerBiriQFlashSet(int playerNo);
 static void PlayerBiriQOMExec(OMOBJ *objP);
@@ -70,7 +76,11 @@ static BOOL PlayerViewSet(
 static void MasuCoinExec(int playerNo, int coinNum);
 void mbDiceNumKill(int playerNo);
 void mbDiceObjHit(int playerNo);
+void mbObjMetalCreate(MBMODELID modelId);
 void mbObjMetalKill(MBMODELID modelId);
+void mbObjMetalTPLvlSet(MBMODELID modelId, float level);
+void mbObjMetalColorSet(
+    MBMODELID modelId, GXColor shadowColor, GXColor hiliteColor);
 void mbObjBiriQCreate(MBMODELID modelId);
 void mbObjBiriQKill(MBMODELID modelId);
 void mbObjBiriQColorSet(
@@ -79,6 +89,7 @@ BOOL mbWipeSpecialStatGet(void);
 void mbWipeFadeIn(void);
 BOOL mbPauseEnableCheck(void);
 void mbPos3DtoNorm(HuVecF *src, s16 cameraMask, HuVecF *dst);
+float mbSinDeg(float angle);
 float mbAngleEaseOut(float angleStart, float angleEnd, float weight);
 
 void mbPlayerClose(void)
@@ -1577,6 +1588,11 @@ typedef struct PlayerMetalWork {
     u8 _unk0_1 : 1;
     u8 _unk0_2 : 1;
     u8 effectF : 1;
+    u8 playerNo : 2;
+    s16 time;
+    s16 maxTime;
+    s16 _unk06;
+    s16 _unk08;
 } PLAYERMETALWORK;
 
 typedef struct PlayerBiriQWork {
@@ -1593,6 +1609,105 @@ typedef struct PlayerBiriQWork {
 } PLAYERBIRIQWORK;
 
 static void PlayerBiriQEffectSet(int playerNo, BOOL effectF);
+
+static void PlayerMetalOMExec(OMOBJ *objP)
+{
+    PLAYERMETALWORK *workP = omObjGetWork(objP, PLAYERMETALWORK);
+    BOOL killF = FALSE;
+    float weight;
+
+    if (mbExitCheck() || workP->killF) {
+        if (workP->killF) {
+            killF = TRUE;
+        }
+        workP->killF = TRUE;
+    }
+    if (!workP->killF) {
+        if (!GwPlayer[workP->playerNo].metalF && !workP->_unk0_2) {
+            workP->_unk0_2 = TRUE;
+            workP->time = 0;
+            workP->maxTime = 20;
+        }
+        if (workP->_unk0_2) {
+            workP->time++;
+            weight = (float)workP->time / workP->maxTime;
+            if (weight > 1.0f) {
+                weight = 1.0f;
+            }
+            mbObjMetalTPLvlSet(
+                mbPlayerObjIDGet(workP->playerNo), 1.0f - weight);
+            if (workP->time >= workP->maxTime) {
+                workP->killF = TRUE;
+            }
+        } else if (!workP->_unk0_1) {
+            workP->time++;
+            weight = (float)workP->time / workP->maxTime;
+            if (weight > 1.0f) {
+                weight = 1.0f;
+            }
+            mbObjMetalTPLvlSet(mbPlayerObjIDGet(workP->playerNo), weight);
+            if (workP->time >= workP->maxTime) {
+                workP->_unk0_1 = TRUE;
+            }
+        }
+        if (objP->mdlId[0] >= 0) {
+            if (!mbObjGet(mbPlayerObjIDGet(workP->playerNo))->dispF
+                || !workP->effectF) {
+                Hu3DModelAttrSet(objP->mdlId[0], HU3D_ATTR_DISPOFF);
+            } else {
+                Hu3DModelAttrReset(objP->mdlId[0], HU3D_ATTR_DISPOFF);
+            }
+        }
+    }
+    if (workP->killF) {
+        if (!killF) {
+            PlayerMetalKill(workP->playerNo);
+        }
+        if (objP->data != NULL) {
+            void *dataP = objP->data;
+
+            HuMemDirectFree(dataP);
+        }
+        omDelObjEx(HuPrcCurrentGet(), objP);
+    }
+}
+
+void mbPlayerMetalSet(int playerNo, BOOL metalF)
+{
+    OMOBJ *objP;
+    PLAYERMETALWORK *workP;
+
+    if (metalF) {
+        if (playerWork[playerNo].metalObj != NULL) {
+            OSReport("------------already METAL!!----------");
+        }
+        GwPlayer[playerNo].metalF = TRUE;
+        objP = playerWork[playerNo].metalObj;
+        if (objP == NULL) {
+            objP = playerWork[playerNo].metalObj = omAddObjEx(mbObjMan,
+                0x100, 1, 0, -1, PlayerMetalOMExec);
+            omSetStatBit(objP, OM_STAT_MODELPAUSE);
+            mbObjMetalCreate(mbPlayerObjIDGet(playerNo));
+            mbObjMetalTPLvlSet(mbPlayerObjIDGet(playerNo), 0.0f);
+            mbObjMetalColorSet(mbPlayerObjIDGet(playerNo),
+                metalShadowColor, metalHiliteColor);
+        }
+        workP = omObjGetWork(objP, PLAYERMETALWORK);
+        workP->playerNo = playerNo;
+        workP->_unk0_2 = FALSE;
+        workP->_unk0_1 = FALSE;
+        workP->effectF = TRUE;
+        workP->time = 0;
+        workP->maxTime = 20;
+        if (objP->mdlId[0] <= 0) {
+            MetalEffectCreate(objP);
+        }
+        CharModelStepSet(GwPlayer[playerNo].charNo, 6);
+    } else {
+        GwPlayer[playerNo].metalF = FALSE;
+        CharModelStepSet(GwPlayer[playerNo].charNo, 0);
+    }
+}
 
 static void PlayerMetalKill(int playerNo)
 {
@@ -1632,6 +1747,434 @@ void mbPlayerMetalColorSet(
 {
     metalShadowColor = *shadowColor;
     metalHiliteColor = *hiliteColor;
+}
+
+static float GetBiriQEffectRadius(
+    OMOBJ *objP, int playerNo, int *effectCount)
+{
+    HSF_DATA *hsfP;
+    HSF_OBJECT *objectP;
+    HuVecF min;
+    HuVecF size;
+    HuVecF pos;
+    HuVecF *vertexP;
+    void *dataP;
+    s16 *groupP;
+    s16 *countP;
+    s16 (*vertexNoP)[8];
+    int objectNo = -1;
+    int vertexNum = 0;
+    int groupNum;
+    int i;
+    int x;
+    int y;
+    int z;
+    int groupNo;
+    int randomNo;
+    s16 count;
+    float radius;
+
+    hsfP = Hu3DData[mbPlayerModelIDGet(playerNo)].hsf;
+    objectP = hsfP->object;
+    for (i = 0; i < hsfP->objectNum; i++, objectP++) {
+        if (objectP->type == HSF_OBJ_MESH
+            && objectP->mesh.vertex->count > 0
+            && vertexNum < objectP->mesh.vertex->count) {
+            vertexNum = objectP->mesh.vertex->count;
+            objectNo = i;
+        }
+    }
+    effectCount[0] = objectNo;
+    dataP = HuMemDirectMallocNum(HEAP_HEAP,
+        (125 + 125 + (125 * 8)) * sizeof(s16), HU_MEMNUM_OVL);
+    objP->data = dataP;
+    groupP = objP->data;
+    countP = groupP + 125;
+    vertexNoP = (s16 (*)[8])(countP + 125);
+    memset(countP, 0, 125 * sizeof(s16));
+    objectP = &hsfP->object[effectCount[0]];
+    VECScale(&objectP->mesh.mesh.min, &min, -1.0f);
+    VECSubtract(&objectP->mesh.mesh.max,
+        &objectP->mesh.mesh.min, &size);
+    size.x += 1.0f;
+    size.y += 1.0f;
+    size.z += 1.0f;
+    if (size.x > 0.0f) {
+        size.x = 5.0f / size.x;
+    }
+    if (size.y > 0.0f) {
+        size.y = 5.0f / size.y;
+    }
+    if (size.z > 0.0f) {
+        size.z = 5.0f / size.z;
+    }
+    vertexNum = objectP->mesh.vertex->count;
+    vertexP = objectP->mesh.vertex->data;
+    for (i = 0; i < vertexNum; i++, vertexP++) {
+        VECAdd(vertexP, &min, &pos);
+        pos.x *= size.x;
+        pos.y *= size.y;
+        pos.z *= size.z;
+        x = pos.x;
+        if (x < 0) {
+            x += 5;
+        }
+        if (x >= 5) {
+            x -= 5;
+        }
+        y = pos.y;
+        if (y < 0) {
+            y += 5;
+        }
+        if (y >= 5) {
+            y -= 5;
+        }
+        z = pos.z;
+        if (z < 0) {
+            z += 5;
+        }
+        if (z >= 5) {
+            z -= 5;
+        }
+        groupNo = x + (5 * y) + (25 * z);
+        count = countP[groupNo];
+        if (count < 8) {
+            vertexNoP[groupNo][count] = i;
+        } else {
+            randomNo = mbRandMod(count + 1);
+            if (randomNo < 8) {
+                vertexNoP[groupNo][randomNo] = i;
+            }
+        }
+        countP[groupNo]++;
+    }
+    groupNum = 0;
+    for (i = 0; i < 125; i++) {
+        if (countP[i] > 0) {
+            groupP[groupNum++] = i;
+            if (countP[i] > 8) {
+                countP[i] = 8;
+            }
+        }
+    }
+    effectCount[1] = groupNum;
+    radius = objectP->mesh.mesh.max.y - objectP->mesh.mesh.min.y;
+    return radius;
+}
+
+static void MetalEffectCreate(OMOBJ *objP)
+{
+    PLAYERMETALWORK *workP = omObjGetWork(objP, PLAYERMETALWORK);
+    HSF_DATA *hsfP;
+    HSF_OBJECT *objectP;
+    MBPARTICLE *particleP;
+    MBPARTICLEDATA *particleDataP;
+    HuVecF min;
+    HuVecF size;
+    HuVecF pos;
+    HuVecF *vertexP;
+    void *dataP;
+    s16 *groupP;
+    s16 *countP;
+    s16 (*vertexNoP)[8];
+    int particleNum = 5;
+    int objectNo = -1;
+    int vertexNum = 0;
+    int groupNum;
+    int i;
+    int x;
+    int y;
+    int z;
+    int groupNo;
+    int randomNo;
+    s16 count;
+
+    objP->mdlId[0] = mbParticleCreate(HuSprAnimRead(HuDataReadNum(
+        mbBoardDataNumGet(DATANUM(DATA_board, 106)), HU_MEMNUM_OVL)),
+        (s16)particleNum);
+    mbParticleHookSet(objP->mdlId[0], MetalEffectHook);
+    Hu3DModelLayerSet(objP->mdlId[0], 5);
+    hsfP = Hu3DData[mbPlayerModelIDGet(workP->playerNo)].hsf;
+    objectP = hsfP->object;
+    for (i = 0; i < hsfP->objectNum; i++, objectP++) {
+        if (objectP->type == HSF_OBJ_MESH
+            && objectP->mesh.vertex->count > 0
+            && vertexNum < objectP->mesh.vertex->count) {
+            vertexNum = objectP->mesh.vertex->count;
+            objectNo = i;
+        }
+    }
+    workP->_unk06 = objectNo;
+    particleP = Hu3DData[objP->mdlId[0]].hookData;
+    particleP->hookData = objP;
+    particleDataP = particleP->data;
+    for (i = 0; i < particleNum; i++, particleDataP++) {
+        particleDataP->vertexNo = 0;
+    }
+    dataP = HuMemDirectMallocNum(HEAP_HEAP,
+        (125 + 125 + (125 * 8)) * sizeof(s16), HU_MEMNUM_OVL);
+    objP->data = dataP;
+    groupP = objP->data;
+    countP = groupP + 125;
+    vertexNoP = (s16 (*)[8])(countP + 125);
+    memset(countP, 0, 125 * sizeof(s16));
+    objectP = &hsfP->object[workP->_unk06];
+    VECScale(&objectP->mesh.mesh.min, &min, -1.0f);
+    VECSubtract(&objectP->mesh.mesh.max,
+        &objectP->mesh.mesh.min, &size);
+    size.x += 1.0f;
+    size.y += 1.0f;
+    size.z += 1.0f;
+    if (size.x > 0.0f) {
+        size.x = 5.0f / size.x;
+    }
+    if (size.y > 0.0f) {
+        size.y = 5.0f / size.y;
+    }
+    if (size.z > 0.0f) {
+        size.z = 5.0f / size.z;
+    }
+    vertexNum = objectP->mesh.vertex->count;
+    vertexP = objectP->mesh.vertex->data;
+    for (i = 0; i < vertexNum; i++, vertexP++) {
+        VECAdd(vertexP, &min, &pos);
+        pos.x *= size.x;
+        pos.y *= size.y;
+        pos.z *= size.z;
+        x = pos.x;
+        if (x < 0) {
+            x += 5;
+        }
+        if (x >= 5) {
+            x -= 5;
+        }
+        y = pos.y;
+        if (y < 0) {
+            y += 5;
+        }
+        if (y >= 5) {
+            y -= 5;
+        }
+        z = pos.z;
+        if (z < 0) {
+            z += 5;
+        }
+        if (z >= 5) {
+            z -= 5;
+        }
+        groupNo = x + (5 * y) + (25 * z);
+        count = countP[groupNo];
+        if (count < 8) {
+            vertexNoP[groupNo][count] = i;
+        } else {
+            randomNo = mbRandMod(count + 1);
+            if (randomNo < 8) {
+                vertexNoP[groupNo][randomNo] = i;
+            }
+        }
+        countP[groupNo]++;
+    }
+    groupNum = 0;
+    for (i = 0; i < 125; i++) {
+        if (countP[i] > 0) {
+            groupP[groupNum++] = i;
+            if (countP[i] > 8) {
+                countP[i] = 8;
+            }
+        }
+    }
+    workP->_unk08 = groupNum;
+}
+
+static void MetalEffectHook(
+    HU3D_MODEL *modelP, MBPARTICLE *particleP, Mtx matrix)
+{
+    OMOBJ *objP = particleP->hookData;
+    PLAYERMETALWORK *workP = omObjGetWork(objP, PLAYERMETALWORK);
+    HSF_DATA *hsfP;
+    HSF_OBJECT *objectP = NULL;
+    MBPARTICLEDATA *dataP;
+    Mtx modelMtx;
+    HuVecF cameraPos;
+    HuVecF pos;
+    HuVecF dir;
+    s16 *groupP;
+    s16 *countP;
+    s16 (*vertexNoP)[8];
+    int groupNo;
+    int randomNo;
+    int i;
+    BOOL firstF = FALSE;
+    BOOL posF;
+    float weight;
+    float mag;
+
+    if (!particleP->initF) {
+        dataP = particleP->data;
+        for (i = 0; i < particleP->num; i++, dataP++) {
+            dataP->scale = 0.0f;
+            dataP->color.a = 0;
+            dataP->time = 0;
+        }
+        particleP->initF = TRUE;
+        particleP->colorIn[0] = GX_CC_RASC;
+        particleP->colorIn[1] = GX_CC_C0;
+        particleP->colorIn[2] = GX_CC_TEXC;
+        particleP->colorIn[3] = GX_CC_ZERO;
+        particleP->tevColor[0].r = particleP->tevColor[0].g =
+            particleP->tevColor[0].b = particleP->tevColor[0].a = 255;
+        particleP->blendMode = MB_PARTICLE_BLEND_ADDCOL;
+        firstF = TRUE;
+    }
+    MTXInverse(Hu3DCameraMtx, modelMtx);
+    cameraPos.x = modelMtx[0][3];
+    cameraPos.y = modelMtx[1][3];
+    cameraPos.z = modelMtx[2][3];
+    hsfP = Hu3DData[mbPlayerModelIDGet(workP->playerNo)].hsf;
+    objectP = &hsfP->object[workP->_unk06];
+    Hu3DModelObjMtxGet(
+        mbPlayerModelIDGet(workP->playerNo), objectP->name, modelMtx);
+    dataP = particleP->data;
+    for (i = 0; i < particleP->num; i++, dataP++) {
+        if (dataP->time == 0) {
+            if (workP->_unk0_2) {
+                continue;
+            }
+            dataP->time++;
+            groupP = objP->data;
+            countP = groupP + 125;
+            vertexNoP = (s16 (*)[8])(countP + 125);
+            groupNo = groupP[mbRandMod(workP->_unk08)];
+            randomNo = mbRandMod(countP[groupNo]);
+            dataP->vertexNo = vertexNoP[groupNo][randomNo];
+            dataP->color.r = mbRandMod(120) + 120;
+            dataP->color.g = mbRandMod(120) + 120;
+            dataP->color.b = mbRandMod(120) + 120;
+            dataP->color.a = mbRandMod(48) + 100;
+            dataP->vel.x = 30.0f + (60.0f * frandf());
+            dataP->scale = 0.0f;
+            dataP->vel.y = (6.0f * frandf()) - 3.0f;
+            dataP->rot.z = 360.0f * frandf();
+            dataP->activeF = mbRandMod(30) + 30;
+            dataP->animBank = mbRandMod(2);
+            dataP->dispF = TRUE;
+            if (firstF) {
+                dataP->vel.x = 60.0f + (80.0f * frandf());
+                dataP->activeF = mbRandMod(40) + 40;
+            }
+        }
+        posF = TRUE;
+        dataP->time++;
+        weight = (float)dataP->time / dataP->activeF;
+        dataP->scale = dataP->vel.x * mbSinDeg(180.0f * weight);
+        dataP->rot.z += dataP->vel.y;
+        if (weight > 0.8f) {
+            dataP->color.a *= 0.9f;
+        }
+        if (weight > 0.6f) {
+            posF = FALSE;
+        }
+        if (dataP->time >= dataP->activeF) {
+            dataP->time = 0;
+            dataP->color.a = 0;
+            dataP->scale = 0.0f;
+            dataP->dispF = FALSE;
+        }
+        if (posF) {
+            MTXMultVec(modelMtx,
+                &((HuVecF *)objectP->mesh.vertex->data)[dataP->vertexNo],
+                &pos);
+            VECSubtract(&cameraPos, &pos, &dir);
+            mag = VECMag(&dir);
+            if (mag > 0.0f) {
+                VECScale(&dir, &dir, 200.0f / mag);
+            }
+            VECAdd(&pos, &dir, &dataP->pos);
+        }
+    }
+}
+
+static void PlayerBiriQOMExec(OMOBJ *objP)
+{
+    PLAYERBIRIQWORK *workP = omObjGetWork(objP, PLAYERBIRIQWORK);
+    BOOL killF = FALSE;
+    BOOL dispF = TRUE;
+
+    if (mbExitCheck() || workP->killF) {
+        if (workP->killF) {
+            killF = TRUE;
+        }
+        workP->killF = TRUE;
+    }
+    if (!workP->killF) {
+        if (!GwPlayer[workP->playerNo].biriQF && !workP->_unk0_3) {
+            workP->_unk0_3 = TRUE;
+            workP->time = 0;
+            workP->maxTime = 20;
+        }
+        if (workP->_unk0_3) {
+            workP->killF = TRUE;
+        } else if (workP->flashF) {
+            workP->time = 0;
+            workP->maxTime = 24;
+            workP->flashF = FALSE;
+            workP->_unk0_1 = FALSE;
+        } else if (!workP->_unk0_1) {
+            GXColor color = { 255, 255, 255, 255 };
+            int colorNoTbl[4] = { 1, 3, 2, 3 };
+            float level = 1.0f;
+            int colorNo = colorNoTbl[(workP->time >> 1) & 3];
+
+            if (colorNo == 0) {
+                level = 0.0f;
+            }
+            mbObjBiriQColorSet(
+                mbPlayerObjIDGet(workP->playerNo), colorNo, level, color);
+            if (workP->time >= workP->maxTime) {
+                workP->_unk0_1 = TRUE;
+                mbObjBiriQColorSet(mbPlayerObjIDGet(workP->playerNo),
+                    FALSE, 0.0f, color);
+                if (objP->mdlId[0] < 0) {
+                    BiriQEffectCreate(objP);
+                }
+            }
+            workP->time++;
+            dispF = FALSE;
+        } else {
+            GXColor color = { 255, 255, 255, 255 };
+            int colorNoTbl[4] = { 1, 3, 2, 3 };
+            float level = 0.1f;
+            int colorNo = colorNoTbl[(workP->time >> 1) & 3];
+
+            if (colorNo == 0) {
+                level = 0.0f;
+            }
+            mbObjBiriQColorSet(
+                mbPlayerObjIDGet(workP->playerNo), colorNo, level, color);
+            workP->time++;
+        }
+        if (objP->mdlId[0] >= 0) {
+            if (!mbObjGet(mbPlayerObjIDGet(workP->playerNo))->dispF
+                || !workP->effectF || !dispF) {
+                Hu3DModelAttrSet(objP->mdlId[0], HU3D_ATTR_DISPOFF);
+                Hu3DModelAttrSet(objP->mdlId[1], HU3D_ATTR_DISPOFF);
+            } else {
+                Hu3DModelAttrReset(objP->mdlId[0], HU3D_ATTR_DISPOFF);
+                Hu3DModelAttrReset(objP->mdlId[1], HU3D_ATTR_DISPOFF);
+            }
+        }
+    }
+    if (workP->killF) {
+        if (!killF) {
+            PlayerBiriQKill(workP->playerNo);
+        }
+        if (objP->data != NULL) {
+            void *dataP = objP->data;
+
+            HuMemDirectFree(dataP);
+        }
+        omDelObjEx(HuPrcCurrentGet(), objP);
+    }
 }
 
 void mbPlayerBiriQSet(int playerNo, BOOL biriQF)
@@ -1752,6 +2295,108 @@ static void BiriQEffectCreate(OMOBJ *objP)
                 (MBPARTICLE *)Hu3DData[sourceModelId].hookData;
         }
         particleP->mode = 0;
+    }
+}
+
+static void BiriQEffect1Hook(
+    HU3D_MODEL *modelP, MBPARTICLE *particleP, Mtx matrix)
+{
+    OMOBJ *objP = particleP->hookData;
+    PLAYERBIRIQWORK *workP = omObjGetWork(objP, PLAYERBIRIQWORK);
+    HSF_DATA *hsfP;
+    HSF_OBJECT *objectP = NULL;
+    MBPARTICLEDATA *dataP;
+    Mtx modelMtx;
+    HuVecF cameraPos;
+    HuVecF pos;
+    HuVecF dir;
+    s16 *groupP;
+    s16 *countP;
+    s16 (*vertexNoP)[8];
+    int groupNo;
+    int randomNo;
+    int i;
+    BOOL firstF = FALSE;
+    BOOL posF;
+    float weight;
+    float mag;
+
+    if (particleP->mode == 0) {
+        dataP = particleP->data;
+        for (i = 0; i < particleP->num; i++, dataP++) {
+            dataP->scale = 0.0f;
+            dataP->color.a = 0;
+            dataP->time = 0;
+        }
+        particleP->mode = 1;
+        firstF = TRUE;
+    }
+    MTXInverse(Hu3DCameraMtx, modelMtx);
+    cameraPos.x = modelMtx[0][3];
+    cameraPos.y = modelMtx[1][3];
+    cameraPos.z = modelMtx[2][3];
+    hsfP = Hu3DData[mbPlayerModelIDGet(workP->playerNo)].hsf;
+    objectP = &hsfP->object[workP->_unk06];
+    Hu3DModelObjMtxGet(
+        mbPlayerModelIDGet(workP->playerNo), objectP->name, modelMtx);
+    dataP = particleP->data;
+    for (i = 0; i < particleP->num; i++, dataP++) {
+        if (dataP->time == 0) {
+            if (workP->_unk0_3) {
+                continue;
+            }
+            dataP->time++;
+            groupP = objP->data;
+            countP = groupP + 125;
+            vertexNoP = (s16 (*)[8])(countP + 125);
+            groupNo = groupP[mbRandMod(workP->_unk08)];
+            randomNo = mbRandMod(countP[groupNo]);
+            dataP->vertexNo = vertexNoP[groupNo][randomNo];
+            dataP->color.r = mbRandMod(40) + 30;
+            dataP->color.g = mbRandMod(40) + 90;
+            dataP->color.b = mbRandMod(40) + 180;
+            dataP->color.a = mbRandMod(58) + 130;
+            dataP->vel.x = 30.0f + (60.0f * frandf());
+            dataP->scale = 0.0f;
+            dataP->rot.z = 360.0f * frandf();
+            dataP->activeF = mbRandMod(12) + 12;
+            dataP->animBank = mbRandMod(4);
+            dataP->dispF = TRUE;
+        }
+        posF = TRUE;
+        dataP->time++;
+        weight = (float)dataP->time / dataP->activeF;
+        dataP->scale = dataP->vel.x
+            * (0.1f + (0.9f * mbSinDeg(180.0f * weight)));
+        if (dataP->time & 1) {
+            dataP->animBank = mbRandMod(4);
+            if (mbRandMod(100) < 25) {
+                dataP->rot.z += 180.0f;
+            }
+        }
+        if (weight > 0.8f) {
+            dataP->color.a *= 0.9f;
+        }
+        if (weight > 0.6f) {
+            posF = FALSE;
+        }
+        if (dataP->time >= dataP->activeF) {
+            dataP->time = 0;
+            dataP->color.a = 0;
+            dataP->scale = 0.0f;
+            dataP->dispF = FALSE;
+        }
+        if (posF) {
+            MTXMultVec(modelMtx,
+                &((HuVecF *)objectP->mesh.vertex->data)[dataP->vertexNo],
+                &pos);
+            VECSubtract(&cameraPos, &pos, &dir);
+            mag = VECMag(&dir);
+            if (mag > 0.0f) {
+                VECScale(&dir, &dir, 18.0f / mag);
+            }
+            VECAdd(&pos, &dir, &dataP->pos);
+        }
     }
 }
 
