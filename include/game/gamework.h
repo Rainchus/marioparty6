@@ -176,7 +176,7 @@ extern GW_PLAYER GwPlayer[GW_PLAYER_MAX];
 extern GW_PLAYER_CONF GwPlayerConf[GW_PLAYER_MAX];
 
 extern u32 GwSinglePrizeFlag[2];
-extern s16 GwMgNightF;
+extern s16 GwMgTime;
 
 extern s16 GwLanguage;
 extern s16 GwLanguageSave;
@@ -315,6 +315,27 @@ static inline void GWMgScoreSet(s32 playerNo, u32 mgScore)
 {
     GwPlayer[playerNo].mgScore = mgScore;
 }
+
+static inline s16 GWMgTimeGet(void)
+{
+    return GwMgTime;
+}
+
+static inline void GWMgTimeSet(s16 value)
+{
+    GwMgTime = value;
+}
+
+static inline void GWSubGameNoSet(int subGameNo)
+{
+    GwSystem.subGameNo = subGameNo;
+}
+
+static inline int GWSubGameNoGet()
+{
+    return GwSystem.subGameNo;
+}
+
 
 void GWInit(void);
 void GWCommonInit(void);

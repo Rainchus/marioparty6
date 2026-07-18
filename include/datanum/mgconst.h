@@ -1,0 +1,80 @@
+#ifndef DATANUM_MGCONST_H
+#define DATANUM_MGCONST_H
+
+#include "datadir_enum.h"
+
+enum {
+    MGCONST_ANM_icon_mario = DATANUM(DATA_mgconst, 0),
+    MGCONST_ANM_icon_luigi, //1
+    MGCONST_ANM_icon_peach, //2
+    MGCONST_ANM_icon_yoshi, //3
+    MGCONST_ANM_icon_wario, //4
+    MGCONST_ANM_icon_daisy, //5
+    MGCONST_ANM_icon_waluigi, //6
+    MGCONST_ANM_icon_kinopio, //7
+    MGCONST_ANM_icon_teresa, //8
+    MGCONST_ANM_icon_minikoopa, //9
+    MGCONST_ANM_icon_kinopiko, //10
+    MGCONST_ANM_icon_minikoopa_r, //11
+    MGCONST_ANM_icon_minikoopa_g, //12
+    MGCONST_ANM_icon_minikoopa_b, //13
+    MGCONST_ANM_icon_outline_mario, //14
+    MGCONST_ANM_icon_outline_luigi, //15
+    MGCONST_ANM_icon_outline_peach, //16
+    MGCONST_ANM_icon_outline_yoshi, //17
+    MGCONST_ANM_icon_outline_wario, //18
+    MGCONST_ANM_icon_outline_daisy, //19
+    MGCONST_ANM_icon_outline_waluigi, //20
+    MGCONST_ANM_icon_outline_kinopio, //21
+    MGCONST_ANM_icon_outline_teresa, //22
+    MGCONST_ANM_icon_outline_minikoopa, //23
+    MGCONST_ANM_icon_outline_kinopiko, //24
+    MGCONST_ANM_icon_outline_minikoopa_r, //25
+    MGCONST_ANM_icon_outline_minikoopa_g, //26
+    MGCONST_ANM_icon_outline_minikoopa_b, //27
+    MGCONST_ANM_icon_coin, //28
+    MGCONST_ANM_icon_bomhei, //29
+    MGCONST_ANM_icon_star_off, //30
+    MGCONST_ANM_icon_star_on, //31
+    MGCONST_ANM_icon_small_mario, //32
+    MGCONST_ANM_icon_small_luigi, //33
+    MGCONST_ANM_icon_small_peach, //34
+    MGCONST_ANM_icon_small_yoshi, //35
+    MGCONST_ANM_icon_small_wario, //36
+    MGCONST_ANM_icon_small_daisy, //37
+    MGCONST_ANM_icon_small_waluigi, //38
+    MGCONST_ANM_icon_small_kinopio, //39
+    MGCONST_ANM_icon_small_teresa, //40
+    MGCONST_ANM_icon_small_minikoopa, //41
+    MGCONST_ANM_icon_small_kinopiko, //42
+    MGCONST_ANM_icon_small_minikoopa_r, //43
+    MGCONST_ANM_icon_small_minikoopa_g, //44
+    MGCONST_ANM_icon_small_minikoopa_b, //45
+    MGCONST_ANM_score_box, //46
+    MGCONST_ANM_score_box_mask, //47
+    MGCONST_ANM_score_small, //48
+    MGCONST_ANM_score_normal, //49
+    MGCONST_ANM_score_blue, //50
+    MGCONST_ANM_score_large, //51
+    MGCONST_ANM_score_segment, //52
+    MGCONST_ANM_score_unit_small, //53
+    MGCONST_ANM_score_unit_small_blue, //54
+    MGCONST_ANM_score_unit_blue, //55
+    MGCONST_ANM_score_unit_large, //56
+    MGCONST_ANM_score_unit_large_blue, //56
+    MGCONST_ANM_old_score_box, //58
+    MGCONST_ANM_old_score_red, //59
+    MGCONST_ANM_old_score_add, //60
+    MGCONST_ANM_old_score_yellow_large, //61
+    MGCONST_ANM_old_time_green, //62
+    MGCONST_ANM_old_time_white, //63
+    MGCONST_ANM_old_score_blue, //64
+    MGCONST_ANM_old_score_yellow, //65
+    MGCONST_ANM_old_record_num, //66
+    MGCONST_ANM_old_record_new, //67
+    MGCONST_ANM_old_record_crown, //68
+    MGCONST_ANM_old_record_crown_small, //699
+    MGCONST_ANM_old_cross, //70
+};
+
+#endif

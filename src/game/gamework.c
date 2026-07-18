@@ -15,7 +15,7 @@ u32 GwSinglePrizeFlag[2];
 static u16 SingleMgWinNum;
 static u16 SingleMgRecordNum;
 static u16 MgPlayNum;
-s16 GwMgNightF;
+s16 GwMgTime;
 
 s16 GwLanguage = HUWIN_LANG_ENGLISH;
 s16 GwLanguageSave = HUWIN_LANG_NULL;

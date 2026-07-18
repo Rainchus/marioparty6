@@ -8,6 +8,7 @@
 #define GW_PLAYER_GRAPH_SIZE 52
 
 #define GW_MGNO_BASE 601
+#define GW_MGNO_NONE 0xFFFF
 
 #define GW_SINGLE_MGWIN_MAX 99
 
@@ -19,6 +20,11 @@
 #define GW_MG_PLAY_NUM_MAX 10000
 
 #include "game/window_enum.h"
+
+typedef enum {
+    GW_MG_TIME_DAY, //0
+    GW_MG_TIME_NIGHT //1
+} GW_MG_TIME;
 
 typedef enum {
     GW_BANK_FLAG_MAX = 63

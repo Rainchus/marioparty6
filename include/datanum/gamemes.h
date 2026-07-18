@@ -9,7 +9,7 @@ enum {
     GAMEMES_ANM_timer_new, //2
     GAMEMES_ANM_digit, //3
     GAMEMES_ANM_score_red, //4
-    GAMEMES_ANM_score_blue, //5
+    GAMEMES_ANM_score_add, //5
     GAMEMES_ANM_practice, //6
     GAMEMES_ANM_record_num, //7
     GAMEMES_ANM_record_crown, //8

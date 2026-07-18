@@ -3,6 +3,9 @@
 
 enum MSM_SE_ID {
     MSM_SE_CMN_03 = 2,
+    MSM_SE_CMN_04 = 3,
+    MSM_SE_CMN_06 = 5,
+    MSM_SE_CMN_07 = 6,
     MSM_SE_CMN_25 = 24,
     
     MSM_SE_CHAR_DAISY = 57,

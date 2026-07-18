@@ -12,19 +12,15 @@
 
 #include "game/esprite.h"
 #include "game/flag.h"
+#include "game/mgdata.h"
+#include "game/gamemes.h"
 
 #define OMOVLHIS_MAX 16
 
-//TODO: Use from mgdata.h
-extern float MgModeWorkFloat[16];
-extern int MgModeWorkInt[16];
 //TODO: Use from saveload.h
 extern void SLWinInit(void);
 //TODO: Use from actman.h
 void MgActorClose(void);
-//TODO: Use from gamemes.h
-void GameMesClose(void);
-void MgScoreBoxInit(void);
 
 OMOBJ *omDBGSysKeyObj;
 static HUPROCESS *omwatchproc;
