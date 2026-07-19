@@ -91,6 +91,8 @@ typedef struct omCameraView_s {
     float zoom;
 } OM_CAMERA_VIEW;
 
+#define OM_OUTVIEW_PRIO 32730
+
 #define omOvlCall(ovl, evtno, stat) omOvlCallEx(ovl, TRUE, evtno, stat)
 #define omOvlGoto(ovl, evtno, stat) omOvlGotoEx(ovl, TRUE, evtno, stat)
 #define omOvlReturn(hisOfs) omOvlReturnEx(hisOfs, TRUE)
@@ -98,6 +100,9 @@ typedef struct omCameraView_s {
 #define omDelObj omDelObjEx
 #define omMakeGroup omMakeGroupEx
 #define omGetGroupMemberList omGetGroupMemberListEx
+#define omAddOutViewObj(objman) omAddObj(objman, OM_OUTVIEW_PRIO, 0, 0, omOutView)
+#define omAddOutViewMultiObj(objman) omAddObj(objman, OM_OUTVIEW_PRIO, 0, 0, omOutViewMulti)
+#define omOutViewMultiCntSet(obj, num) ((obj)->work[0] = (num))
 
 #define omObjGetWork(obj, type) ((type *)(&((obj)->work[0])))
 #define omObjGetDataAs(obj, type) ((type *)((obj)->data))

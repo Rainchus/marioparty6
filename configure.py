@@ -206,6 +206,7 @@ cflags_rel = [
     "-fp_contract off",
     "-sdata 0",
     "-sdata2 0",
+    "-pool off",
 ]
 
 # Game flags
@@ -735,7 +736,12 @@ config.libs = [
             Object(NonMatching, "REL/bootDll/opening.c"),
         },
     ),
-
+    Rel(
+        "motchkDll",
+        objects={
+            Object(Matching, "REL/motchkDll/motchk.c"),
+        },
+    ),
 ]
 
 if args.mode == "configure":
