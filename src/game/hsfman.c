@@ -16,12 +16,6 @@
 #define REFLECT_TEX_W 128
 #define REFLECT_TEX_H 128
 
-#define LIGHT_TYPE_SET(lightP, lightType) ((lightP)->type &= 0xFF00); \
-    ((lightP)->type |= (lightType))
-
-#define LIGHT_TYPE_GET(lightP) ((lightP)->type & 0xFF)
-
-
 #include "refMapData0.inc"
 #include "refMapData1.inc"
 #include "refMapData2.inc"
@@ -1622,7 +1616,7 @@ HU3D_LLIGHTID Hu3DLLightCreateV(HU3D_MODELID modelId, HuVecF *pos, HuVecF *dir, 
 
 static void Hu3DLightSpotSet(HU3D_LIGHT *lightP, GXSpotFn spotFunc, float cutoff)
 {
-    LIGHT_TYPE_SET(lightP, HU3D_LIGHT_TYPE_SPOT);
+    HU3D_LIGHT_TYPE_SET(lightP, HU3D_LIGHT_TYPE_SPOT);
     lightP->cutoff = cutoff;
     lightP->func = spotFunc;
 }
@@ -1642,7 +1636,7 @@ void Hu3DLLightSpotSet(HU3D_MODELID modelId, HU3D_LLIGHTID lightId, GXSpotFn spo
 
 static void Hu3DLightInfinitytSet(HU3D_LIGHT *lightP)
 {
-    LIGHT_TYPE_SET(lightP, HU3D_LIGHT_TYPE_INFINITYT);
+    HU3D_LIGHT_TYPE_SET(lightP, HU3D_LIGHT_TYPE_INFINITYT);
 }
 
 void Hu3DGLightInfinitytSet(HU3D_LIGHTID lightId)
@@ -1660,7 +1654,7 @@ void Hu3DLLightInfinitytSet(HU3D_MODELID modelId, HU3D_LLIGHTID lightId)
 
 static void Hu3DLightPointSet(HU3D_LIGHT *lightP, float refDistance, float refBrightness, GXDistAttnFn distFunc)
 {
-    LIGHT_TYPE_SET(lightP, HU3D_LIGHT_TYPE_POINT);
+    HU3D_LIGHT_TYPE_SET(lightP, HU3D_LIGHT_TYPE_POINT);
     lightP->cutoff = refDistance;
     lightP->brightness = refBrightness;
     lightP->func = distFunc;
@@ -2016,7 +2010,7 @@ static void lightSet(HU3D_LIGHT *lightP, s16 lightBit, Mtx cameraMtx, Mtx camera
     HuVecF dir;
     HuVecF pos;
     GXColor color;
-    switch(LIGHT_TYPE_GET(lightP)) {
+    switch(HU3D_LIGHT_TYPE_GET(lightP)) {
         case HU3D_LIGHT_TYPE_SPOT:
             GXInitLightAttn(&lightObj, 1, 0, 0, 1, 0, 0);
             GXInitLightSpot(&lightObj, lightP->cutoff, lightP->func);

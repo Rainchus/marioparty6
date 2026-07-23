@@ -5,6 +5,12 @@
 #include "game/memory.h"
 #include "game/data.h"
 
+
+#define HU3D_LIGHT_TYPE_SET(lightP, lightType) ((lightP)->type &= 0xFF00); \
+    ((lightP)->type |= (lightType))
+
+#define HU3D_LIGHT_TYPE_GET(lightP) ((lightP)->type & 0xFF)
+
 //Max for model properties
 #define HU3D_CLUSTER_MAX 4
 #define HU3D_MODEL_LLIGHT_MAX 8
@@ -252,15 +258,15 @@ struct Hu3DDrawObj_s {
 };
 
 typedef struct Hu3DAttrAnim_s {
-    u16 attr;
-    HU3D_ANIMID animId;
-    HU3D_TEXSCRID texScrId;
-    HuVecF trans3D;
-    HuVecF rot;
-    HuVecF scale3D;
-    HuVec2f scale;
-    HuVec2f trans;
-    HSF_BITMAP *bitMapPtr;
+    u16 attr; //0x00
+    HU3D_ANIMID animId; //0x02
+    HU3D_TEXSCRID texScrId; //0x04
+    HuVecF trans3D; //0x08
+    HuVecF rot; //0x14
+    HuVecF scale3D; //0x20
+    HuVec2f scale; //0x2C
+    HuVec2f trans; //0x34
+    HSF_BITMAP *bitMapPtr; //0x3C
     u32 unk40;
 } HU3D_ATTR_ANIM;
 
@@ -272,240 +278,240 @@ typedef struct HsfDrawData_s {
 } HSF_DRAWDATA;
 
 typedef struct HsfConstData_s {
-    u32 attr;
-    HU3D_MODELID hookMdlId;
-    u8 shadowAlpha;
-    HSF_DRAWDATA *drawData;
-    void *dlBuf;
-    Mtx matrix;
-    ANIMDATA *hiliteMap;
-    HU3D_OBJ_HOOK hook;
-    u32 triCnt;
+    u32 attr; //0x00
+    HU3D_MODELID hookMdlId; //0x04
+    u8 shadowAlpha; //0x06
+    HSF_DRAWDATA *drawData; //0x08
+    void *dlBuf; //0x0C
+    Mtx matrix; //0x10
+    ANIMDATA *hiliteMap; //0x40
+    HU3D_OBJ_HOOK hook; //0x44
+    u32 triCnt; //0x48
 } HSF_CONSTDATA;
 
 typedef struct Hu3DMotWork_s {
-    float time;
-    float speed;
-    float start;
-    float end;
+    float time; //0x00
+    float speed; //0x04
+    float start; //0x08
+    float end; //0x0C
 } HU3D_MOTWORK;
 
 struct Hu3DModel_s {
-    u8 tick;
-    u8 camInfoBit;
-    u8 projBit;
-    u8 hiliteIdx;
-    s8 reflectType;
-    u8 lightBit;
-    s16 layerNo;
-    HU3D_MOTIONID motId;
-    HU3D_MOTIONID motIdOvl;
-    HU3D_MOTIONID motIdShift;
-    HU3D_MOTIONID motIdShape;
-    HU3D_MOTIONID motIdCluster[HU3D_CLUSTER_MAX];
-    s16 clusterAttr[HU3D_CLUSTER_MAX];
-    HU3D_MOTIONID motIdSrc;
-    u16 cameraBit;
-    HU3D_MODELID linkMdlId;
-    u16 lightNum;
-    u16 lightId[HU3D_GLIGHT_MAX];
-    HU3D_LIGHTID LLightId[HU3D_MODEL_LLIGHT_MAX];
-    u32 mallocNo;
-    u32 mallocNoLink;
-    u32 attr;
-    u32 motAttr;
-    float ambR;
-    float ambB;
-    float ambG;
-    HU3D_MOTWORK motWork;
-    HU3D_MOTWORK motOvlWork;
-    HU3D_MOTWORK motShiftWork;
-    HU3D_MOTWORK motShapeWork;
-    float clusterTime[HU3D_CLUSTER_MAX];
-    float clusterSpeed[HU3D_CLUSTER_MAX];
+    u8 tick; //0x00
+    u8 camInfoBit; //0x01
+    u8 projBit; //0x02
+    u8 hiliteIdx; //0x03
+    s8 reflectType; //0x04
+    u8 lightBit; //0x05
+    s16 layerNo; //0x06
+    HU3D_MOTIONID motId; //0x08
+    HU3D_MOTIONID motIdOvl; //0x0A
+    HU3D_MOTIONID motIdShift; //0x0C
+    HU3D_MOTIONID motIdShape; //0x0E
+    HU3D_MOTIONID motIdCluster[HU3D_CLUSTER_MAX]; //0x10
+    s16 clusterAttr[HU3D_CLUSTER_MAX]; //0x18
+    HU3D_MOTIONID motIdSrc; //0x20
+    u16 cameraBit; //0x22
+    HU3D_MODELID linkMdlId; //0x24
+    u16 lightNum; //0x26
+    u16 lightId[HU3D_GLIGHT_MAX]; //0x28
+    HU3D_LIGHTID LLightId[HU3D_MODEL_LLIGHT_MAX]; //0x38
+    u32 mallocNo; //0x48
+    u32 mallocNoLink; //0x4C
+    u32 attr; //0x50
+    u32 motAttr; //0x54
+    float ambR; //0x58
+    float ambB; //0x5C
+    float ambG; //0x64
+    HU3D_MOTWORK motWork; //0x68
+    HU3D_MOTWORK motOvlWork; //0x78
+    HU3D_MOTWORK motShiftWork; //0x88
+    HU3D_MOTWORK motShapeWork; //0x98
+    float clusterTime[HU3D_CLUSTER_MAX]; //0xA8
+    float clusterSpeed[HU3D_CLUSTER_MAX]; //0xB8
     union {
-        HSF_DATA *hsf;
-        HU3D_MODEL_HOOK hookFunc;
+        HSF_DATA *hsf; //0xC8
+        HU3D_MODEL_HOOK hookFunc; //0xC8
     };
-    HSF_DATA *hsfLink;
-    HuVecF pos;
-    HuVecF rot;
-    HuVecF scale;
-    Mtx mtx;
-    void *hookData;
-    HU3D_TIMING_HOOK timingHook;
-    HSF_OBJECT *timingHookObj;
-    HU3D_MAT_HOOK matHook;
-    u32 endCounter;
+    HSF_DATA *hsfLink; //0xCC
+    HuVecF pos; //0xD0
+    HuVecF rot; //0xDC
+    HuVecF scale; //0xE8
+    Mtx mtx; //0xF4
+    void *hookData; //0x124
+    HU3D_TIMING_HOOK timingHook; //0x128
+    HSF_OBJECT *timingHookObj; //0x12C
+    HU3D_MAT_HOOK matHook; //0x130
+    u32 endCounter; //0x134
 };
 
 typedef struct Hu3DCamera_s {
-    float fov;
-    float near;
-    float far;
-    float aspect;
-    float upRot;
-    Vec pos;
-    Vec up;
-    Vec target;
-    s16 scissorX;
-    s16 scissorY;
-    s16 scissorW;
-    s16 scissorH;
-    float viewportX;
-    float viewportY;
-    float viewportW;
-    float viewportH;
-    float viewportNear;
-    float viewportFar;
+    float fov; //0x00
+    float near; //0x04
+    float far; //0x08
+    float aspect; //0x0C
+    float upRot; //0x10
+    Vec pos; //0x14
+    Vec up; //0x20
+    Vec target; //0x2C
+    s16 scissorX; //0x38
+    s16 scissorY; //0x3A
+    s16 scissorW; //0x3C
+    s16 scissorH; //0x3E
+    float viewportX; //0x40
+    float viewportY; //0x44
+    float viewportW; //0x48
+    float viewportH; //0x4C
+    float viewportNear; //0x50
+    float viewportFar; //0x54
 } HU3D_CAMERA;
 
 typedef struct Hu3DProjection_s {
-    u8 alpha;
-    ANIMDATA *anim;
-    float fov;
-    float near;
-    float far;
-    HuVecF camPos;
-    HuVecF camTarget;
-    HuVecF camUp;
-    Mtx lookAtMtx;
-    Mtx projMtx;
+    u8 alpha; //0x00
+    ANIMDATA *anim; //0x04
+    float fov; //0x08
+    float near; //0x0C
+    float far; //0x10
+    HuVecF camPos; //0x14
+    HuVecF camTarget; //0x20
+    HuVecF camUp; //0x2C
+    Mtx lookAtMtx; //0x38
+    Mtx projMtx; //0x68
 } HU3D_PROJECTION;
 
 typedef struct Hu3DShadow_s {
-    GXColor color;
-    u16 size;
-    void *buf;
-    float fov;
-    float near;
-    float far;
-    HuVecF camPos;
-    HuVecF camTarget;
-    HuVecF camUp;
-    Mtx lookAtMtx;
-    Mtx projMtx;
+    GXColor color; //0x00
+    u16 size; //0x04
+    void *buf; //0x08
+    float fov; //0x0C
+    float near; //0x10
+    float far; //0x14
+    HuVecF camPos; //0x18
+    HuVecF camTarget; //0x24
+    HuVecF camUp; //0x30
+    Mtx lookAtMtx; //0x3C
+    Mtx projMtx; //0x6C
 } HU3D_SHADOW;
 
 typedef struct Hu3DLight_s {
-    s16 type;
-    s16 func;
-    float cutoff;
-    float brightness;
+    s16 type; //0x00
+    s16 func; //0x02
+    float cutoff; //0x04
+    float brightness; //0x08
     u8 unkC[16];
-    HuVecF pos;
-    HuVecF dir;
-    HuVecF offset;
-    GXColor color;
+    HuVecF pos; //0x1C
+    HuVecF dir; //0x28
+    HuVecF offset; //0x34
+    GXColor color; //0x40
 } HU3D_LIGHT;
 
 typedef struct Hu3DMotion_s {
-    u16 attr;
-    HU3D_MODELID modelId;
-    HSF_DATA *hsf;
+    u16 attr; //0x00
+    HU3D_MODELID modelId; //0x02
+    HSF_DATA *hsf; //0x04
 } HU3D_MOTION;
 
 typedef struct Hu3DParticleData_s {
-    s16 time;
-    HU3D_PARMANID parManId;
-    s16 attr;
-    s16 cameraBit;
-    HuVecF vel;
-    HuVecF accel;
-    float speedDecay;
-    float colorIdx;
-    float scaleBase;
-    float scale;
-    float scaleY;
-    float zRot;
-    HuVecF pos;
-    GXColor color;
+    s16 time; //0x00
+    HU3D_PARMANID parManId; //0x02
+    s16 attr; //0x04
+    s16 cameraBit; //0x06
+    HuVecF vel; //0x08
+    HuVecF accel; //0x14
+    float speedDecay; //0x20
+    float colorIdx; //0x24
+    float scaleBase; //0x28
+    float scale; //0x2C
+    float scaleY; //0x30
+    float zRot; //0x34
+    HuVecF pos; //0x38
+    GXColor color; //0x44
 } HU3D_PARTICLE_DATA;
 
 typedef struct Hu3DParticle_s {
-    s16 dataCnt;
-    s16 emitCnt;
-    HuVecF pos;
+    s16 dataCnt; //0x00
+    s16 emitCnt; //0x02
+    HuVecF pos; //0x04
     HuVecF unk_10;
-    void *work;
-    s16 animBank;
-    s16 animNo;
-    float animSpeed;
-    float animTime;
-    u8 blendMode;
-    u8 attr;
+    void *work; //0x1C
+    s16 animBank; //0x20
+    s16 animNo; //0x22
+    float animSpeed; //0x24
+    float animTime; //0x28
+    u8 blendMode; //0x2C
+    u8 attr; //0x2D
     s16 unk_2E;
-    s16 maxCnt;
-    u32 count;
-    u32 prevCounter;
-    u32 prevCount;
-    u32 dlSize;
-    ANIMDATA *anim;
-    HU3D_PARTICLE_DATA *data;
-    HuVecF *vtxBuf;
-    void *dlBuf;
-    HU3D_PARTICLE_HOOK hook;
+    s16 maxCnt; //0x30
+    u32 count; //0x34
+    u32 prevCounter; //0x38
+    u32 prevCount; //0x3C
+    u32 dlSize; //0x40
+    ANIMDATA *anim; //0x44
+    HU3D_PARTICLE_DATA *data; //0x48
+    HuVecF *vtxBuf; //0x4C
+    void *dlBuf; //0x50
+    HU3D_PARTICLE_HOOK hook; //0x54
 } HU3D_PARTICLE; 
 
 typedef struct Hu3DParmanParam_s {
-    s16 maxTime;
+    s16 maxTime; //0x00
     s16 unk2;
-    float accelRange;
-    float scaleRange;
-    float angleRange;
-    Vec gravity;
-    float speedBase;
-    float speedDecay;
-    float scaleBase;
-    float scaleDecay;
-    s16 colorNum;
-    GXColor colorStart[4];
-    GXColor colorEnd[4];
+    float accelRange; //0x04
+    float scaleRange; //0x08
+    float angleRange; //0x0C
+    Vec gravity; //0x10
+    float speedBase; //0x1C
+    float speedDecay; //0x20
+    float scaleBase; //0x24
+    float scaleDecay; //0x28
+    s16 colorNum; //0x2C
+    GXColor colorStart[4]; //0x2E
+    GXColor colorEnd[4]; //0x3E
 } HU3D_PARMAN_PARAM;
 
 typedef struct Hu3DTexAnim_s {
-    u16 attr;
-    s16 bank;
-    s16 anmNo;
-    HU3D_MODELID modelId;
-    float time;
-    float speed;
-    ANIMDATA *anim;
+    u16 attr; //0x00
+    s16 bank; //0x02
+    s16 anmNo; //0x04
+    HU3D_MODELID modelId; //0x06
+    float time; //0x08
+    float speed; //0x0C
+    ANIMDATA *anim; //0x10
 } HU3D_TEXANIM; // Size 0x14
 
 typedef struct Hu3DTexScroll_s {
-    u16 attr;
-    HU3D_MODELID modelId;
-    HuVecF pos;
-    HuVecF scale;
-    HuVecF posMove;
-    HuVecF scaleMove;
-    float rot;
-    float rotMove;
-    Mtx texMtx;
+    u16 attr; //0x00
+    HU3D_MODELID modelId; //0x02
+    HuVecF pos; //0x04
+    HuVecF scale; //0x10
+    HuVecF posMove; //0x1C
+    HuVecF scaleMove; //0x28
+    float rot; //0x34
+    float rotMove; //0x38
+    Mtx texMtx; //0x3C
 } HU3D_TEXSCROLL;
 
 typedef struct Hu3DParMan_s {
-    HU3D_MODELID modelId;
-    s16 attr;
-    s16 timeLimit;
-    HU3D_PARMANID parManId;
-    s16 color;
-    Vec pos;
-    Vec vec;
-    Vec vacuum;
-    float vacuumSpeed;
-    float accel;
-    s32 jitterNo;
-    HU3D_PARMAN_PARAM *param;
+    HU3D_MODELID modelId; //0x00
+    s16 attr; //0x02
+    s16 timeLimit; //0x04
+    HU3D_PARMANID parManId; //0x06
+    s16 color; //0x08
+    Vec pos; //0x0C
+    Vec vec; //0x18
+    Vec vacuum; //0x24
+    float vacuumSpeed; //0x30
+    float accel; //0x34
+    s32 jitterNo; //0x38
+    HU3D_PARMAN_PARAM *param; //0x3C
 } HU3D_PARMAN;
 
 typedef struct Hu3DWaterWave_s {
-    HuVecF pos;
-    float radiusMax;
-    float radius;
-    float texMtx[2][3];
-    s16 time;
+    HuVecF pos; //0x00
+    float radiusMax; //0x0C
+    float radius; //0x10
+    float texMtx[2][3]; //0x14
+    s16 time; //0x2C
 } HU3D_WATERWAVE;
 
 typedef struct Hu3DWater_s {
